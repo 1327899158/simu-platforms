@@ -1,0 +1,38 @@
+<view class="page-container">
+
+  <!-- 顶部导航 -->
+  <view class="page-header">
+    <text class="page-title">💰 提交报价</text>
+  </view>
+
+  <view class="form-section">
+    <view class="form-group" wx:if="{{flexible}}">
+      <text class="form-label">报价金额（元）<text class="required">*</text></text>
+      <input class="form-input" type="digit" placeholder="请输入报价金额" value="{{amountYuan}}"
+        bindinput="input" data-f="amountYuan" maxlength="11" />
+    </view>
+    <view class="form-group" wx:else>
+      <text class="form-label">报价金额（元）</text>
+      <view class="fixed-amount">¥{{amountYuan}} <text class="fixed-tip">（客户已固定预算，不可修改）</text></view>
+    </view>
+
+    <view class="form-group">
+      <text class="form-label">预计工期（天）<text class="required">*</text></text>
+      <input class="form-input" type="number" placeholder="请输入预计完成天数（1-90）" value="{{days}}"
+        bindinput="input" data-f="days" maxlength="2" />
+    </view>
+
+    <view class="form-group">
+      <text class="form-label">报价说明<text class="required">*</text></text>
+      <textarea class="form-textarea" placeholder="请简要说明您的技术方案和优势（至少10字）：求解器、网格策略、工况设置、交付物…"
+        value="{{solution}}" bindinput="input" data-f="solution" maxlength="3000" />
+      <text class="char-count">{{solution.length}}/3000</text>
+    </view>
+
+    <button class="btn-primary-block {{submitting ? 'disabled' : ''}}" bindtap="submit">
+      {{submitting ? '提交中…' : '提交报价'}}
+    </button>
+    <view class="submit-tip">提示：其他工程师看不到你的报价金额与方案；被选中后不可修改。</view>
+  </view>
+
+</view>

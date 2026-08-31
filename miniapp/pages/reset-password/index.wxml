@@ -1,0 +1,47 @@
+<!--忘记密码页面-->
+<view class="page">
+  <view class="header">
+    <text class="title">重置密码</text>
+  </view>
+
+  <view class="form-card">
+    <view class="form-group">
+      <label>用户名</label>
+      <view class="account-input">
+        <input type="number" maxlength="12" placeholder="请输入6-12位数字用户名" value="{{username}}" bindinput="onUsername" />
+        <button wx:if="{{!targetReady}}" class="btn-account" bindtap="confirmAccount" loading="{{targetLoading}}" disabled="{{targetLoading}}">确认账号</button>
+      </view>
+      <view class="phone-hint" wx:if="{{targetReady}}">
+        验证码将发送至绑定手机：<text>{{phoneMasked}}</text>
+      </view>
+    </view>
+
+    <view class="form-group" wx:if="{{targetReady}}">
+      <label>验证码</label>
+      <view class="sms-input">
+        <input type="number" maxlength="6" placeholder="请输入6位验证码" value="{{smsCode}}" bindinput="onSmsCode" />
+        <button
+          class="btn-sms"
+          bindtap="requestSms"
+          disabled="{{smsSending || smsCountdown > 0}}"
+        >
+          {{smsCountdown > 0 ? smsCountdown + 's' : '获取验证码'}}
+        </button>
+      </view>
+    </view>
+
+    <view class="form-group" wx:if="{{targetReady}}">
+      <label>新密码</label>
+      <input type="password" maxlength="50" placeholder="请输入新密码（至少6位）" value="{{newPassword}}" bindinput="onNewPassword" />
+    </view>
+
+    <view class="form-group" wx:if="{{targetReady}}">
+      <label>确认密码</label>
+      <input type="password" maxlength="50" placeholder="请再次输入密码" value="{{confirmPassword}}" bindinput="onConfirmPassword" />
+    </view>
+
+    <button wx:if="{{targetReady}}" class="btn-primary" bindtap="resetPassword" disabled="{{loading}}">
+      {{loading ? '重置中...' : '确认重置'}}
+    </button>
+  </view>
+</view>

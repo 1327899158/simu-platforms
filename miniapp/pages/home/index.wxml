@@ -1,0 +1,127 @@
+<view class="page-container">
+
+  <!-- ========== 客户视图 ========== -->
+  <block wx:if="{{role === 'CUSTOMER'}}">
+    <view class="hero hero-sunny hero-col">
+      <image class="hero-illust" src="/assets/hero-laptop.png" mode="aspectFit" />
+      <view class="hero-greet">你好，<text class="hl">{{user.nickname || '客户'}}</text></view>
+    </view>
+
+    <view class="tile-grid">
+      <view class="tile" bindtap="goPublish" hover-class="tile-hover" hover-stay-time="80">
+        <text class="tile-icon">📝</text>
+        <text class="tile-label">发布需求</text>
+      </view>
+      <view class="tile" bindtap="goOrders" hover-class="tile-hover" hover-stay-time="80">
+        <text class="tile-badge" wx:if="{{unreadOrderCount}}">{{unreadOrderCount > 99 ? '99+' : unreadOrderCount}}</text>
+        <text class="tile-icon">📋</text>
+        <text class="tile-label">我的订单</text>
+      </view>
+      <view class="tile" bindtap="goMessages" hover-class="tile-hover" hover-stay-time="80">
+        <text class="tile-icon">💬</text>
+        <text class="tile-label">消息</text>
+      </view>
+      <view class="tile" bindtap="goMe" hover-class="tile-hover" hover-stay-time="80">
+        <text class="tile-icon">👤</text>
+        <text class="tile-label">个人中心</text>
+      </view>
+    </view>
+
+    <view class="list-card">
+      <view class="lc-head">
+        <text class="lc-title">我的订单</text>
+        <text class="lc-more" bindtap="goOrders">查看全部 ›</text>
+      </view>
+      <view class="stat-row">
+        <view class="stat" bindtap="goOrders">
+          <b>{{counts.UNQUOTED}}</b>
+          <span>未报价</span>
+        </view>
+        <view class="stat" bindtap="goOrders">
+          <b>{{counts.AWAITING_CONFIRMATION}}</b>
+          <span>待确认</span>
+        </view>
+        <view class="stat" bindtap="goOrders">
+          <b>{{counts.AWAITING_PAYMENT}}</b>
+          <span>待支付</span>
+        </view>
+        <view class="stat" bindtap="goOrders">
+          <b>{{counts.IN_PROGRESS}}</b>
+          <span>执行中</span>
+        </view>
+        <view class="stat" bindtap="goOrders">
+          <b>{{counts.DELIVERED}}</b>
+          <span>待验收</span>
+        </view>
+      </view>
+    </view>
+
+    <view class="sec-title">我的需求</view>
+    <view class="list-card req-card" wx:for="{{recent}}" wx:key="id" data-id="{{item.id}}"
+      bindtap="openMine" hover-class="card-press" hover-stay-time="80">
+      <view class="req-top">
+        <text class="req-name">{{item.projectName}}</text>
+        <text class="badge-y">{{item.statusText}}</text>
+      </view>
+      <text class="req-meta">{{item.time}} · {{item.quoteCount}} 人报价</text>
+      <text class="req-price">¥{{item.budgetY}}</text>
+    </view>
+    <view class="empty-state" wx:if="{{!recent.length}}">
+      <text class="empty-icon">📭</text>
+      <text class="empty-text">暂无需求</text>
+      <text class="empty-desc">点上方「发布需求」创建第一个需求</text>
+    </view>
+  </block>
+
+  <!-- ========== 工程师视图（抢单大厅） ========== -->
+  <block wx:if="{{role === 'ENGINEER'}}">
+    <view class="hero hero-sky hero-col">
+      <image class="hero-illust" src="/assets/hero-wrench.png" mode="aspectFit" />
+      <view class="hero-greet">你好，<text class="hl">{{user.nickname || '工程师'}}</text></view>
+      <view class="hero-link" bindtap="goProfile">查看资料 ›</view>
+    </view>
+
+    <view class="tile-grid three">
+      <view class="tile" bindtap="goMyQuotes" hover-class="tile-hover" hover-stay-time="80">
+        <text class="tile-icon">📋</text>
+        <text class="tile-label">我的报价</text>
+      </view>
+      <view class="tile" bindtap="goMessages" hover-class="tile-hover" hover-stay-time="80">
+        <text class="tile-icon">💬</text>
+        <text class="tile-label">消息</text>
+      </view>
+      <view class="tile" bindtap="goMe" hover-class="tile-hover" hover-stay-time="80">
+        <text class="tile-icon">👤</text>
+        <text class="tile-label">个人中心</text>
+      </view>
+    </view>
+
+    <view class="sec-title">📌 可接单需求</view>
+
+    <view class="list-card req-card" wx:for="{{hall}}" wx:key="id" data-id="{{item.id}}"
+      bindtap="openMarket" hover-class="card-press" hover-stay-time="80">
+      <text class="req-name">{{item.projectName}}</text>
+      <view class="tag-row">
+        <text class="tag" wx:for="{{item.directionTags}}" wx:for-item="t" wx:key="*this">{{t}}</text>
+      </view>
+      <view class="info-box">
+        <view class="ib-row">💰 ¥{{item.budgetY}}</view>
+        <view class="ib-row">📅 工期{{item.deliveryDays}}天</view>
+        <view class="ib-row">💬 {{item.quoteCount}}人报价 · 👁 {{item.viewCount}}次浏览</view>
+      </view>
+      <view class="req-foot">
+        <button wx:if="{{!item.myQuote}}" class="btn-para"
+          data-id="{{item.id}}" data-flexible="{{item.budgetFlexible ? 1 : 0}}" data-fen="{{item.budgetFen}}"
+          catchtap="quickQuote"><text class="btn-in">报价</text></button>
+        <text wx:else class="badge-g">已报价</text>
+      </view>
+    </view>
+
+    <view class="empty-state" wx:if="{{!hall.length}}">
+      <text class="empty-icon">📭</text>
+      <text class="empty-text">暂无需求</text>
+      <text class="empty-desc">当前没有可接单的需求，下拉刷新试试</text>
+    </view>
+  </block>
+
+</view>

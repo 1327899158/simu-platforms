@@ -1,0 +1,77 @@
+<view class="page-container">
+
+  <!-- 顶部导航 -->
+  <view class="page-header">
+    <text class="page-title">📋 我的订单</text>
+    <text class="order-count">共 {{currentCount}} 个</text>
+  </view>
+
+  <!-- 常驻状态筛选：全部标签一次展示，不需要滚动或展开。 -->
+  <view class="filter-wrap">
+    <view class="filter-panel">
+      <button wx:for="{{tabs}}" wx:key="key"
+        class="filter-item {{tab === item.key ? 'active' : ''}}"
+        data-key="{{item.key}}" bindtap="pickTab">
+        <text class="status-dot {{item.dotCls}}"></text>
+        <text class="filter-label">{{item.label}}</text>
+        <text class="filter-count">{{item.count}}</text>
+      </button>
+    </view>
+  </view>
+
+  <!-- 订单列表 -->
+  <view class="order-list">
+    <view wx:for="{{items}}" wx:key="id" class="order-card" data-id="{{item.id}}"
+      bindtap="open" hover-class="order-card-hover" hover-stay-time="80">
+      <view class="order-header">
+        <view class="order-title-wrap">
+          <text class="order-title">{{item.projectName}}</text>
+        </view>
+        <text class="status {{item.cls}}">{{item.statusText}}</text>
+      </view>
+
+      <view class="order-body">
+        <view class="order-info-row">
+          <text class="info-label">预算</text>
+          <text class="info-value budget">¥{{item.budgetY}}</text>
+        </view>
+        <view class="order-info-row" wx:if="{{item.deliveryDays}}">
+          <text class="info-label">周期</text>
+          <text class="info-value">{{item.deliveryDays}} 天</text>
+        </view>
+        <view class="order-info-row" wx:if="{{item.softwareText}}">
+          <text class="info-label">软件</text>
+          <text class="info-value">{{item.softwareText}}</text>
+        </view>
+        <view class="order-info-row" wx:if="{{item.directionText}}">
+          <text class="info-label">方向</text>
+          <text class="info-value">{{item.directionText}}</text>
+        </view>
+        <view class="order-info-row" wx:if="{{item.quoteCount > 0}}">
+          <text class="info-label">报价</text>
+          <text class="info-value">💬 {{item.quoteCount}} 个工程师报价</text>
+        </view>
+        <view class="order-info-row">
+          <text class="info-label">浏览</text>
+          <text class="info-value">👁 {{item.viewCount || 0}} 位工程师查看</text>
+        </view>
+      </view>
+
+      <view class="order-footer">
+        <text class="order-time">📆 {{item.time}} · {{item.orderNo}}</text>
+        <view class="order-actions">
+          <button class="btn-action detail" data-id="{{item.id}}" catchtap="open">查看详情</button>
+        </view>
+      </view>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-state" wx:if="{{!items.length}}">
+      <text class="empty-icon">📭</text>
+      <text class="empty-text">暂无订单</text>
+      <text class="empty-desc">还没有相关订单，快去发布需求吧</text>
+      <button class="btn-sm" bindtap="gotoPublish">发布需求</button>
+    </view>
+  </view>
+
+</view>

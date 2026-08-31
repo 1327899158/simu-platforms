@@ -1,0 +1,73 @@
+{
+  "pages": [
+    "pages/home/index",
+    "pages/market/index",
+    "pages/guest-home/index",
+    "pages/guest-market/index",
+    "pages/guest-profile/index",
+    "pages/login/index",
+    "pages/publish/index",
+    "pages/orders/index",
+    "pages/order-detail/index",
+    "pages/quote-form/index",
+    "pages/my-quotes/index",
+    "pages/my-reviews/index",
+    "pages/review-form/index",
+    "pages/engineer-profile/index",
+    "pages/chat-list/index",
+    "pages/chat-room/index",
+    "pages/me/index",
+    "pages/profile-edit/index",
+    "pages/engineer-qualification/index",
+    "pages/reset-password/index",
+    "pages/account-security/index",
+    "pages/invoice-request/index",
+    "pages/invoices/index",
+    "pages/dispute-form/index",
+    "pages/dispute-detail/index",
+    "pages/disputes/index"
+  ],
+  "subPackages": [
+    {
+      "root": "admin",
+      "name": "admin",
+      "pages": [
+        "pages/gate/index",
+        "pages/dashboard/index",
+        "pages/users/index",
+        "pages/user-detail/index",
+        "pages/engineers/index",
+        "pages/engineer-detail/index",
+        "pages/orders/index",
+        "pages/order-detail/index",
+        "pages/audit-logs/index",
+        "pages/data-preview/index",
+        "pages/disputes/index",
+        "pages/dispute-detail/index",
+        "pages/invoices/index"
+      ]
+    }
+  ],
+  "window": {
+    "navigationBarBackgroundColor": "#FFFFFF",
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "仿真服务平台",
+    "backgroundColor": "#DDEBD9",
+    "backgroundTextStyle": "dark"
+  },
+  "tabBar": {
+    "custom": true,
+    "color": "#767676",
+    "selectedColor": "#5BC0EB",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "white",
+    "list": [
+      { "pagePath": "pages/home/index", "text": "首页" },
+      { "pagePath": "pages/market/index", "text": "接单大厅" },
+      { "pagePath": "pages/chat-list/index", "text": "消息" },
+      { "pagePath": "pages/me/index", "text": "我的" }
+    ]
+  },
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}

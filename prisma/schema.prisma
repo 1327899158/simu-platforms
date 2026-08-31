@@ -1,0 +1,447 @@
+// ============================================================
+// 生产版数据库蓝图（MySQL + Prisma）
+// Demo 后端（server/，SQLite）的表结构与此一一对应；
+// 迁移到 NestJS + Prisma 时以本文件为准：npx prisma migrate dev
+// 设计纪律：金额一律「分」(Int)、枚举英文、软删除、审计时间戳
+// ============================================================
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum UserRole {
+  CUSTOMER
+  ENGINEER
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  BANNED
+  DELETED
+}
+
+enum VerifyStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum OrderStatus {
+  QUOTING
+  AWAITING_PAYMENT
+  IN_PROGRESS
+  DELIVERED
+  COMPLETED
+  REFUND_PENDING
+  CANCELLED
+  CLOSED
+  DISPUTING
+}
+
+enum QuoteStatus {
+  PENDING
+  SELECTED
+  REJECTED
+  WITHDRAWN
+}
+
+enum PayStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
+enum FileKind {
+  MODEL
+  DOC
+  IMAGE
+  RESULT
+}
+
+enum MsgType {
+  TEXT
+  IMAGE
+  FILE
+  SYSTEM
+}
+
+model User {
+  id        String     @id @default(cuid())
+  role      UserRole   @default(CUSTOMER)
+  openid    String?    @unique
+  nickname  String?
+  avatarUrl String?
+  phone     String?    @unique
+  status    UserStatus @default(ACTIVE)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  deletedAt DateTime?
+
+  engineer EngineerProfile?
+  orders   Order[]          @relation("CustomerOrders")
+  quotes   Quote[]
+  uploadedAttachments OrderAttachment[]
+  orderViews OrderView[]
+  initiatedDisputes Dispute[]         @relation("DisputeInitiator")
+  disputeEvidence    DisputeEvidence[]
+  customerRefundRequests RefundRequest[] @relation("CustomerRefundRequests")
+  engineerRefundRequests RefundRequest[] @relation("EngineerRefundRequests")
+  uploadedRefundRequestFiles RefundRequestFile[]
+  customerInvoiceRequests InvoiceRequest[] @relation("CustomerInvoiceRequests")
+  engineerInvoiceRequests InvoiceRequest[] @relation("EngineerInvoiceRequests")
+  uploadedInvoiceRequestFiles InvoiceRequestFile[]
+}
+
+model EngineerProfile {
+  userId       String       @id
+  realName     String?
+  specialties  Json // ["结构分析","流体分析"]
+  softwares    Json // ["ANSYS全系列"]
+  intro        String?      @db.Text
+  verifyStatus VerifyStatus @default(PENDING)
+  user         User         @relation(fields: [userId], references: [id])
+}
+
+model Order {
+  id              String      @id @default(cuid())
+  orderNo         String      @unique // SIM202607260001
+  customerId      String
+  projectName     String
+  description     String      @db.Text
+  softwareTags    Json
+  directionTags   Json
+  budgetFen       Int?
+  budgetFlexible  Boolean     @default(true)
+  deliveryDays    Int
+  specialNote     String?     @db.Text
+  status          OrderStatus @default(QUOTING)
+  selectedQuoteId String?     @unique
+  finalAmountFen  Int?
+  selectedAt      DateTime?
+  paidAt          DateTime?
+  deliveredAt     DateTime?
+  completedAt     DateTime?
+  viewCount       Int         @default(0)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  deletedAt       DateTime?
+
+  customer User           @relation("CustomerOrders", fields: [customerId], references: [id])
+  quotes   Quote[]
+  files    UploadedFile[]
+  attachments OrderAttachment[]
+  views       OrderView[]
+  disputes    Dispute[]
+  refundRequests RefundRequest[]
+  invoiceRequest InvoiceRequest?
+
+  @@index([status, createdAt])
+  @@index([customerId, status])
+}
+
+model OrderView {
+  orderId   String
+  userId    String
+  createdAt DateTime @default(now())
+
+  order Order @relation(fields: [orderId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+
+  @@id([orderId, userId])
+  @@index([userId, createdAt])
+  @@map("order_views")
+}
+
+model Quote {
+  id         String      @id @default(cuid())
+  orderId    String
+  engineerId String
+  amountFen  Int
+  days       Int
+  solution   String      @db.Text
+  status     QuoteStatus @default(PENDING)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  order    Order @relation(fields: [orderId], references: [id])
+  engineer User  @relation(fields: [engineerId], references: [id])
+
+  @@unique([orderId, engineerId])
+  @@index([engineerId, status])
+}
+
+model UploadedFile {
+  id         String   @id @default(cuid())
+  orderId    String?
+  uploaderId String
+  kind       FileKind
+  name       String
+  cosKey     String   @unique // 生产：COS 对象键；Demo：本地文件名
+  sizeBytes  BigInt
+  mime       String?
+  createdAt  DateTime @default(now())
+
+  order Order? @relation(fields: [orderId], references: [id])
+  attachment OrderAttachment?
+  disputeEvidence DisputeEvidence[]
+  refundRequestFile RefundRequestFile?
+  invoiceRequestFile InvoiceRequestFile?
+
+  @@index([orderId])
+}
+
+model OrderAttachment {
+  orderId    String
+  fileId     String   @unique
+  uploaderId String
+  purpose    String   @default("REQUIREMENT")
+  createdAt  DateTime @default(now())
+
+  order    Order        @relation(fields: [orderId], references: [id])
+  file     UploadedFile @relation(fields: [fileId], references: [id])
+  uploader User         @relation(fields: [uploaderId], references: [id])
+
+  @@id([orderId, fileId])
+  @@index([orderId, purpose, createdAt])
+  @@map("order_attachments")
+}
+
+model Conversation {
+  id         String    @id @default(cuid())
+  orderId    String
+  customerId String
+  engineerId String
+  lastMsgAt  DateTime  @default(now())
+  createdAt  DateTime  @default(now())
+  messages   Message[]
+
+  @@unique([orderId, engineerId])
+}
+
+model Message {
+  id        BigInt    @id @default(autoincrement())
+  convId    String
+  senderId  String // SYSTEM 消息为 'SYSTEM'
+  type      MsgType   @default(TEXT)
+  content   String?   @db.Text
+  fileId    String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  conv Conversation @relation(fields: [convId], references: [id])
+
+  @@index([convId, id])
+}
+
+model Payment {
+  id            String    @id @default(cuid())
+  orderId       String
+  outTradeNo    String    @unique
+  transactionId String?   @unique
+  amountFen     Int
+  status        PayStatus @default(PENDING)
+  paidAt        DateTime?
+  raw           Json?
+  createdAt     DateTime  @default(now())
+
+  @@index([orderId])
+}
+
+model RefreshToken {
+  token     String   @id
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+enum DisputeStatus {
+  OPEN
+  RESOLVED
+  CANCELLED
+}
+
+enum DisputeReasonType {
+  QUALITY
+  DELAY
+  MISSING
+  PAYMENT
+  COMMUNICATION
+  OTHER
+}
+
+enum DisputeVerdict {
+  NONE
+  CUSTOMER_FAVOR
+  ENGINEER_FAVOR
+  PARTIAL
+}
+
+enum DisputeOrderAction {
+  KEEP
+  FORCE_COMPLETE
+  REOPEN
+  CLOSE
+}
+
+enum RefundStatus {
+  NONE
+  PENDING
+  PROCESSED
+  FAILED
+}
+
+enum RefundRequestStatus {
+  PENDING
+  AGREED
+  REJECTED
+}
+
+model RefundRequest {
+  id          String              @id @default(cuid())
+  orderId     String
+  customerId  String
+  engineerId  String
+  status      RefundRequestStatus @default(PENDING)
+  orderStatusAtRequest String
+  reason      String              @db.Text
+  disputeId   String?
+  createdAt   DateTime            @default(now())
+  respondedAt DateTime?
+  updatedAt   DateTime            @updatedAt
+
+  order       Order @relation(fields: [orderId], references: [id])
+  customer    User  @relation("CustomerRefundRequests", fields: [customerId], references: [id])
+  engineer    User  @relation("EngineerRefundRequests", fields: [engineerId], references: [id])
+  files       RefundRequestFile[]
+
+  @@index([engineerId, status, createdAt])
+  @@index([orderId, status, createdAt])
+  @@map("refund_requests")
+}
+
+model RefundRequestFile {
+  refundRequestId String
+  fileId          String @unique
+  uploaderId      String
+  createdAt       DateTime @default(now())
+
+  refundRequest RefundRequest @relation(fields: [refundRequestId], references: [id])
+  file          UploadedFile  @relation(fields: [fileId], references: [id])
+  uploader      User          @relation(fields: [uploaderId], references: [id])
+
+  @@id([refundRequestId, fileId])
+  @@index([refundRequestId, createdAt])
+  @@map("refund_request_files")
+}
+
+model InvoiceRequest {
+  id             String   @id @default(cuid())
+  orderId        String   @unique
+  customerId     String
+  engineerId     String
+  invoiceTitle   String   @db.VarChar(120)
+  taxNumber      String?  @db.VarChar(50)
+  email          String?  @db.VarChar(120)
+  customerNote   String?  @db.VarChar(500)
+  engineerNote   String?  @db.VarChar(500)
+  status         String   @default("REQUESTED") @db.VarChar(24)
+  handlingMode   String?  @db.VarChar(24)
+  platformFeeFen BigInt?
+  requestedAt    DateTime
+  handledAt      DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  order    Order @relation(fields: [orderId], references: [id])
+  customer User  @relation("CustomerInvoiceRequests", fields: [customerId], references: [id])
+  engineer User  @relation("EngineerInvoiceRequests", fields: [engineerId], references: [id])
+  files    InvoiceRequestFile[]
+
+  @@index([engineerId, status, updatedAt])
+  @@index([customerId, status, updatedAt])
+  @@map("invoice_requests")
+}
+
+model InvoiceRequestFile {
+  invoiceRequestId String
+  fileId           String @unique
+  uploaderId       String
+  createdAt        DateTime @default(now())
+
+  invoiceRequest InvoiceRequest @relation(fields: [invoiceRequestId], references: [id])
+  file           UploadedFile   @relation(fields: [fileId], references: [id])
+  uploader       User           @relation(fields: [uploaderId], references: [id])
+
+  @@id([invoiceRequestId, fileId])
+  @@index([invoiceRequestId, createdAt])
+  @@map("invoice_request_files")
+}
+
+model Dispute {
+  id              String      @id @default(cuid())
+  orderId         String
+  initiatorId     String
+  reasonType      DisputeReasonType
+  description     String      @db.Text
+  status          DisputeStatus @default(OPEN)
+  orderStatusAtOpen String   // 冻结前的订单状态快照，结案/取消时用于恢复
+  evidenceDeadlineAt DateTime?
+  refundAmountFen Int?
+  refundStatus    RefundStatus @default(NONE)
+  refundTransactionId String?
+  verdict         DisputeVerdict @default(NONE)
+  orderAction     DisputeOrderAction @default(KEEP)
+  resolutionNote  String?     @db.Text
+  resolvedBy      String?
+  resolvedAt      DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  order     Order             @relation(fields: [orderId], references: [id])
+  initiator User              @relation("DisputeInitiator", fields: [initiatorId], references: [id])
+  evidence  DisputeEvidence[]
+  messages  DisputeMessage[]
+
+  @@index([orderId, status])
+  @@index([initiatorId, status])
+  @@index([status, createdAt])
+}
+
+model DisputeEvidence {
+  disputeId String
+  fileId    String
+  uploaderId String
+  createdAt DateTime @default(now())
+
+  dispute Dispute      @relation(fields: [disputeId], references: [id])
+  file    UploadedFile @relation(fields: [fileId], references: [id])
+  uploader User        @relation(fields: [uploaderId], references: [id])
+
+  @@id([disputeId, fileId])
+  @@index([disputeId, createdAt])
+  @@map("dispute_evidence")
+}
+
+model DisputeMessage {
+  id        BigInt   @id @default(autoincrement())
+  disputeId String
+  senderId  String // 管理员发送时为 admin_accounts.id，SYSTEM 为 'SYSTEM'，因此不设外键
+  type      MsgType  @default(TEXT)
+  content   String?  @db.Text
+  fileId    String?
+  createdAt DateTime @default(now())
+
+  dispute Dispute @relation(fields: [disputeId], references: [id])
+
+  @@index([disputeId, id])
+  @@map("dispute_messages")
+}

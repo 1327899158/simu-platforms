@@ -1,0 +1,67 @@
+<view class="page-container">
+
+  <!-- 顶部导航 -->
+  <view class="page-header">
+    <text class="page-title">📋 我的报价</text>
+    <text class="quote-count">共 {{currentCount}} 个</text>
+  </view>
+
+  <!-- 常驻状态筛选：全部标签一次展示，不需要滚动或展开。 -->
+  <view class="filter-wrap">
+    <view class="filter-panel">
+      <button wx:for="{{tabs}}" wx:key="key"
+        class="filter-item {{tab === item.key ? 'active' : ''}}"
+        data-key="{{item.key}}" bindtap="pickTab">
+        <text class="status-dot {{item.dotCls}}"></text>
+        <text class="filter-label">{{item.label}}</text>
+        <text class="filter-count">{{item.count}}</text>
+      </button>
+    </view>
+  </view>
+
+  <!-- 报价列表 -->
+  <view class="quote-list">
+    <view wx:for="{{items}}" wx:key="id" class="quote-card" data-oid="{{item.orderId}}"
+      bindtap="open" hover-class="quote-card-hover" hover-stay-time="80">
+      <view class="quote-header">
+        <view class="quote-title-wrap">
+          <text class="quote-title">{{item.order.projectName}}</text>
+        </view>
+        <text class="status {{item.badgeCls}}">{{item.badgeText}}</text>
+      </view>
+
+      <view class="quote-body">
+        <view class="quote-row">
+          <text class="quote-label">💰 报价金额</text>
+          <text class="quote-value price">¥{{item.amountY}}</text>
+        </view>
+        <view class="quote-row">
+          <text class="quote-label">📅 工期</text>
+          <text class="quote-value">{{item.days}} 天</text>
+        </view>
+        <view class="quote-row" wx:if="{{item.solution}}">
+          <text class="quote-label">📝 方案</text>
+          <text class="quote-value">{{item.solution}}</text>
+        </view>
+      </view>
+
+      <view class="quote-footer">
+        <text class="quote-time">📆 {{item.time}} · {{item.order.orderNo}}</text>
+        <view class="quote-actions">
+          <button class="btn-action withdraw" wx:if="{{item.status === 'PENDING'}}"
+            data-id="{{item.id}}" catchtap="withdraw">撤回</button>
+          <button class="btn-action detail" data-oid="{{item.orderId}}" catchtap="open">查看详情</button>
+        </view>
+      </view>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-state" wx:if="{{!items.length}}">
+      <text class="empty-icon">📭</text>
+      <text class="empty-text">暂无报价</text>
+      <text class="empty-desc">去仿真大厅浏览并报价吧</text>
+      <button class="btn-sm" bindtap="gotoMarket">🔍 浏览需求</button>
+    </view>
+  </view>
+
+</view>

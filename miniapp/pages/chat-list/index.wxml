@@ -1,0 +1,41 @@
+<view class="page-container">
+
+  <!-- 顶部 -->
+  <view class="page-header">
+    <text class="page-title">💬 我的消息</text>
+    <text class="unread-badge" wx:if="{{unreadTotal > 0}}">{{unreadTotal > 99 ? '99+' : unreadTotal}}</text>
+  </view>
+
+  <!-- 会话列表 -->
+  <view class="conversation-list">
+    <view class="conv-item" wx:for="{{items}}" wx:key="id" data-id="{{item.id}}"
+      bindtap="open" hover-class="conv-item-hover" hover-stay-time="80">
+      <view class="conv-avatar">
+        <image wx:if="{{item.peer.avatarUrl}}" src="{{item.peer.avatarUrl}}" class="avatar-img" mode="aspectFill" />
+        <text wx:else class="avatar-text">{{item.peer.nickname[0]}}</text>
+      </view>
+      <view class="conv-info">
+        <view class="conv-top">
+          <text class="conv-name">{{item.peer.nickname}}</text>
+          <text class="conv-time">{{item.time}}</text>
+        </view>
+        <view class="conv-order" catchtap="goOrder" data-oid="{{item.orderId}}" data-role="{{role}}">
+          📋 {{item.order.projectName}} ›
+        </view>
+        <view class="conv-bottom">
+          <text class="conv-last-msg">{{item.lastText}}</text>
+          <view class="unread-dot" wx:if="{{item.unread}}">{{item.unread > 99 ? '99+' : item.unread}}</view>
+        </view>
+      </view>
+      <text class="conv-arrow">›</text>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-state" wx:if="{{!items.length}}">
+      <text class="empty-icon">💬</text>
+      <text class="empty-text">暂无消息</text>
+      <text class="empty-desc">客户可在报价列表中先与工程师沟通，支付后也可继续联系</text>
+    </view>
+  </view>
+
+</view>

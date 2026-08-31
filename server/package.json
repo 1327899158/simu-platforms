@@ -1,0 +1,20 @@
+{
+  "name": "simu-platform-server",
+  "version": "0.2.0",
+  "private": true,
+  "description": "仿真服务平台 · 云开发版后端（云托管 MySQL + 云存储 + 云开发开放接口）",
+  "scripts": {
+    "start": "node src/main.js",
+    "dev": "node --watch src/main.js",
+    "migrate": "node src/migrate.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@cloudbase/node-sdk": "^2.0.0",
+    "bcrypt": "^5.1.1",
+    "mysql2": "^3.9.7",
+    "tencentcloud-sdk-nodejs": "^3.0.0"
+  }
+}

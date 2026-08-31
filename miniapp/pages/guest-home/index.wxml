@@ -1,0 +1,72 @@
+<view class="page-container">
+  <view class="hero-card">
+    <view class="hero-orb orb-one"></view><view class="hero-orb orb-two"></view>
+    <text class="hero-eyebrow">⚡ 仿真服务平台</text>
+    <view class="hero-title-wrap">
+      <text class="hero-title">让仿真更简单 · 让结果更可靠</text>
+      <view class="hero-title-shine-window">
+        <text class="hero-title hero-title-shine-copy">让仿真更简单 · 让结果更可靠</text>
+      </view>
+    </view>
+    <text class="hero-subtitle">精准如光 · 高效交付</text>
+    <text class="hero-desc">汇聚专业工程师，一站式解决复杂工程问题</text>
+    <view class="hero-tags"><text>快速对接</text><text>精准匹配</text><text>价格透明</text><text>数据安全</text></view>
+    <view class="hero-action" bindtap="goLogin">✨ 立即体验</view>
+  </view>
+
+  <swiper class="quick-swiper" circular autoplay interval="3500" duration="450" current="{{activeBanner}}" bindchange="onBannerChange">
+    <swiper-item wx:for="{{banners}}" wx:key="theme">
+      <view class="quick-card {{item.theme}}" bindtap="goLogin">
+        <view class="quick-light"></view>
+        <view class="quick-content"><text class="quick-title">{{item.title}}</text><text class="quick-desc">{{item.desc}}</text><text class="quick-action">{{item.action}} →</text></view>
+        <text class="quick-icon">{{item.icon}}</text>
+      </view>
+    </swiper-item>
+  </swiper>
+  <view class="carousel-dot"><text wx:for="{{banners}}" wx:key="theme" class="{{index === activeBanner ? 'on' : ''}}"></text></view>
+
+  <view class="metric-card">
+    <view class="metric-item"><text class="metric-number">{{stats.approvedEngineers}}</text><text class="metric-label">认证工程师</text></view>
+    <view class="metric-divider"></view>
+    <view class="metric-item"><text class="metric-number">{{stats.completedOrders}}</text><text class="metric-label">已完成需求</text></view>
+    <view class="metric-divider"></view>
+    <view class="metric-item"><text class="metric-number">{{stats.satisfaction}}</text><text class="metric-label">服务好评度</text></view>
+  </view>
+  <view class="live-stats"><text>当前有 <text>{{stats.openOrders}}</text> 个需求等待响应 · 已累计收到 <text>{{stats.quoteCount}}</text> 份报价</text></view>
+
+  <view class="platform-data-card">
+    <view class="data-card-header"><text class="data-card-title">平台实时数据</text><text class="data-card-hint">来自平台业务汇总</text></view>
+    <view class="platform-data-grid">
+      <view class="platform-data-item"><text class="platform-data-number">{{stats.allOrders}}</text><text class="platform-data-label">所有需求</text></view>
+      <view class="platform-data-item"><text class="platform-data-number">{{stats.activeProjects}}</text><text class="platform-data-label">执行中项目</text></view>
+      <view class="platform-data-item"><text class="platform-data-number">{{stats.openOrders}}</text><text class="platform-data-label">待报价需求</text></view>
+      <view class="platform-data-item"><text class="platform-data-number">{{stats.quoteCount}}</text><text class="platform-data-label">累计报价</text></view>
+    </view>
+    <view class="data-card-footer"><text>已服务 {{stats.customerCount}} 位客户 · 需求累计被浏览 {{stats.totalViews}} 次</text></view>
+  </view>
+
+  <view class="role-card">
+    <text class="section-title">🚀 选择你的角色</text>
+    <text class="section-desc">注册成为客户或工程师，立即体验</text>
+    <view class="role-grid">
+      <view class="role-option customer" bindtap="goLogin"><view class="role-top"><text class="role-icon">👤</text><text class="role-badge">推荐</text></view><text class="role-name">我是客户</text><text class="role-copy">发布仿真需求寻找专业工程师</text><text class="role-button">立即发布 →</text></view>
+      <view class="role-option engineer" bindtap="goLogin"><view class="role-top"><text class="role-icon">🛠️</text><text class="role-badge">热门</text></view><text class="role-name">我是工程师</text><text class="role-copy">接单赚钱展示专业技能</text><text class="role-button">立即接单 →</text></view>
+    </view>
+  </view>
+
+  <view class="benefit-section">
+    <text class="section-title">✨ 为什么选择我们</text>
+    <view class="benefit-grid">
+      <view class="benefit-item"><text class="benefit-icon blue">🚀</text><text class="benefit-title">极速发布</text><text class="benefit-desc">3分钟完成需求发布，快速对接工程师</text></view>
+      <view class="benefit-item"><text class="benefit-icon purple">🧑‍🔬</text><text class="benefit-title">专业团队</text><text class="benefit-desc">汇聚行业顶尖工程师，覆盖全学科领域</text></view>
+      <view class="benefit-item"><text class="benefit-icon green">💰</text><text class="benefit-title">价格透明</text><text class="benefit-desc">清晰的报价体系，无隐形消费</text></view>
+      <view class="benefit-item"><text class="benefit-icon gold">🔒</text><text class="benefit-title">安全可靠</text><text class="benefit-desc">企业级数据加密，保护您的知识产权</text></view>
+    </view>
+  </view>
+
+  <view class="guest-tabbar">
+    <view class="guest-tab active" data-page="home" bindtap="goTab"><text class="tab-icon">⌂</text><text>首页</text></view>
+    <view class="guest-tab" data-page="market" bindtap="goTab"><text class="tab-icon">▤</text><text>仿真大厅</text></view>
+    <view class="guest-tab" data-page="profile" bindtap="goTab"><text class="tab-icon">☺</text><text>我的</text></view>
+  </view>
+</view>

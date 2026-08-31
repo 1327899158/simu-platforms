@@ -1,0 +1,124 @@
+<view class="page-container">
+  <view class="page-header">
+    <image class="header-illust" src="/assets/hero-wrench.png" mode="aspectFit" />
+    <view>
+      <text class="page-title">🔍 浏览需求</text>
+      <text class="page-subtitle">寻找适合你的仿真项目</text>
+    </view>
+    <text class="hint-text">了解市场行情</text>
+  </view>
+
+  <view class="stats-card">
+    <view class="stat-item primary">
+      <text class="stat-number">{{stats.allCount || 0}}</text>
+      <view class="stat-info">
+        <text class="stat-label">全部需求</text>
+        <text class="stat-desc">当前可接单</text>
+      </view>
+    </view>
+    <view class="stat-divider"></view>
+    <view class="stat-item highlight">
+      <text class="stat-number">{{stats.todayCount || 0}}</text>
+      <view class="stat-info">
+        <text class="stat-label">今日新增</text>
+        <text class="stat-desc">今日新发布</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="filter-sort-container">
+    <view class="filter-section">
+      <view class="section-header">
+        <text class="section-title">📂 分类筛选</text>
+        <text class="section-hint">{{category || '全部分类'}}</text>
+      </view>
+      <view class="filter-bar">
+        <button class="filter-item {{category === '' ? 'active' : ''}}"
+          data-value="" bindtap="pickCategory">
+          <text class="filter-name">全部</text>
+          <text class="filter-check" wx:if="{{category === ''}}">✓</text>
+        </button>
+        <button class="filter-item {{category === item ? 'active' : ''}}"
+          wx:for="{{directions}}" wx:key="*this"
+          data-value="{{item}}" bindtap="pickCategory">
+          <text class="filter-name">{{item}}</text>
+          <text class="filter-check" wx:if="{{category === item}}">✓</text>
+        </button>
+      </view>
+    </view>
+
+    <view class="sort-section">
+      <view class="section-header">
+        <text class="section-title">📊 排序方式</text>
+        <text class="section-hint">按需排序</text>
+      </view>
+      <view class="sort-bar">
+        <button class="sort-item {{sort === 'latest' ? 'active' : ''}}"
+          data-value="latest" bindtap="pickSort">
+          <text class="sort-icon">🕐</text>
+          <text class="sort-name">最新发布</text>
+        </button>
+        <button class="sort-item {{sort === 'hot' ? 'active' : ''}}"
+          data-value="hot" bindtap="pickSort">
+          <text class="sort-icon">🔥</text>
+          <text class="sort-name">最热门</text>
+        </button>
+      </view>
+      <text class="sort-hint" wx:if="{{sort === 'hot'}}">按有效报价数与去重浏览量之和排序</text>
+    </view>
+  </view>
+
+  <view class="requirement-list">
+    <view class="requirement-card" wx:for="{{items}}" wx:key="id"
+      data-id="{{item.id}}" bindtap="open" hover-class="card-press" hover-stay-time="80">
+      <view class="req-header">
+        <text class="req-title">{{item.projectName || '未命名需求'}}</text>
+        <text class="req-status {{item.myQuote ? 'quoted' : 'quoting'}}">{{item.myQuote ? '已报价' : '待报价'}}</text>
+      </view>
+
+      <text class="req-description" wx:if="{{item.description}}">{{item.description}}</text>
+
+      <view class="req-tags">
+        <text class="tag" wx:for="{{item.directionTags}}" wx:for-item="tagItem" wx:key="*this">{{tagItem}}</text>
+      </view>
+
+      <view class="req-data">
+        <view class="data-item budget-item">
+          <text class="data-label">预算</text>
+          <text class="data-value">¥{{item.budgetY}}</text>
+        </view>
+        <view class="data-item">
+          <text class="data-label">工期</text>
+          <text class="data-value">{{item.deliveryDays}} 天</text>
+        </view>
+        <view class="data-item">
+          <text class="data-label">浏览</text>
+          <text class="data-value">{{item.viewCount || 0}} 次</text>
+        </view>
+      </view>
+
+      <view class="req-footer">
+        <view class="req-meta">
+          <text class="req-time">📆 {{item.time}}</text>
+          <text class="req-quote-count">💬 {{item.quoteCount || 0}} 个报价</text>
+          <text class="req-hot" wx:if="{{sort === 'hot'}}">🔥 热度 {{item.hotValue}}</text>
+        </view>
+        <text class="quoted-text" wx:if="{{item.myQuote}}">已提交报价</text>
+        <button wx:else class="quote-btn btn-para" data-id="{{item.id}}"
+          data-flexible="{{item.budgetFlexible ? 1 : 0}}" data-fen="{{item.budgetFen}}"
+          catchtap="quickQuote"><text class="btn-in">立即报价</text></button>
+      </view>
+    </view>
+
+    <view class="empty-state" wx:if="{{!loading && !items.length}}">
+      <text class="empty-icon">🔍</text>
+      <text class="empty-text">暂无可接单需求</text>
+      <text class="empty-desc">当前分类下没有需求，试试其他分类</text>
+    </view>
+
+    <view class="loading-state" wx:if="{{loading}}">
+      <view class="spinner"></view>
+      <text>正在加载需求…</text>
+    </view>
+  </view>
+</view>

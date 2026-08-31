@@ -1,0 +1,386 @@
+<wxs module="u">
+var STATUS_ICONS = { QUOTING: '📋', AWAITING_PAYMENT: '💳', IN_PROGRESS: '⚙️', DELIVERED: '📦', COMPLETED: '✅', REFUND_PENDING: '↩️', CLOSED: '❌', CANCELLED: '🚫', DISPUTING: '⚖️' };
+var STATUS_HINTS = {
+  QUOTING: '需求已发布，等待工程师报价',
+  AWAITING_PAYMENT: '已选定工程师，请尽快完成支付',
+  IN_PROGRESS: '工程师正在执行，请保持沟通',
+  DELIVERED: '成果已交付，请及时验收',
+  COMPLETED: '订单已完成，感谢使用',
+  REFUND_PENDING: '客户已申请退款，等待工程师确认',
+  CLOSED: '订单已关闭',
+  CANCELLED: '退款申请已确认，订单已取消',
+  DISPUTING: '订单存在纠纷，已暂停处理'
+};
+module.exports = {
+  statusIcon: function (s) { return STATUS_ICONS[s] || '📋'; },
+  statusHint: function (s) { return STATUS_HINTS[s] || ''; },
+  joinText: function (arr) { return arr && arr.length ? arr.join('、') : '未选择'; }
+};
+</wxs>
+<view class="page-container" wx:if="{{order}}">
+
+  <!-- 状态卡片 -->
+  <view class="status-card">
+    <text class="status-icon">{{u.statusIcon(order.status)}}</text>
+    <view class="status-info">
+      <text class="status-label">{{order.statusText}}</text>
+      <text class="status-hint">{{u.statusHint(order.status)}}</text>
+    </view>
+  </view>
+
+  <!-- 纠纷横幅 -->
+  <view class="dispute-banner" wx:if="{{dispute}}">
+    <view class="dispute-banner-left">
+      <text class="dispute-banner-icon">⚖️</text>
+      <view class="dispute-banner-copy">
+        <text class="dispute-banner-title">{{dispute.status === 'OPEN' ? '订单存在进行中的纠纷' : '该订单已有纠纷记录'}}</text>
+        <text class="dispute-banner-desc">{{dispute.reasonText}} · {{dispute.statusText}}</text>
+      </view>
+    </view>
+    <text class="dispute-banner-link" bindtap="goDisputeDetail">查看 ›</text>
+  </view>
+
+  <!-- 基本信息 -->
+  <view class="info-card">
+    <text class="card-title">📄 基本信息</text>
+    <view class="info-row">
+      <text class="info-label">项目名称</text>
+      <text class="info-value">{{order.projectName}}</text>
+    </view>
+    <view class="info-row">
+      <text class="info-label">预算</text>
+      <text class="info-value budget">¥{{order.budgetY}}{{order.budgetFlexible ? '（可协商）' : ''}}</text>
+    </view>
+    <view class="info-row" wx:if="{{order.finalAmountFen}}">
+      <text class="info-label">成交价</text>
+      <text class="info-value budget">¥{{order.finalY}}</text>
+    </view>
+    <view class="info-row">
+      <text class="info-label">工期</text>
+      <text class="info-value">{{order.deliveryDays}} 天</text>
+    </view>
+    <view class="info-row">
+      <text class="info-label">仿真方向</text>
+      <text class="info-value">{{u.joinText(order.directionTags)}}</text>
+    </view>
+    <view class="info-row">
+      <text class="info-label">使用软件</text>
+      <text class="info-value">{{u.joinText(order.softwareTags)}}</text>
+    </view>
+    <view class="info-row">
+      <text class="info-label">订单编号</text>
+      <text class="info-value">{{order.orderNo}}</text>
+    </view>
+    <view class="info-row">
+      <text class="info-label">创建时间</text>
+      <text class="info-value">{{order.time}}</text>
+    </view>
+    <view class="info-row">
+      <text class="info-label">浏览量</text>
+      <text class="info-value">{{order.viewCount || 0}} 次</text>
+    </view>
+  </view>
+
+  <!-- 项目描述 -->
+  <view class="info-card" wx:if="{{order.description}}">
+    <text class="card-title">📝 项目描述</text>
+    <text class="desc-text">{{order.description}}</text>
+  </view>
+
+  <!-- 特殊要求 -->
+  <view class="info-card" wx:if="{{order.specialNote}}">
+    <text class="card-title">🎯 特殊要求</text>
+    <text class="desc-text">{{order.specialNote}}</text>
+  </view>
+
+  <!-- 附件列表 -->
+  <view class="info-card" wx:if="{{files.length}}">
+    <text class="card-title">📎 附件（{{files.length}}）</text>
+    <view class="attachment-list">
+      <view class="attachment-item" wx:for="{{files}}" wx:key="fileId" data-id="{{item.fileId}}" bindtap="download">
+        <text class="attachment-kind {{item.purpose === 'RESULT' || item.kind === 'RESULT' ? 'result' : ''}}">{{item.purpose === 'RESULT' || item.kind === 'RESULT' ? '成果' : '需求'}}</text>
+        <text class="attachment-name">{{item.name}}</text>
+        <text class="attachment-size">{{item.sizeText}}</text>
+        <text class="attachment-dl">{{downloadingFileId === item.fileId ? '下载中…' : '下载'}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- ===== 客户视角 ===== -->
+  <block wx:if="{{mode === 'customer'}}">
+
+    <!-- 工程师报价 -->
+    <view class="info-card" wx:if="{{order.status === 'QUOTING' || order.status === 'AWAITING_PAYMENT'}}">
+      <text class="card-title">💬 工程师报价（{{quotes.length}}）</text>
+      <view class="no-data-text" wx:if="{{!quotes.length}}">暂无工程师报价，请耐心等待</view>
+      <view class="quote-item {{item.status === 'SELECTED' ? 'selected' : ''}}" wx:for="{{quotes}}" wx:key="id">
+        <view class="quote-header">
+          <view class="quote-engineer">
+            <image wx:if="{{item.engineer.avatarUrl}}" src="{{item.engineer.avatarUrl}}" class="quote-avatar" mode="aspectFill" />
+            <view wx:else class="quote-avatar quote-avatar-fallback">{{item.engineer.nickname[0]}}</view>
+            <view class="quote-engineer-info">
+              <text class="quote-engineer-name">👨‍💼 {{item.engineer.nickname}}</text>
+              <text class="quote-sub">已完成 {{item.engineer.completedCount}} 单 · {{item.engineer.reviewCount ? ('★ ' + item.engineer.averageScore + '（' + item.engineer.reviewCount + '条）') : '暂无评价'}}</text>
+            </view>
+          </view>
+          <text class="status st-blue" wx:if="{{item.status === 'SELECTED'}}">已选中</text>
+        </view>
+        <view class="quote-body">
+          <text class="quote-price">💰 ¥{{item.amountY}}</text>
+          <text class="quote-days">📅 承诺 {{item.days}} 天</text>
+        </view>
+        <text class="quote-desc" wx:if="{{item.solution}}">{{item.solution}}</text>
+        <view class="quote-profile-link" bindtap="goEngineerProfile" data-id="{{item.engineer.id}}">查看工程师资料与评价 ›</view>
+        <view class="quote-actions" wx:if="{{order.status === 'QUOTING' && item.status === 'PENDING'}}">
+          <view class="btn-quote-chat" bindtap="goQuoteChat" data-id="{{item.id}}">
+            {{chatOpeningQuoteId === item.id ? '进入中…' : '💬 先聊一聊'}}
+          </view>
+          <view class="btn-select"
+            bindtap="select" data-id="{{item.id}}" data-nick="{{item.engineer.nickname}}"
+            data-amounty="{{item.amountY}}" data-days="{{item.days}}">选择该工程师</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 支付 -->
+    <view class="pay-card" wx:if="{{order.status === 'AWAITING_PAYMENT'}}">
+      <view class="pay-row">
+        <text class="pay-label">应付金额</text>
+        <text class="pay-amount">¥{{order.finalY}}</text>
+      </view>
+      <button class="btn-pay {{paying ? 'disabled' : ''}}" bindtap="pay">
+        {{paying ? '处理中…' : '💳 立即支付'}}
+      </button>
+      <view class="pay-tip">超时未支付将自动释放选标；真实通道将调起微信支付收银台</view>
+    </view>
+
+    <!-- 验收 -->
+    <view class="action-card" wx:if="{{order.status === 'DELIVERED'}}">
+      <button class="btn-primary-block" bindtap="confirmDone">✅ 确认验收，完成订单</button>
+      <button class="btn-danger-block" bindtap="rejectDelivery">驳回本次交付</button>
+    </view>
+
+    <!-- 已完成订单：评价仅可首次提交一次，之后可修改一次 -->
+    <view class="review-action-card" wx:if="{{order.status === 'COMPLETED'}}">
+      <view class="review-action-copy">
+        <text class="review-action-title">{{order.review ? '已评价工程师' : '评价本次服务'}}</text>
+        <text class="review-action-desc" wx:if="{{order.review}}">质量 {{order.review.qualityScore}} · 态度 {{order.review.attitudeScore}} · 速度 {{order.review.speedScore}} · 专业 {{order.review.professionalScore}} · 沟通 {{order.review.communicationScore}} 星</text>
+        <text class="review-action-desc" wx:else>从质量、态度、速度、专业能力、沟通五个维度为工程师评分</text>
+      </view>
+      <button class="review-action-btn" bindtap="goReview" disabled="{{order.review && order.review.revisionCount >= 1}}">{{!order.review ? '去评价' : (order.review.revisionCount >= 1 ? '已完成' : '修改评价')}}</button>
+    </view>
+
+    <!-- 退款申请进行中 -->
+    <view class="refund-request-card" wx:if="{{refundRequest && refundRequest.status === 'PENDING'}}">
+      <text class="refund-request-title">↩️ 退款申请已提交</text>
+      <text class="refund-request-desc">等待工程师确认；若对方拒绝，你可自行决定是否申请客服介入。</text>
+      <view class="refund-reason-box">
+        <text class="refund-detail-label">退款理由</text>
+        <text class="refund-detail-value">{{refundRequest.reason}}</text>
+      </view>
+      <view class="refund-materials" wx:if="{{refundRequest.files.length}}">
+        <text class="refund-detail-label">已提交材料（{{refundRequest.files.length}}）</text>
+        <view class="refund-file-row" wx:for="{{refundRequest.files}}" wx:key="fileId"
+          bindtap="download" data-id="{{item.fileId}}">
+          <view class="refund-file-copy">
+            <text class="refund-file-name">📎 {{item.name}}</text>
+            <text class="refund-file-size">{{item.sizeText}}</text>
+          </view>
+          <text class="refund-file-action">{{downloadingFileId === item.fileId ? '打开中…' : '查看'}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="invoice-action-card" wx:if="{{order.status === 'COMPLETED'}}">
+      <view class="review-action-copy">
+        <text class="review-action-title">{{invoiceRequest ? '发票申请' : '需要发票？'}}</text>
+        <text class="review-action-desc" wx:if="{{invoiceRequest}}">{{invoiceRequest.statusText}} · {{invoiceRequest.invoiceTitle}}</text>
+        <text class="review-action-desc" wx:else>向工程师提交发票抬头和接收信息</text>
+      </view>
+      <button class="invoice-action-btn" bindtap="goInvoiceRequest">{{invoiceRequest ? '查看详情' : '申请发票'}}</button>
+    </view>
+    <view class="refund-request-card rejected" wx:if="{{refundRequest && refundRequest.status === 'REJECTED' && !dispute}}">
+      <text class="refund-request-title">退款申请已被拒绝</text>
+      <text class="refund-request-desc">工程师拒绝了你的退款请求。你可以继续沟通，或申请客服介入处理。</text>
+      <view class="refund-reason-box">
+        <text class="refund-detail-label">退款理由</text>
+        <text class="refund-detail-value">{{refundRequest.reason}}</text>
+      </view>
+      <view class="refund-materials" wx:if="{{refundRequest.files.length}}">
+        <text class="refund-detail-label">已提交材料（{{refundRequest.files.length}}）</text>
+        <view class="refund-file-row" wx:for="{{refundRequest.files}}" wx:key="fileId"
+          bindtap="download" data-id="{{item.fileId}}">
+          <view class="refund-file-copy">
+            <text class="refund-file-name">📎 {{item.name}}</text>
+            <text class="refund-file-size">{{item.sizeText}}</text>
+          </view>
+          <text class="refund-file-action">{{downloadingFileId === item.fileId ? '打开中…' : '查看'}}</text>
+        </view>
+      </view>
+      <button class="btn-refund-escalate" bindtap="escalateRefund">申请客服介入</button>
+    </view>
+
+    <!-- 操作区 -->
+    <view class="action-section">
+      <button class="btn-chat"
+        wx:if="{{order.status === 'IN_PROGRESS' || order.status === 'DELIVERED' || order.status === 'COMPLETED'}}"
+        bindtap="goChat">💬 与工程师沟通</button>
+      <button class="btn-delete-order" wx:if="{{order.status === 'QUOTING'}}" bindtap="del">🗑️ 删除订单</button>
+      <!-- 退款入口：工程师拒绝后由客户自主决定是否申请客服介入。 -->
+      <button class="btn-refund"
+        wx:if="{{(order.status === 'IN_PROGRESS' || order.status === 'DELIVERED') && !dispute && !refundRequest && !refundFormOpen}}"
+        bindtap="requestRefund">↩️ 发起退款</button>
+    </view>
+
+    <!-- 退款申请表：理由必填，附件选填 -->
+    <view class="refund-form-card" wx:if="{{refundFormOpen}}">
+      <view class="refund-form-head">
+        <view class="refund-form-copy">
+          <text class="refund-form-title">申请退款</text>
+          <text class="refund-form-tip">请说明退款原因，工程师将在订单页确认申请</text>
+        </view>
+        <text class="refund-form-required">理由必填</text>
+      </view>
+      <view class="refund-field-title">退款理由 <text class="required-mark">*</text></view>
+      <textarea class="refund-reason-input" value="{{refundReason}}" bindinput="onRefundReason"
+        maxlength="1000" placeholder="请清楚描述申请退款的原因" placeholder-class="refund-placeholder" />
+      <view class="refund-word-count">{{refundReason.length}} / 1000</view>
+
+      <view class="refund-upload-head">
+        <view>
+          <text class="refund-field-title">补充材料</text>
+          <text class="refund-upload-optional">（选填，最多 5 个）</text>
+        </view>
+        <button class="refund-upload-btn" bindtap="addRefundFiles"
+          disabled="{{refundUploading || refundSubmitting || refundUploads.length >= 5}}">
+          {{refundUploading ? '上传中…' : '+ 上传文件'}}
+        </button>
+      </view>
+      <view class="refund-upload-list" wx:if="{{refundUploads.length}}">
+        <view class="refund-upload-row" wx:for="{{refundUploads}}" wx:key="fileId">
+          <view class="refund-file-copy">
+            <text class="refund-file-name">📎 {{item.name}}</text>
+            <text class="refund-file-size">{{item.sizeText}}</text>
+          </view>
+          <text class="refund-remove-file" bindtap="removeRefundFile" data-index="{{index}}">删除</text>
+        </view>
+      </view>
+      <view class="refund-form-notice">提交后订单履约将暂停，等待工程师同意或拒绝。</view>
+      <view class="refund-form-actions">
+        <button class="refund-form-cancel" bindtap="cancelRefundForm"
+          disabled="{{refundUploading || refundSubmitting}}">取消</button>
+        <button class="refund-form-submit" bindtap="submitRefundRequest"
+          disabled="{{refundUploading || refundSubmitting || !refundReason}}">
+          {{refundSubmitting ? '提交中…' : '提交退款申请'}}
+        </button>
+      </view>
+    </view>
+  </block>
+
+  <!-- ===== 工程师视角 ===== -->
+  <block wx:if="{{mode === 'market'}}">
+    <view class="info-card" wx:if="{{order.myQuote}}">
+      <view class="card-title-row">
+        <text class="card-title">💰 我的报价</text>
+        <text class="status st-blue">{{order.myQuote.status === 'PENDING' ? '待客户确认' : order.myQuote.status === 'SELECTED' ? '已选中' : order.myQuote.status}}</text>
+      </view>
+      <view class="info-row">
+        <text class="info-label">报价金额</text>
+        <text class="info-value budget">¥{{order.myQuote.amountFen / 100}}</text>
+      </view>
+      <view class="info-row">
+        <text class="info-label">承诺工期</text>
+        <text class="info-value">{{order.myQuote.days}} 天</text>
+      </view>
+    </view>
+
+    <!-- 同行报价：自己的报价仍在上方单独展示 -->
+    <view class="info-card peer-quotes-card" wx:if="{{order.status === 'QUOTING' || peerQuotes.length}}">
+      <view class="card-title-row">
+        <text class="card-title">📊 其他工程师报价（{{peerQuotes.length}}）</text>
+        <text class="peer-quotes-tip">报价透明</text>
+      </view>
+      <view class="no-data-text" wx:if="{{!peerQuotes.length}}">暂时还没有其他工程师报价</view>
+      <view class="quote-item {{item.status === 'SELECTED' ? 'selected' : ''}}" wx:for="{{peerQuotes}}" wx:key="id">
+        <view class="quote-header">
+          <view class="quote-engineer">
+            <image wx:if="{{item.engineer.avatarUrl}}" src="{{item.engineer.avatarUrl}}" class="quote-avatar" mode="aspectFill" />
+            <view wx:else class="quote-avatar quote-avatar-fallback">{{item.engineer.nickname ? item.engineer.nickname[0] : '工'}}</view>
+            <view class="quote-engineer-info">
+              <text class="quote-engineer-name">👨‍💼 {{item.engineer.nickname || '工程师'}}</text>
+              <text class="quote-sub">已完成 {{item.engineer.completedCount}} 单 · {{item.engineer.reviewCount ? ('★ ' + item.engineer.averageScore + '（' + item.engineer.reviewCount + '条）') : '暂无评价'}}</text>
+            </view>
+          </view>
+          <text class="status st-blue" wx:if="{{item.status === 'SELECTED'}}">已选中</text>
+        </view>
+        <view class="quote-body">
+          <text class="quote-price">💰 ¥{{item.amountY}}</text>
+          <text class="quote-days">📅 承诺 {{item.days}} 天</text>
+        </view>
+        <text class="quote-desc" wx:if="{{item.solution}}">{{item.solution}}</text>
+        <view class="quote-profile-link" bindtap="goEngineerProfile" data-id="{{item.engineer.id}}">查看工程师资料与评价 ›</view>
+      </view>
+    </view>
+
+    <view class="invoice-engineer-card" wx:if="{{order.iAmSelected && order.status === 'COMPLETED'}}">
+      <text class="review-action-title">🧾 发票处理</text>
+      <text class="review-action-desc">{{invoiceRequest ? ('客户申请：' + invoiceRequest.statusText) : '客户暂未申请发票'}}</text>
+      <button class="invoice-action-btn" wx:if="{{invoiceRequest}}" bindtap="goInvoiceRequest">前往处理</button>
+    </view>
+
+    <!-- 退款确认：待处理期间工程师只能同意或拒绝 -->
+    <view class="refund-decision-card" wx:if="{{refundRequest && refundRequest.status === 'PENDING'}}">
+      <view class="refund-decision-head">
+        <text class="refund-decision-icon">↩️</text>
+        <view class="refund-decision-copy">
+          <text class="refund-decision-title">客户申请退款</text>
+          <text class="refund-decision-desc">订单履约已暂停，请确认是否同意退款。拒绝后将恢复原订单状态，客户可自行申请客服介入。</text>
+        </view>
+      </view>
+      <view class="refund-reason-box engineer-refund-reason">
+        <text class="refund-detail-label">客户填写的退款理由</text>
+        <text class="refund-detail-value">{{refundRequest.reason}}</text>
+      </view>
+      <view class="refund-materials" wx:if="{{refundRequest.files.length}}">
+        <text class="refund-detail-label">退款材料（{{refundRequest.files.length}}）</text>
+        <view class="refund-file-row" wx:for="{{refundRequest.files}}" wx:key="fileId"
+          bindtap="download" data-id="{{item.fileId}}">
+          <view class="refund-file-copy">
+            <text class="refund-file-name">📎 {{item.name}}</text>
+            <text class="refund-file-size">{{item.sizeText}}</text>
+          </view>
+          <text class="refund-file-action">{{downloadingFileId === item.fileId ? '打开中…' : '查看'}}</text>
+        </view>
+      </view>
+      <view class="refund-decision-actions">
+        <button class="refund-reject-btn" bindtap="respondRefundRequest" data-action="REJECT"
+          disabled="{{respondingRefund}}">拒绝退款</button>
+        <button class="refund-accept-btn" bindtap="respondRefundRequest" data-action="ACCEPT"
+          disabled="{{respondingRefund}}">{{respondingRefund ? '处理中…' : '同意退款'}}</button>
+      </view>
+    </view>
+
+    <view class="action-section" wx:if="{{!refundRequest || refundRequest.status !== 'PENDING'}}">
+      <button class="btn-primary-block" wx:if="{{order.status === 'QUOTING'}}" bindtap="goQuote">
+        {{order.myQuote ? '✏️ 修改报价' : '💰 我要报价'}}
+      </button>
+      <button class="btn-deliver {{delivering ? 'disabled' : ''}}"
+        wx:if="{{order.iAmSelected && order.status === 'IN_PROGRESS'}}" bindtap="deliver">
+        {{delivering ? '上传中…' : '📦 上传成果并交付'}}
+      </button>
+      <button class="btn-chat"
+        wx:if="{{order.iAmSelected && (order.status === 'IN_PROGRESS' || order.status === 'DELIVERED' || order.status === 'COMPLETED')}}"
+        bindtap="goChat">💬 与客户沟通</button>
+      <!-- 纠纷入口：被选中且已进入履约阶段，无进行中纠纷时发起 -->
+      <button class="btn-dispute"
+        wx:if="{{order.iAmSelected && order.status !== 'QUOTING' && order.status !== 'REFUND_PENDING' && order.status !== 'CLOSED' && order.status !== 'CANCELLED' && !dispute}}"
+        bindtap="goDisputeForm">⚖️ 发起纠纷</button>
+    </view>
+
+    <view class="info-card" wx:if="{{order.customer}}">
+      <text class="card-title">👤 客户</text>
+      <text class="desc-text">{{order.customer.nickname}}（支付后可见联系方式）</text>
+    </view>
+  </block>
+
+</view>

@@ -1,0 +1,30 @@
+# 环境变量
+.env
+.env.local
+.env.production
+.env.development
+
+# 依赖包（云托管构建时会自动 npm install）
+node_modules/
+*/node_modules/
+
+# 临时和构建文件
+*.log
+npm-debug.log*
+.DS_Store
+dist/
+build/
+temp/
+tmp/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+Thumbs.db
+EOF
+
+# 本地重复克隆，不作为子模块提交
+/simu-platform/

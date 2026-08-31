@@ -1,0 +1,47 @@
+<view class="page-container">
+
+  <view class="page-header">
+    <text class="page-title">⚖️ 我的纠纷</text>
+  </view>
+
+  <!-- 常驻状态筛选 -->
+  <view class="filter-wrap">
+    <view class="filter-panel">
+      <button wx:for="{{tabs}}" wx:key="key"
+        class="filter-item {{tab === item.key ? 'active' : ''}}"
+        data-key="{{item.key}}" bindtap="pickTab">
+        <text class="status-dot {{item.dotCls}}"></text>
+        <text class="filter-label">{{item.label}}</text>
+      </button>
+    </view>
+  </view>
+
+  <!-- 列表 -->
+  <view class="list">
+    <view wx:for="{{items}}" wx:key="id" class="dispute-card" data-id="{{item.id}}" bindtap="open" hover-class="card-hover">
+      <view class="card-top">
+        <text class="reason-icon">{{item.reasonType === 'QUALITY' ? '📉' : item.reasonType === 'DELAY' ? '⏰' : item.reasonType === 'MISSING' ? '📭' : item.reasonType === 'PAYMENT' ? '💳' : item.reasonType === 'COMMUNICATION' ? '💬' : '📌'}}</text>
+        <view class="card-grow">
+          <view class="title-row">
+            <text class="card-title">{{item.reasonText}}</text>
+            <text class="role-tag {{item.myRole === 'INITIATOR' ? 'mine' : 'other'}}">{{item.myRole === 'INITIATOR' ? '我提出' : '对方提出'}}</text>
+          </view>
+          <text class="card-sub">{{item.orderName}} · {{item.orderNo}}</text>
+        </view>
+        <text class="status {{item.badgeCls}}">{{item.statusText}}</text>
+      </view>
+      <view class="card-desc" wx:if="{{item.description}}">{{item.description}}</view>
+      <view class="card-footer">
+        <text class="time">📆 {{item.time}}</text>
+        <text class="detail-link">查看详情 ›</text>
+      </view>
+    </view>
+
+    <view class="empty" wx:if="{{!loading && !items.length}}">
+      <text class="empty-icon">⚖️</text>
+      <text class="empty-text">暂无纠纷记录</text>
+    </view>
+    <view class="loading" wx:if="{{loading}}">正在加载…</view>
+  </view>
+
+</view>

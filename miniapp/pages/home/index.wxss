@@ -1,0 +1,7 @@
+/* home · 设计稿 1:1 还原 */
+.page-container {
+  min-height: 100vh;
+  padding: 20rpx 20rpx calc(140rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+}
+.hero-illust { width: 300rpx; height: 300rpx; }
