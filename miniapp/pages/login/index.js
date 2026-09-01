@@ -11,12 +11,13 @@ const { digits } = require('../../utils/input');
 
 Page({
   data: {
-    // 默认进入手机号登录；账号密码登录和验证码登录共用同一个入口。
-    tab: 'phone',
+    // 默认进入一键登录首页；手机号、账号密码作为次级入口。
+    tab: 'wechat',
     phoneStep: 'phone', // phone | code | account
     role: '',
     roleText: '',
     loading: false,
+    agreementAccepted: false,
 
     // 账号密码
     isRegister: false,
@@ -55,11 +56,43 @@ Page({
     });
   },
 
+  // ========== 用户协议与隐私政策 ==========
+  confirmAgreement() {
+    if (this.data.agreementAccepted) return Promise.resolve(true);
+    if (this._agreementDialogOpen) return Promise.resolve(false);
+
+    this._agreementDialogOpen = true;
+    return new Promise((resolve) => {
+      wx.showModal({
+        title: '用户协议及隐私政策',
+        content: '请阅读并同意《平台服务协议》和《隐私政策》。平台将为登录、身份认证、交易履约和账号安全处理必要信息。',
+        confirmText: '同意并继续',
+        cancelText: '不同意',
+        confirmColor: '#2FA8DE',
+        success: (result) => {
+          if (result.confirm) {
+            this.setData({ agreementAccepted: true });
+            resolve(true);
+          } else {
+            resolve(false);
+          }
+        },
+        fail: () => resolve(false),
+        complete: () => { this._agreementDialogOpen = false; },
+      });
+    });
+  },
+
+  showAgreementDialog() {
+    return this.confirmAgreement();
+  },
+
   // ========== 微信登录 ==========
   async wxLogin() {
     if (!this.data.role) {
       return wx.showToast({ title: '请先选择身份', icon: 'none' });
     }
+    if (!(await this.confirmAgreement())) return;
     if (this.data.loading) return;
     this.setData({ loading: true });
     try {
@@ -147,6 +180,7 @@ Page({
   async accountLogin() {
     if (!this.data.username) return wx.showToast({ title: '请输入用户名', icon: 'none' });
     if (!this.data.password) return wx.showToast({ title: '请输入密码', icon: 'none' });
+    if (!(await this.confirmAgreement())) return;
     if (this.data.loading) return;
     this.setData({ loading: true });
     try {
@@ -177,6 +211,7 @@ Page({
     if (this.data.password !== this.data.passwordConfirm) return wx.showToast({ title: '两次密码不一致', icon: 'none' });
     if (!this.data.smsCode) return wx.showToast({ title: '请输入验证码', icon: 'none' });
     if (!/^\d{6}$/.test(this.data.smsCode)) return wx.showToast({ title: '验证码格式不对', icon: 'none' });
+    if (!(await this.confirmAgreement())) return;
     if (this.data.loading) return;
     this.setData({ loading: true });
     try {
@@ -213,6 +248,7 @@ Page({
       wx.showToast({ title: '手机号格式不对', icon: 'none' });
       return false;
     }
+    if (!(await this.confirmAgreement())) return false;
     if (this.data.smsCountdown > 0) return false;
     const smsType = typeof type === 'string'
       ? type
@@ -263,6 +299,7 @@ Page({
   async phoneLogin() {
     if (!this.data.phone) return wx.showToast({ title: '请输入手机号', icon: 'none' });
     if (!this.data.smsCode) return wx.showToast({ title: '请输入验证码', icon: 'none' });
+    if (!(await this.confirmAgreement())) return;
     if (this.data.loading) return;
     this.setData({ loading: true });
     try {

@@ -3,7 +3,7 @@
  * 使用 wx.cloud.callContainer 替代 wx.request + JWT Bearer token。
  */
 
-const ENV_ID = 'cloud1-d8gh7xyw56d7c185f'; // ← 改为你的云开发环境 ID
+const ENV_ID = 'cloud1-d8gpj5gwue506a774'; // 云开发环境 ID
 const SERVICE_NAME = 'simu-api'; // 云托管服务名
 
 module.exports = {

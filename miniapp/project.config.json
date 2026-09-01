@@ -1,7 +1,7 @@
 {
   "description": "仿真服务平台小程序（云开发版）",
   "projectname": "simu-platform",
-  "appid": "wx14085d227567dd7d",
+  "appid": "wxbea2bc4ff6ae73f7",
   "compileType": "miniprogram",
   "libVersion": "3.17.0",
   "cloudfunctionRoot": "cloudfunctions/",
