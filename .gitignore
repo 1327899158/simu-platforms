@@ -17,10 +17,17 @@ build/
 temp/
 tmp/
 
+# 运行时上传数据（可能包含用户文件或敏感标识）
+/server/uploads/
+
 # IDE
 .vscode/
 .idea/
 *.swp
+
+# 微信开发者工具个人配置（本地 AppID 等）
+/project.private.config.json
+/miniapp/project.private.config.json
 
 # OS
 Thumbs.db

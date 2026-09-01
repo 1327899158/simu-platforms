@@ -66,7 +66,7 @@ Page({
       wx.showModal({
         title: '用户协议及隐私政策',
         content: '请阅读并同意《平台服务协议》和《隐私政策》。平台将为登录、身份认证、交易履约和账号安全处理必要信息。',
-        confirmText: '同意并继续',
+        confirmText: '同意',
         cancelText: '不同意',
         confirmColor: '#2FA8DE',
         success: (result) => {
@@ -77,7 +77,11 @@ Page({
             resolve(false);
           }
         },
-        fail: () => resolve(false),
+        fail: (error) => {
+          console.error('[login] agreement modal failed', error);
+          wx.showToast({ title: '协议弹窗打开失败，请重试', icon: 'none' });
+          resolve(false);
+        },
         complete: () => { this._agreementDialogOpen = false; },
       });
     });
