@@ -14,6 +14,12 @@ const { init: dbInit } = require('./db');
 const { startSweeper } = require('./services/pay-svc');
 
 const router = createRouter();
+
+// 微信云托管 SDK 在 callContainer 发送业务请求前会探测服务连通性。
+// 该路径必须返回 2xx；若返回 404，客户端会重试探测并中止后续登录请求。
+router.get('/__tcb_probe__', async (_req, res) =>
+  sendJson(res, 200, { code: 0, data: { ok: true } }));
+
 require('./routes/auth').register(router);
 require('./routes/auth-multi').register(router);  // 新增：多种登录方式
 require('./routes/dicts').register(router);
