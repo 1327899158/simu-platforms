@@ -233,8 +233,8 @@ function register(router) {
     const identityFiles = await query(
       `SELECT f.id, f.name, f.kind, f.mime, f.sizeBytes, ivf.purpose, ivf.createdAt
          FROM identity_verification_files ivf JOIN uploaded_files f ON f.id=ivf.fileId
-        WHERE ivf.userId=?
-        ORDER BY FIELD(ivf.purpose,'ID_FRONT','ID_BACK','SUPPORTING'), ivf.createdAt DESC`,
+        WHERE ivf.userId=? AND ivf.purpose='SUPPORTING'
+        ORDER BY ivf.createdAt DESC`,
       [target.id]);
     const reviews = await query(
       `SELECT r.*, o.orderNo, o.projectName, e.nickname AS engineerNickname
@@ -326,7 +326,7 @@ function register(router) {
       `SELECT f.id, f.name, f.kind, f.mime, f.sizeBytes, ivf.purpose, ivf.createdAt
        FROM identity_verification_files ivf
        JOIN uploaded_files f ON f.id = ivf.fileId
-       WHERE ivf.userId = ? ORDER BY FIELD(ivf.purpose,'ID_FRONT','ID_BACK','SUPPORTING'), ivf.createdAt DESC`, [params.id]
+       WHERE ivf.userId = ? AND ivf.purpose='SUPPORTING' ORDER BY ivf.createdAt DESC`, [params.id]
     );
     const [reviewSummary, receivedReviews] = await Promise.all([
       queryOne(`SELECT COUNT(*) AS reviewCount,
@@ -370,7 +370,7 @@ function register(router) {
       `SELECT f.id, f.fileID, f.name, f.mime, f.sizeBytes
        FROM identity_verification_files ivf
        JOIN uploaded_files f ON f.id = ivf.fileId
-       WHERE f.id = ?`, [params.id]
+       WHERE f.id = ? AND ivf.purpose='SUPPORTING'`, [params.id]
     );
     if (!file) throw err.notFound('身份认证材料不存在');
     return ok(res, { ...file, sizeBytes: Number(file.sizeBytes || 0) });

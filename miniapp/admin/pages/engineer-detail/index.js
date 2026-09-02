@@ -32,7 +32,7 @@ Page({
         reviewedText: timeShort(engineer.reviewedAt),
         files: (engineer.files || []).map((file) => ({
           ...file, sizeText: sizeText(file.sizeBytes),
-          purposeText: file.purpose === 'ID_FRONT' ? '身份证人像面' : file.purpose === 'ID_BACK' ? '身份证国徽面' : '补充材料',
+          purposeText: '补充认证资料',
         })),
         receivedReviews: (engineer.receivedReviews || []).map((item) => ({ ...item, updatedText: timeShort(item.updatedAt) })),
       } });

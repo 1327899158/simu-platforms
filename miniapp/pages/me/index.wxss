@@ -3,7 +3,8 @@
 .page-container {
   min-height: 100vh;
   background: var(--bg-base);
-  padding: 24rpx;
+  padding: 24rpx 24rpx calc(148rpx + constant(safe-area-inset-bottom));
+  padding: 24rpx 24rpx calc(148rpx + env(safe-area-inset-bottom));
   box-sizing: border-box;
 }
 
@@ -227,3 +228,7 @@
 .verify-hint { display: block; margin: -8rpx 8rpx 20rpx; font-size: 22rpx; color: #7C877B; }
 .self-verify { margin: 0 0 20rpx; background: #FFFFFF; color: #2FA8DE; border-radius: 999rpx; font-size: 26rpx; }
 .logout-wrap { margin-top: 30rpx; }
+.logout-wrap .btn-danger-outline {
+  width: 100%;
+  box-sizing: border-box;
+}

@@ -29,7 +29,7 @@ Page({
           statusText: identity.verifyStatus === 'APPROVED' ? '已通过' : identity.verifyStatus === 'REJECTED' ? '未通过' : '待审核',
           files: (identity.files || []).map((file) => ({
             ...file,
-            purposeText: file.purpose === 'ID_FRONT' ? '身份证人像面' : file.purpose === 'ID_BACK' ? '身份证国徽面' : '补充材料',
+            purposeText: '补充认证资料',
           })),
         },
       } });

@@ -7,7 +7,6 @@ const {
   encryptIdCard, decryptIdCard, idCardHash, validateIdentityFields, ensureIdentityRecord,
 } = require('../services/identity-svc');
 
-const PURPOSES = ['ID_FRONT', 'ID_BACK', 'SUPPORTING'];
 const MAX_SUPPORTING = 10;
 
 function fileView(row) {
@@ -35,15 +34,6 @@ async function ownedFiles(conn, userId, ids) {
   return rows;
 }
 
-function isImageFile(file) {
-  const mime = String(file?.mime || '').toLowerCase();
-  const name = String(file?.name || '').toLowerCase();
-  // 身份证照片必须是图片：前端选择器限制为 image，服务端再次检查已提交的文件元数据。
-  // 云存储文件由小程序直传，后端不会为此下载私密证件文件作内容嗅探。
-  return file?.kind === 'IMAGE'
-    && (mime.startsWith('image/') || /\.(jpg|jpeg|png|gif|webp|bmp|heic|heif)$/i.test(name));
-}
-
 function register(router) {
   router.get('/api/identity', async (req, res) => {
     const user = await requireUser(req);
@@ -52,12 +42,12 @@ function register(router) {
       `SELECT f.*, ivf.purpose, ivf.createdAt AS linkedAt
          FROM identity_verification_files ivf
          JOIN uploaded_files f ON f.id=ivf.fileId
-        WHERE ivf.userId=?
-        ORDER BY FIELD(ivf.purpose, 'ID_FRONT', 'ID_BACK', 'SUPPORTING'), ivf.createdAt DESC`,
+        WHERE ivf.userId=? AND ivf.purpose='SUPPORTING'
+        ORDER BY ivf.createdAt DESC`,
       [user.id]);
     ok(res, {
       realName: identity.realName || '',
-      phone: identity.phone || user.phone || '',
+      phone: user.phone || identity.phone || '',
       idCardNumber: decryptIdCard(identity.idCardCipher),
       verifyStatus: identity.verifyStatus || 'PENDING',
       reviewReason: identity.reviewReason || '',
@@ -70,21 +60,14 @@ function register(router) {
   router.post('/api/identity/submit', async (req, res) => {
     const user = await requireUser(req);
     const body = await readJson(req);
-    const fields = validateIdentityFields(body.realName, body.phone, body.idCardNumber);
-    const idFrontFileId = v.str(body.idFrontFileId, '身份证人像面', { min: 1, max: 32 });
-    const idBackFileId = v.str(body.idBackFileId, '身份证国徽面', { min: 1, max: 32 });
-    if (idFrontFileId === idBackFileId) throw err.bad('身份证正反面不能使用同一个文件');
+    if (!user.phone) throw err.bad('请先通过微信授权或手机号登录绑定本人手机号');
+    const fields = validateIdentityFields(body.realName, user.phone, body.idCardNumber);
     const supportingFileIds = (v.arr(body.supportingFileIds, '补充材料', { maxLen: MAX_SUPPORTING, optional: true }) || [])
       .map((id) => v.str(id, '文件ID', { min: 1, max: 32 }));
-    const allIds = [idFrontFileId, idBackFileId, ...supportingFileIds];
-    if (new Set(allIds).size !== allIds.length) throw err.bad('认证材料不能重复');
+    if (new Set(supportingFileIds).size !== supportingFileIds.length) throw err.bad('补充认证材料不能重复');
     try {
       await tx(async (conn) => {
-        const uploaded = await ownedFiles(conn, user.id, allIds);
-        const byId = new Map(uploaded.map((file) => [file.id, file]));
-        if (!isImageFile(byId.get(idFrontFileId)) || !isImageFile(byId.get(idBackFileId))) {
-          throw err.bad('身份证正反面只能上传 JPG、PNG、WEBP、HEIC 等图片文件');
-        }
+        await ownedFiles(conn, user.id, supportingFileIds);
         const [duplicate] = await conn.execute(
           `SELECT userId FROM identity_verifications WHERE idCardHash=? AND userId<>? FOR UPDATE`,
           [idCardHash(fields.idCardNumber), user.id]);
@@ -102,10 +85,7 @@ function register(router) {
             idCardHash(fields.idCardNumber), now, now]
         );
         await conn.execute(`DELETE FROM identity_verification_files WHERE userId=?`, [user.id]);
-        const links = [
-          [idFrontFileId, 'ID_FRONT'], [idBackFileId, 'ID_BACK'],
-          ...supportingFileIds.map((id) => [id, 'SUPPORTING']),
-        ];
+        const links = supportingFileIds.map((id) => [id, 'SUPPORTING']);
         for (const [fileId, purpose] of links) {
           await conn.execute(
             `INSERT INTO identity_verification_files(userId, fileId, purpose, createdAt) VALUES(?,?,?,?)`,
@@ -119,7 +99,7 @@ function register(router) {
         }
       });
     } catch (error) {
-      if (error?.code === 'ER_DUP_ENTRY') throw err.conflict('身份证号或认证材料已被其他账号使用');
+      if (error?.code === 'ER_DUP_ENTRY') throw err.conflict('身份证号或补充认证材料已被其他账号使用');
       throw error;
     }
     ok(res, { submitted: true, verifyStatus: 'PENDING' });

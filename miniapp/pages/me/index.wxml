@@ -6,7 +6,7 @@
     <view wx:else class="me-avatar me-avatar-fb">{{user.nickname ? user.nickname[0] : '👤'}}</view>
     <view class="me-info">
       <text class="me-name">Hi，{{user.nickname || '用户'}}</text>
-      <text class="badge-y">{{user.role === 'ENGINEER' ? '已认证工程师' : '客户'}}</text>
+      <text class="badge-y">{{roleBadgeText}}</text>
     </view>
     <view class="me-edit" bindtap="goEdit">编辑</view>
   </view>
@@ -24,7 +24,7 @@
     </view>
     <text class="btn-y">查看</text>
   </view>
-  <text class="verify-hint" wx:if="{{user}}">{{qualificationFileCount ? '已提交 ' + qualificationFileCount + ' 份认证材料。' : (user.role === 'ENGINEER' ? '可填写资料申请审核；演示环境也可使用自主认证。' : '填写本人信息并上传身份证正反面后提交审核。')}}</text>
+  <text class="verify-hint" wx:if="{{user}}">{{qualificationHint}}</text>
   <button
     wx:if="{{user && showSelfVerify}}"
     class="self-verify"

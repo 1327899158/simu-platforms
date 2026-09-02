@@ -59,7 +59,7 @@ async function loadUserView(id) {
     : null;
   const identity = await ensureIdentityRecord(u);
   const count = await queryOne(
-    `SELECT COUNT(*) AS count FROM identity_verification_files WHERE userId = ?`, [u.id]
+    `SELECT COUNT(*) AS count FROM identity_verification_files WHERE userId = ? AND purpose = 'SUPPORTING'`, [u.id]
   );
   identity.fileCount = Number(count.count || 0);
   if (profile) {
@@ -235,7 +235,7 @@ function register(router) {
       await conn.execute(`UPDATE users SET phone = ?, updatedAt = ? WHERE id = ?`, [phoneNumber, boundAt, user.id]);
       await conn.execute(
         `UPDATE identity_verifications
-            SET phone = CASE WHEN phone IS NULL OR phone = '' THEN ? ELSE phone END, updatedAt = ?
+            SET phone = ?, updatedAt = ?
           WHERE userId = ?`,
         [phoneNumber, boundAt, user.id]
       );

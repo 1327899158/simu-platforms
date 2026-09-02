@@ -15,17 +15,41 @@ function verifyView(user) {
   const profile = user && user.engineer;
   const status = user?.identity?.verifyStatus || profile?.verifyStatus || user?.verifyStatus || 'PENDING';
   const fileCount = Number(user?.identity?.fileCount || profile?.qualificationFileCount || 0);
+  const hasSubmitted = Boolean(user?.identity?.hasSubmitted || user?.identity?.submittedAt || fileCount);
+  const qualificationHint = hasSubmitted
+    ? fileCount
+      ? `已提交 ${fileCount} 份补充认证资料。`
+      : '认证信息已提交，补充认证资料为选填。'
+    : '填写本人信息即可提交认证，补充认证资料选填。';
+  let roleBadgeText = '客户';
+  if (user?.role === 'ENGINEER') {
+    roleBadgeText = status === 'APPROVED'
+      ? '已认证工程师'
+      : status === 'REJECTED'
+        ? '认证未通过'
+        : hasSubmitted
+          ? '认证审核中'
+          : '未认证';
+  }
   return {
     verifyStatus: status,
-    verifyText: status === 'APPROVED' ? '已通过' : status === 'REJECTED' ? '未通过' : '待审核',
+    verifyText: status === 'APPROVED'
+      ? '已通过'
+      : status === 'REJECTED'
+        ? '未通过'
+        : hasSubmitted
+          ? '待审核'
+          : '未申请',
+    roleBadgeText,
+    qualificationHint,
     qualificationFileCount: fileCount,
     // 已提交材料后必须等待管理员审核，避免演示自主认证绕过已发起的人工审核。
-    showSelfVerify: user?.role === 'ENGINEER' && status !== 'APPROVED' && !fileCount,
+    showSelfVerify: user?.role === 'ENGINEER' && status !== 'APPROVED' && !hasSubmitted,
   };
 }
 
 Page({
-  data: { user: null, roleText: '', verifyStatus: 'UNAPPLIED', verifyText: '未申请', showSelfVerify: true, selfVerifyLoading: false },
+  data: { user: null, roleText: '', roleBadgeText: '客户', qualificationHint: '', verifyStatus: 'UNAPPLIED', verifyText: '未申请', showSelfVerify: true, selfVerifyLoading: false },
   async onShow() {
     // 先用缓存快速渲染（缓存里已是绝对路径，可直接显示）
     const cached = ensureLogin();

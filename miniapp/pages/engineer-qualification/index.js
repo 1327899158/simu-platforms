@@ -16,15 +16,15 @@ function imageMime(name, mime) {
   return String(mime || '').startsWith('image/') || /\.(png|jpg|jpeg|gif|webp|bmp)$/i.test(String(name || ''));
 }
 
-function statusText(status) {
-  return status === 'APPROVED' ? '已通过' : status === 'REJECTED' ? '未通过' : '待审核';
+function statusText(status, submittedAt) {
+  return status === 'APPROVED' ? '已通过' : status === 'REJECTED' ? '未通过' : submittedAt ? '待审核' : '未申请';
 }
 
 Page({
   data: {
-    loading: true, uploading: false, saving: false, uploadText: '',
-    realName: '', phone: '', idCardNumber: '', verifyStatus: 'PENDING', verifyText: '待审核', reviewReason: '',
-    idFront: null, idBack: null, files: [], maxSupportingFiles: MAX_SUPPORTING,
+    loading: true, uploading: false, saving: false, bindingPhone: false, uploadText: '',
+    realName: '', phone: '', idCardNumber: '', verifyStatus: 'PENDING', verifyText: '未申请', reviewReason: '',
+    files: [], maxSupportingFiles: MAX_SUPPORTING,
     maxFileMb: DEFAULT_MAX_MB, maxFileBytes: DEFAULT_MAX_MB * 1024 * 1024,
   },
   onLoad() {
@@ -44,10 +44,8 @@ Page({
       const maxFileMb = Number(dicts?.limits?.maxUploadMb) || DEFAULT_MAX_MB;
       this.setData({
         realName: identity.realName || '', phone: identity.phone || '', idCardNumber: identity.idCardNumber || '',
-        verifyStatus: identity.verifyStatus || 'PENDING', verifyText: statusText(identity.verifyStatus),
+        verifyStatus: identity.verifyStatus || 'PENDING', verifyText: statusText(identity.verifyStatus, identity.submittedAt),
         reviewReason: identity.reviewReason || '',
-        idFront: decorate(all.find((file) => file.purpose === 'ID_FRONT')),
-        idBack: decorate(all.find((file) => file.purpose === 'ID_BACK')),
         files: all.filter((file) => file.purpose === 'SUPPORTING').map(decorate),
         maxSupportingFiles: Number(identity.maxSupportingFiles || MAX_SUPPORTING),
         maxFileMb, maxFileBytes: Number(dicts?.limits?.maxUploadBytes) || maxFileMb * 1024 * 1024,
@@ -57,50 +55,29 @@ Page({
     } finally { this.setData({ loading: false }); }
   },
   onRealName(e) { this.setData({ realName: e.detail.value }); },
-  onPhone(e) { this.setData({ phone: e.detail.value.replace(/\D/g, '').slice(0, 11) }); },
   onIdCard(e) { this.setData({ idCardNumber: e.detail.value.replace(/[^0-9Xx]/g, '').toUpperCase().slice(0, 18) }); },
 
-  chooseIdImage(e) {
-    if (this.data.uploading) return;
-    const side = e.currentTarget.dataset.side;
-    wx.showActionSheet({
-      itemList: ['相机拍照', '从相册中选择'],
-      success: ({ tapIndex }) => this.pickIdImage(side, tapIndex === 0 ? 'camera' : 'album'),
-    });
-  },
-  pickIdImage(side, sourceType) {
-    const accept = (items) => {
-      const file = items && items[0];
-      if (!file) return;
-      this.uploadIdImage(side, {
-        path: file.tempFilePath || file.path,
-        name: `身份证${side === 'front' ? '人像面' : '国徽面'}_${Date.now()}.jpg`,
-        size: Number(file.size || 0), mime: file.type || 'image/jpeg',
-      });
-    };
-    if (wx.chooseMedia) {
-      wx.chooseMedia({ count: 1, mediaType: ['image'], sourceType: [sourceType], success: (r) => accept(r.tempFiles) });
-    } else {
-      wx.chooseImage({ count: 1, sourceType: [sourceType], success: (r) => accept((r.tempFilePaths || []).map((path, i) => ({ path, size: r.tempFiles?.[i]?.size }))) });
+  async onGetPhoneNumber(e) {
+    const detail = e.detail || {};
+    if (!detail.code || (detail.errMsg && detail.errMsg !== 'getPhoneNumber:ok')) {
+      return wx.showToast({ title: '已取消手机号授权', icon: 'none' });
     }
-  },
-  async uploadIdImage(side, file) {
-    if (!file.path) return;
-    if (!imageMime(file.name, file.mime)) {
-      return wx.showModal({ title: '文件格式不支持', content: '身份证正反面只能上传图片文件。', showCancel: false });
-    }
-    if (file.size > this.data.maxFileBytes) {
-      return wx.showModal({ title: '图片超过大小限制', content: `身份证图片不能超过 ${this.data.maxFileMb}MB。`, showCancel: false });
-    }
-    this.setData({ uploading: true, uploadText: '正在上传身份证…' });
+    let bound = false;
+    this.setData({ bindingPhone: true });
+    wx.showLoading({ title: '正在获取手机号…', mask: true });
     try {
-      const result = await upload(file.path, { kind: 'IMAGE', name: file.name, mime: file.mime });
-      const uploaded = { ...result, fileId: result.fileId || result.id, name: file.name, sizeBytes: file.size, sizeText: sizeText(file.size), previewUrl: file.path, persisted: false };
-      const old = side === 'front' ? this.data.idFront : this.data.idBack;
-      this.setData(side === 'front' ? { idFront: uploaded } : { idBack: uploaded });
-      if (old && !old.persisted) this.cleanupUnlinked(old);
-    } catch (error) { wx.showToast({ title: error.message || '身份证上传失败', icon: 'none' }); }
-    finally { this.setData({ uploading: false, uploadText: '' }); }
+      const data = await request('POST', '/auth/bind-phone', { code: detail.code }, { silent: true });
+      bound = true;
+      if (data?.user) wx.setStorageSync('user', data.user);
+      const identity = await request('GET', '/identity', null, { silent: true });
+      this.setData({ phone: identity.phone || '' });
+      wx.showToast({ title: '手机号获取成功', icon: 'success' });
+    } catch (error) {
+      wx.showToast({ title: bound ? '手机号已绑定，请下拉刷新' : (error.message || '手机号获取失败'), icon: 'none' });
+    } finally {
+      wx.hideLoading();
+      this.setData({ bindingPhone: false });
+    }
   },
 
   chooseSupporting() {
@@ -163,8 +140,7 @@ Page({
     } });
   },
   async openFile(e) {
-    const source = e.currentTarget.dataset.source;
-    const file = source === 'front' ? this.data.idFront : source === 'back' ? this.data.idBack : this.data.files[Number(e.currentTarget.dataset.index)];
+    const file = this.data.files[Number(e.currentTarget.dataset.index)];
     if (!file) return;
     wx.showLoading({ title: '正在打开…', mask: true });
     try { await downloadAndOpen(await request('GET', `/files/${file.fileId}/url`, null, { silent: true })); }
@@ -173,17 +149,15 @@ Page({
   },
   async submit() {
     if (this.data.saving || this.data.uploading) return;
-    const { realName, phone, idCardNumber, idFront, idBack, files } = this.data;
+    const { realName, phone, idCardNumber, files } = this.data;
     if (!realName.trim()) return wx.showToast({ title: '请填写真实姓名', icon: 'none' });
-    if (!/^1[3-9]\d{9}$/.test(phone)) return wx.showToast({ title: '请填写正确手机号', icon: 'none' });
+    if (!/^1[3-9]\d{9}$/.test(phone)) return wx.showToast({ title: '请先授权获取本人手机号', icon: 'none' });
     if (!/^\d{17}[0-9X]$/.test(idCardNumber)) return wx.showToast({ title: '请填写正确身份证号', icon: 'none' });
-    if (!idFront || !idBack) return wx.showToast({ title: '请上传身份证正反面', icon: 'none' });
     this.setData({ saving: true });
     wx.showLoading({ title: '正在提交…', mask: true });
     try {
       await request('POST', '/identity/submit', {
-        realName: realName.trim(), phone, idCardNumber,
-        idFrontFileId: idFront.fileId, idBackFileId: idBack.fileId,
+        realName: realName.trim(), idCardNumber,
         supportingFileIds: files.map((file) => file.fileId),
       }, { silent: true });
       await this.refreshUser();

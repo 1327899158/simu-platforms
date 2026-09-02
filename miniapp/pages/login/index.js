@@ -97,7 +97,7 @@ Page({
     const enterHome = () => wx.switchTab({ url: '/pages/home/index' });
     wx.showModal({
       title,
-      content: '身份认证正在审核，审核通过后即可使用完整功能。',
+      content: '请进行身份认证，审核通过后即可使用完整功能。',
       showCancel: false,
       confirmText: '确定',
       success: (result) => {
