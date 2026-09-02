@@ -73,7 +73,15 @@ Page({
       this.setData({ phone: identity.phone || '' });
       wx.showToast({ title: '手机号获取成功', icon: 'success' });
     } catch (error) {
-      wx.showToast({ title: bound ? '手机号已绑定，请下拉刷新' : (error.message || '手机号获取失败'), icon: 'none' });
+      if (bound) {
+        wx.showToast({ title: '手机号已绑定，请下拉刷新', icon: 'none' });
+      } else {
+        wx.showModal({
+          title: '手机号获取失败',
+          content: error.message || '请稍后重试',
+          showCancel: false,
+        });
+      }
     } finally {
       wx.hideLoading();
       this.setData({ bindingPhone: false });
@@ -161,10 +169,22 @@ Page({
         supportingFileIds: files.map((file) => file.fileId),
       }, { silent: true });
       await this.refreshUser();
-      await this.load();
-      wx.showModal({ title: '提交成功', content: '身份认证资料已提交，请等待管理员审核。', showCancel: false });
+      wx.showModal({
+        title: '提交成功',
+        content: '身份认证资料已提交，请等待管理员审核。',
+        showCancel: false,
+        success: ({ confirm }) => { if (confirm) this.returnAfterSubmit(); },
+      });
     } catch (error) { wx.showModal({ title: '提交失败', content: error.message || '请稍后重试', showCancel: false }); }
     finally { wx.hideLoading(); this.setData({ saving: false }); }
+  },
+  returnAfterSubmit() {
+    const pages = typeof getCurrentPages === 'function' ? getCurrentPages() : [];
+    if (pages.length > 1) {
+      wx.navigateBack({ delta: 1, fail: () => wx.switchTab({ url: '/pages/me/index' }) });
+      return;
+    }
+    wx.switchTab({ url: '/pages/me/index' });
   },
   async refreshUser() {
     const user = await request('GET', '/me', null, { silent: true });

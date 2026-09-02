@@ -12,12 +12,75 @@
  * PATCH /api/me             → 更新昵称、头像 fileID、工程师资料
  */
 const { readJson, ok, err } = require('../lib/http');
+const http = require('node:http');
 const { newId, nowIso, maskPhone, v } = require('../lib/util');
 const { query, queryOne, tx } = require('../db');
 const { requireUser, getOrCreateUser, switchUserRole, getOpenid } = require('../lib/auth-mw');
 const { parseJson } = require('../db');
 const { config } = require('../config');
 const { ensureIdentityRecord } = require('../services/identity-svc');
+
+function wechatOpenApiPost(path, payload) {
+  const postData = JSON.stringify(payload || {});
+  return new Promise((resolve, reject) => {
+    const request = http.request({
+      hostname: 'api.weixin.qq.com',
+      // 微信云托管会在容器网络内代理 api.weixin.qq.com，并自动补充调用凭证。
+      // 这里必须保留微信服务端 API 的原始路径，不能添加 /_/ 等额外前缀。
+      path,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(postData) },
+      timeout: 10000,
+    }, (response) => {
+      let raw = '';
+      response.on('data', (chunk) => { raw += chunk; });
+      response.on('end', () => {
+        let body = null;
+        try { body = raw ? JSON.parse(raw) : {}; } catch (_) { body = null; }
+        resolve({ statusCode: Number(response.statusCode || 0), body, raw: raw.slice(0, 500) });
+      });
+    });
+    request.on('timeout', () => request.destroy(new Error('微信接口请求超时')));
+    request.on('error', reject);
+    request.write(postData);
+    request.end();
+  });
+}
+
+function phoneExchangeMessage(response) {
+  const body = response?.body || {};
+  const code = Number(body.errcode || 0);
+  if (code === 40029 || code === 40163) return '手机号授权凭证已失效或已使用，请重新点击手机号框授权';
+  if ([40001, 40014, 41001, 42001].includes(code)) {
+    return '微信云托管令牌无效，请检查开放接口服务和微信令牌配置';
+  }
+  if (code === 48001) return '当前小程序或云托管服务未开通获取手机号接口权限';
+  if (code === -1) return '微信服务繁忙，请稍后重试';
+  if (code) return `微信接口错误 ${code}: ${body.errmsg || '未知错误'}`;
+  if (response?.statusCode === 401 || response?.statusCode === 403) {
+    return '微信云托管开放接口未授权，请开启开放接口服务并配置 /wxa/business/getuserphonenumber 权限';
+  }
+  if (!response?.body) return `微信云托管开放接口返回异常（HTTP ${response?.statusCode || 0}）`;
+  return `微信云托管开放接口调用失败（HTTP ${response?.statusCode || 0}）`;
+}
+
+async function exchangeWechatPhone(code) {
+  // 通过云托管容器网络直接请求原始微信服务端 API；代理会自动注入 access_token。
+  const response = await wechatOpenApiPost('/wxa/business/getuserphonenumber', { code });
+  const body = response.body || {};
+  if (response.statusCode < 200 || response.statusCode >= 300 || (body.errcode && body.errcode !== 0)) {
+    console.warn(JSON.stringify({
+      t: new Date().toISOString(), evt: 'wechat-phone-exchange-failed',
+      apiPath: '/wxa/business/getuserphonenumber',
+      statusCode: response.statusCode, errcode: body.errcode || null,
+      errmsg: body.errmsg || response.raw || 'empty response',
+    }));
+    throw new Error(phoneExchangeMessage(response));
+  }
+  const phoneNumber = body.phone_info?.phoneNumber || body.phone_info?.purePhoneNumber;
+  if (!phoneNumber) throw new Error('微信接口未返回手机号');
+  return phoneNumber;
+}
 
 function userView(u, profile, identity) {
   return {
@@ -194,28 +257,7 @@ function register(router) {
     const code = v.str(body.code, '手机号授权code', { min: 1 });
     let phoneNumber = null;
     try {
-      // 云托管内部调用微信 API（云 sidecar 自动注入 access_token）
-      const http = require('node:http');
-      const postData = JSON.stringify({ code });
-      const resp = await new Promise((resolve, reject) => {
-        const r = http.request({
-          hostname: 'api.weixin.qq.com',
-          path: '/wxa/business/getuserphonenumber',
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(postData) },
-        }, (res) => {
-          let data = '';
-          res.on('data', (c) => data += c);
-          res.on('end', () => { try { resolve(JSON.parse(data)); } catch (e) { reject(e); } });
-        });
-        r.on('error', reject);
-        r.write(postData);
-        r.end();
-      });
-      if (resp.errcode && resp.errcode !== 0) {
-        throw new Error(`微信API错误: ${resp.errmsg || resp.errcode}`);
-      }
-      phoneNumber = resp.phone_info?.phoneNumber || resp.phone_info?.purePhoneNumber;
+      phoneNumber = await exchangeWechatPhone(code);
     } catch (e) {
       // 本地开发降级：直接用传入的手机号（仅 dev）
       if (process.env.NODE_ENV === 'development' && body.phone) {
