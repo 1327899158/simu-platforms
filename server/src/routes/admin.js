@@ -86,7 +86,7 @@ function register(router) {
         SUM(iv.verifyStatus = 'APPROVED') AS approvedCount,
         SUM(iv.verifyStatus = 'REJECTED') AS rejectedCount
         FROM identity_verifications iv JOIN users u ON u.id=iv.userId
-        WHERE u.role='ENGINEER' AND u.deletedAt IS NULL`),
+        WHERE iv.submittedAt IS NOT NULL AND u.deletedAt IS NULL`),
       query(`SELECT status, COUNT(*) AS count FROM orders WHERE deletedAt IS NULL GROUP BY status`),
       queryOne(`SELECT COUNT(*) AS total FROM quotes WHERE status <> 'WITHDRAWN'`),
       queryOne(`SELECT COUNT(*) AS count FROM users
@@ -266,35 +266,34 @@ function register(router) {
   router.get('/api/admin/engineers', async (req, res, _params, q) => {
     await requireAdmin(req, 'ENGINEER_READ');
     const { limit, offset } = pageArgs(q);
-    const cond = ['u.deletedAt IS NULL'];
+    // 历史路由名保留兼容；此页面现在审核所有真正提交过的身份认证，
+    // 不再只显示 engineer_profiles 中的工程师，也不显示尚未提交的空记录。
+    const cond = ['u.deletedAt IS NULL', 'iv.submittedAt IS NOT NULL'];
     const args = [];
     const verifyStatus = String(q.get('status') || '').toUpperCase();
     const search = String(q.get('search') || '').trim().slice(0, 60);
     if (verifyStatus) {
       v.oneOf(verifyStatus, '审核状态', ['PENDING', 'APPROVED', 'REJECTED']);
-      cond.push('COALESCE(iv.verifyStatus, ep.verifyStatus) = ?'); args.push(verifyStatus);
+      cond.push('iv.verifyStatus = ?'); args.push(verifyStatus);
     }
     if (search) {
-      cond.push('(u.nickname LIKE ? OR ep.realName LIKE ? OR u.id = ?)');
+      cond.push('(u.nickname LIKE ? OR iv.realName LIKE ? OR u.id = ?)');
       args.push(`%${search}%`, `%${search}%`, search);
     }
     const where = cond.join(' AND ');
     const totalRow = await queryOne(
-      `SELECT COUNT(*) AS count FROM engineer_profiles ep
-       JOIN users u ON u.id = ep.userId
-       LEFT JOIN identity_verifications iv ON iv.userId=u.id
+      `SELECT COUNT(*) AS count FROM identity_verifications iv
+       JOIN users u ON u.id = iv.userId
        WHERE ${where}`, args
     );
     const rows = await query(
-      `SELECT u.id, u.nickname, u.avatarUrl, u.status AS userStatus, u.createdAt,
-              COALESCE(iv.realName, ep.realName) AS realName, ep.specialties, ep.softwares, ep.intro,
-              COALESCE(iv.verifyStatus, ep.verifyStatus) AS verifyStatus,
-              COALESCE(iv.reviewReason, ep.reviewReason) AS reviewReason,
-              COALESCE(iv.reviewedAt, ep.reviewedAt) AS reviewedAt
-       FROM engineer_profiles ep JOIN users u ON u.id = ep.userId
-       LEFT JOIN identity_verifications iv ON iv.userId=u.id
+      `SELECT u.id, u.role, u.nickname, u.avatarUrl, u.status AS userStatus, u.createdAt,
+              iv.realName, ep.specialties, ep.softwares, ep.intro,
+              iv.verifyStatus, iv.reviewReason, iv.reviewedAt, iv.submittedAt
+       FROM identity_verifications iv JOIN users u ON u.id = iv.userId
+       LEFT JOIN engineer_profiles ep ON ep.userId=u.id
        WHERE ${where}
-       ORDER BY FIELD(COALESCE(iv.verifyStatus, ep.verifyStatus), 'PENDING', 'REJECTED', 'APPROVED'), u.createdAt DESC
+       ORDER BY FIELD(iv.verifyStatus, 'PENDING', 'REJECTED', 'APPROVED'), iv.submittedAt DESC
        LIMIT ${limit} OFFSET ${offset}`,
       args
     );

@@ -16,7 +16,7 @@ Page({
     const admin = getAdmin();
     if (!admin) { denyAndExit('管理员会话不存在，请重新扫码进入。'); return; }
     if (!options.id) { wx.showToast({ title: '缺少工程师ID', icon: 'none' }); return; }
-    this.setData({ id: options.id, canReview: hasPermission(admin, 'ENGINEER_APPROVE') });
+    this.setData({ id: options.id, canReview: hasPermission(admin, 'IDENTITY_APPROVE') });
     this.load();
   },
   onPullDownRefresh() { this.load().finally(() => wx.stopPullDownRefresh()); },
@@ -58,7 +58,7 @@ Page({
   },
   async submitReview(status, reason) {
     try {
-      await request('POST', `/admin/engineers/${this.data.id}/review`, { status, reason }, { silent: true });
+      await request('POST', `/admin/users/${this.data.id}/identity-review`, { status, reason }, { silent: true });
       wx.showToast({ title: status === 'APPROVED' ? '审核已通过' : '已驳回', icon: 'success' });
       this.load();
     } catch (error) { wx.showToast({ title: error.message || '审核失败', icon: 'none' }); }

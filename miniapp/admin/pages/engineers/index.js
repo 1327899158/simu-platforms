@@ -7,7 +7,7 @@ Page({
   onLoad() {
     const admin = getAdmin();
     if (!admin) { denyAndExit('管理员会话不存在，请重新扫码进入。'); return; }
-    this.setData({ canReview: hasPermission(admin, 'ENGINEER_APPROVE') });
+    this.setData({ canReview: hasPermission(admin, 'IDENTITY_APPROVE') });
     this.load();
   },
   onPullDownRefresh() { this.load().finally(() => wx.stopPullDownRefresh()); },
@@ -29,14 +29,19 @@ Page({
       }, { silent: true });
       this.setData({
         total: result.total,
-        items: result.items.map((item) => ({ ...item, createdText: timeShort(item.createdAt), reviewedText: timeShort(item.reviewedAt) })),
+        items: result.items.map((item) => ({
+          ...item,
+          roleText: item.role === 'ENGINEER' ? '工程师' : '客户',
+          submittedText: timeShort(item.submittedAt),
+          reviewedText: timeShort(item.reviewedAt),
+        })),
       });
     } catch (error) {
       if (error.statusCode === 403) denyAndExit(error.message);
-      else wx.showToast({ title: error.message || '工程师加载失败', icon: 'none' });
+      else wx.showToast({ title: error.message || '认证申请加载失败', icon: 'none' });
     } finally { this.setData({ loading: false }); }
   },
-  approve(e) { this.review(e.currentTarget.dataset.id, 'APPROVED', '确认通过该工程师的身份认证？'); },
+  approve(e) { this.review(e.currentTarget.dataset.id, 'APPROVED', '确认通过该用户的身份认证？'); },
   reject(e) {
     const id = e.currentTarget.dataset.id;
     wx.showModal({
@@ -54,10 +59,14 @@ Page({
   },
   async submitReview(id, status, reason) {
     try {
-      await request('POST', `/admin/engineers/${id}/review`, { status, reason }, { silent: true });
+      await request('POST', `/admin/users/${id}/identity-review`, { status, reason }, { silent: true });
       wx.showToast({ title: status === 'APPROVED' ? '审核已通过' : '已驳回', icon: 'success' });
       this.load();
     } catch (error) { wx.showToast({ title: error.message || '审核失败', icon: 'none' }); }
   },
-  open(e) { wx.navigateTo({ url: `/admin/pages/engineer-detail/index?id=${e.currentTarget.dataset.id}` }); },
+  open(e) {
+    const item = this.data.items.find((row) => row.id === e.currentTarget.dataset.id);
+    const page = item?.role === 'ENGINEER' ? 'engineer-detail' : 'user-detail';
+    wx.navigateTo({ url: `/admin/pages/${page}/index?id=${e.currentTarget.dataset.id}` });
+  },
 });
