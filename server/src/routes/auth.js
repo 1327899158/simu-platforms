@@ -12,7 +12,8 @@
  * PATCH /api/me             → 更新昵称、头像 fileID、工程师资料
  */
 const { readJson, ok, err } = require('../lib/http');
-const http = require('node:http');
+const fs = require('node:fs');
+const https = require('node:https');
 const { newId, nowIso, maskPhone, v } = require('../lib/util');
 const { query, queryOne, tx } = require('../db');
 const { requireUser, getOrCreateUser, switchUserRole, getOpenid } = require('../lib/auth-mw');
@@ -20,14 +21,31 @@ const { parseJson } = require('../db');
 const { config } = require('../config');
 const { ensureIdentityRecord } = require('../services/identity-svc');
 
+const WECHAT_TOKEN_FILE = '/.tencentcloudbase/wx/cloudbase_access_token';
+
+function getWechatCloudbaseToken() {
+  const envToken = String(process.env.WX_CLOUDBASE_ACCESSTOKEN || '').trim();
+  if (envToken) return { token: envToken, source: 'env' };
+  try {
+    const token = fs.readFileSync(WECHAT_TOKEN_FILE, 'utf8').trim();
+    if (token) return { token, source: 'mounted-file' };
+  } catch (e) {
+    if (e.code !== 'ENOENT') throw e;
+  }
+  throw new Error(
+    '云托管微信令牌未下发，请在当前环境的云调用中绑定新 AppID、开启开放接口服务并重新部署'
+  );
+}
+
 function wechatOpenApiPost(path, payload) {
+  const { token, source: tokenSource } = getWechatCloudbaseToken();
   const postData = JSON.stringify(payload || {});
   return new Promise((resolve, reject) => {
-    const request = http.request({
+    const request = https.request({
       hostname: 'api.weixin.qq.com',
-      // 微信云托管会在容器网络内代理 api.weixin.qq.com，并自动补充调用凭证。
-      // 这里必须保留微信服务端 API 的原始路径，不能添加 /_/ 等额外前缀。
-      path,
+      // 云托管下发的是 cloudbase_access_token，不是普通 access_token。
+      // 走 HTTPS 并显式携带它，避免未启用 HTTP 代理时被 301 重定向。
+      path: `${path}?cloudbase_access_token=${encodeURIComponent(token)}`,
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(postData) },
       timeout: 10000,
@@ -37,7 +55,10 @@ function wechatOpenApiPost(path, payload) {
       response.on('end', () => {
         let body = null;
         try { body = raw ? JSON.parse(raw) : {}; } catch (_) { body = null; }
-        resolve({ statusCode: Number(response.statusCode || 0), body, raw: raw.slice(0, 500) });
+        resolve({
+          statusCode: Number(response.statusCode || 0), body, raw: raw.slice(0, 500),
+          tokenSource, location: response.headers?.location || '',
+        });
       });
     });
     request.on('timeout', () => request.destroy(new Error('微信接口请求超时')));
@@ -57,6 +78,9 @@ function phoneExchangeMessage(response) {
   if (code === 48001) return '当前小程序或云托管服务未开通获取手机号接口权限';
   if (code === -1) return '微信服务繁忙，请稍后重试';
   if (code) return `微信接口错误 ${code}: ${body.errmsg || '未知错误'}`;
+  if ([301, 302, 307, 308].includes(response?.statusCode)) {
+    return '微信开放接口发生异常重定向，请检查云调用与微信令牌是否绑定到当前小程序 AppID';
+  }
   if (response?.statusCode === 401 || response?.statusCode === 403) {
     return '微信云托管开放接口未授权，请开启开放接口服务并配置 /wxa/business/getuserphonenumber 权限';
   }
@@ -65,14 +89,23 @@ function phoneExchangeMessage(response) {
 }
 
 async function exchangeWechatPhone(code) {
-  // 通过云托管容器网络直接请求原始微信服务端 API；代理会自动注入 access_token。
-  const response = await wechatOpenApiPost('/wxa/business/getuserphonenumber', { code });
+  let response;
+  try {
+    response = await wechatOpenApiPost('/wxa/business/getuserphonenumber', { code });
+  } catch (e) {
+    console.warn(JSON.stringify({
+      t: new Date().toISOString(), evt: 'wechat-phone-exchange-unavailable',
+      cloudbaseEnv: config.cloudbaseEnv || null, error: e.message,
+    }));
+    throw e;
+  }
   const body = response.body || {};
   if (response.statusCode < 200 || response.statusCode >= 300 || (body.errcode && body.errcode !== 0)) {
     console.warn(JSON.stringify({
       t: new Date().toISOString(), evt: 'wechat-phone-exchange-failed',
       apiPath: '/wxa/business/getuserphonenumber',
       statusCode: response.statusCode, errcode: body.errcode || null,
+      tokenSource: response.tokenSource, redirected: Boolean(response.location),
       errmsg: body.errmsg || response.raw || 'empty response',
     }));
     throw new Error(phoneExchangeMessage(response));
