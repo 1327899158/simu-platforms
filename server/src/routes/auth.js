@@ -22,6 +22,7 @@ const { config } = require('../config');
 const { ensureIdentityRecord } = require('../services/identity-svc');
 
 const WECHAT_TOKEN_FILE = '/.tencentcloudbase/wx/cloudbase_access_token';
+const wechatAccessTokenCache = { token: '', expiresAt: 0, pending: null };
 
 function getWechatCloudbaseToken() {
   const envToken = String(process.env.WX_CLOUDBASE_ACCESSTOKEN || '').trim();
@@ -32,22 +33,18 @@ function getWechatCloudbaseToken() {
   } catch (e) {
     if (e.code !== 'ENOENT') throw e;
   }
-  throw new Error(
-    '云托管微信令牌未下发，请在当前环境的云调用中绑定新 AppID、开启开放接口服务并重新部署'
-  );
+  return null;
 }
 
-function wechatOpenApiPost(path, payload) {
-  const { token, source: tokenSource } = getWechatCloudbaseToken();
-  const postData = JSON.stringify(payload || {});
+function wechatHttpsJson({ path, method = 'GET', payload }) {
+  const postData = payload === undefined ? '' : JSON.stringify(payload);
   return new Promise((resolve, reject) => {
     const request = https.request({
       hostname: 'api.weixin.qq.com',
-      // 云托管下发的是 cloudbase_access_token，不是普通 access_token。
-      // 走 HTTPS 并显式携带它，避免未启用 HTTP 代理时被 301 重定向。
-      path: `${path}?cloudbase_access_token=${encodeURIComponent(token)}`,
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(postData) },
+      path, method,
+      headers: postData
+        ? { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(postData) }
+        : undefined,
       timeout: 10000,
     }, (response) => {
       let raw = '';
@@ -57,15 +54,69 @@ function wechatOpenApiPost(path, payload) {
         try { body = raw ? JSON.parse(raw) : {}; } catch (_) { body = null; }
         resolve({
           statusCode: Number(response.statusCode || 0), body, raw: raw.slice(0, 500),
-          tokenSource, location: response.headers?.location || '',
+          location: response.headers?.location || '',
         });
       });
     });
     request.on('timeout', () => request.destroy(new Error('微信接口请求超时')));
     request.on('error', reject);
-    request.write(postData);
+    if (postData) request.write(postData);
     request.end();
   });
+}
+
+function appAccessTokenMessage(body) {
+  const code = Number(body?.errcode || 0);
+  if (code === 40013) return 'WX_APPID 无效，请核对小程序 AppID';
+  if (code === 40125) return 'WX_APPSECRET 无效，请在微信公众平台重置后更新云托管环境变量';
+  if (code === 40164) return '微信接口 IP 白名单未包含当前云托管出口 IP';
+  return `获取微信 access_token 失败${code ? `（${code}: ${body?.errmsg || '未知错误'}）` : ''}`;
+}
+
+async function getWechatAppAccessToken() {
+  const now = Date.now();
+  if (wechatAccessTokenCache.token && wechatAccessTokenCache.expiresAt > now + 60 * 1000) {
+    return wechatAccessTokenCache.token;
+  }
+  if (wechatAccessTokenCache.pending) return wechatAccessTokenCache.pending;
+  if (!config.wxAppid || !config.wxAppsecret) {
+    throw new Error('当前 CloudBase 未提供微信令牌，请在 simu-api 环境变量中配置 WX_APPSECRET');
+  }
+  wechatAccessTokenCache.pending = (async () => {
+    const response = await wechatHttpsJson({
+      path: '/cgi-bin/token?grant_type=client_credential'
+        + `&appid=${encodeURIComponent(config.wxAppid)}`
+        + `&secret=${encodeURIComponent(config.wxAppsecret)}`,
+    });
+    const body = response.body || {};
+    if (response.statusCode !== 200 || !body.access_token) {
+      throw new Error(appAccessTokenMessage(body));
+    }
+    const expiresIn = Math.max(300, Number(body.expires_in || 7200));
+    wechatAccessTokenCache.token = body.access_token;
+    wechatAccessTokenCache.expiresAt = Date.now() + Math.max(60, expiresIn - 300) * 1000;
+    return body.access_token;
+  })();
+  try {
+    return await wechatAccessTokenCache.pending;
+  } finally {
+    wechatAccessTokenCache.pending = null;
+  }
+}
+
+async function getWechatApiCredential() {
+  const cloudbase = getWechatCloudbaseToken();
+  if (cloudbase) return { queryName: 'cloudbase_access_token', ...cloudbase };
+  return { queryName: 'access_token', token: await getWechatAppAccessToken(), source: 'app-secret' };
+}
+
+async function wechatOpenApiPost(path, payload) {
+  const { queryName, token, source: tokenSource } = await getWechatApiCredential();
+  const response = await wechatHttpsJson({
+    path: `${path}?${queryName}=${encodeURIComponent(token)}`,
+    method: 'POST', payload,
+  });
+  return { ...response, tokenSource };
 }
 
 function phoneExchangeMessage(response) {
@@ -73,19 +124,19 @@ function phoneExchangeMessage(response) {
   const code = Number(body.errcode || 0);
   if (code === 40029 || code === 40163) return '手机号授权凭证已失效或已使用，请重新点击手机号框授权';
   if ([40001, 40014, 41001, 42001].includes(code)) {
-    return '微信云托管令牌无效，请检查开放接口服务和微信令牌配置';
+    return '微信调用凭证无效，请检查 WX_APPID、WX_APPSECRET 或微信令牌配置';
   }
   if (code === 48001) return '当前小程序或云托管服务未开通获取手机号接口权限';
   if (code === -1) return '微信服务繁忙，请稍后重试';
   if (code) return `微信接口错误 ${code}: ${body.errmsg || '未知错误'}`;
   if ([301, 302, 307, 308].includes(response?.statusCode)) {
-    return '微信开放接口发生异常重定向，请检查云调用与微信令牌是否绑定到当前小程序 AppID';
+    return '微信开放接口发生异常重定向，请检查微信调用凭证配置';
   }
   if (response?.statusCode === 401 || response?.statusCode === 403) {
-    return '微信云托管开放接口未授权，请开启开放接口服务并配置 /wxa/business/getuserphonenumber 权限';
+    return '微信开放接口未授权，请检查小程序获取手机号能力和调用凭证';
   }
-  if (!response?.body) return `微信云托管开放接口返回异常（HTTP ${response?.statusCode || 0}）`;
-  return `微信云托管开放接口调用失败（HTTP ${response?.statusCode || 0}）`;
+  if (!response?.body) return `微信开放接口返回异常（HTTP ${response?.statusCode || 0}）`;
+  return `微信开放接口调用失败（HTTP ${response?.statusCode || 0}）`;
 }
 
 async function exchangeWechatPhone(code) {

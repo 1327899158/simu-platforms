@@ -43,6 +43,9 @@ const config = {
 
   // 微信小程序 AppID（用于校验 X-WX-APPID 头）
   wxAppid: process.env.WX_APPID || '',
+  // 通用 CloudBase 云托管没有微信令牌挂载时，用 AppSecret 获取官方 access_token。
+  // 仅在服务端环境变量中配置，严禁提交到代码仓库或放入小程序端。
+  wxAppsecret: process.env.WX_APPSECRET || '',
 
   // 首位管理员引导白名单。仅服务端环境变量可配置，前端 scene 参数不能授予权限。
   // 推荐优先使用 OpenID；用户需至少登录过一次普通小程序以建立 users 记录。

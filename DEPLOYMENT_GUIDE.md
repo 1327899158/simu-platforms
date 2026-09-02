@@ -27,6 +27,7 @@
 | `NODE_ENV` | `production` | 生产环境 |
 | `CLOUDBASE_ENV_ID` | `cloud1-d8gpj5gwue506a774` | 你的环境 ID |
 | `WX_APPID` | `your-wechat-miniapp-appid` | 小程序 AppID（仅在部署环境中填写，不要提交真实值） |
+| `WX_APPSECRET` | `your-wechat-miniapp-appsecret` | 通用 CloudBase 云托管换取手机号所需；仅配置在服务端环境变量，严禁提交仓库或放入小程序 |
 | `MAX_UPLOAD_MB` | `30` | 单个附件上限（MB，允许 1-100）；修改后前端自动同步 |
 | `MYSQL_ADDRESS` | `xxx.gz.cdb.tencentcdb.com:3306` | ← 从第一步复制 |
 | `MYSQL_USERNAME` | `root` | ← 从第一步复制 |

@@ -76,6 +76,7 @@ async function bootstrap() {
     console.log(JSON.stringify({
       t: new Date().toISOString(), evt: 'listening', port: config.port,
       env: config.env, cloudbaseEnv: config.cloudbaseEnv,
+      wxAppsecretConfigured: Boolean(config.wxAppsecret),
       engineerSelfVerify: config.allowEngineerSelfVerify,
       paymentMode: config.paymentMode,
       chatImageMode: 'direct-cloud-file-id',
