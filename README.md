@@ -25,7 +25,7 @@
 
 **小程序端** — 编辑 `miniapp/utils/config.js`：
 ```js
-const ENV_ID = 'cloud1-d8gh7xyw56d7c185f'; // 云开发环境 ID
+const ENV_ID = 'cloud1-d8gpj5gwue506a774'; // 云开发环境 ID
 const SERVICE_NAME = 'simu-api';  // 云托管服务名
 ```
 
@@ -33,7 +33,7 @@ const SERVICE_NAME = 'simu-api';  // 云托管服务名
 ```bash
 cd server
 # 关键配置：
-# CLOUDBASE_ENV_ID=cloud1-d8gh7xyw56d7c185f
+# CLOUDBASE_ENV_ID=cloud1-d8gpj5gwue506a774
 # WX_APPID=your-wechat-miniapp-appid
 # PAY_AMOUNT_OVERRIDE_FEN=1   （演示价：实付 0.01 元）
 ```
@@ -102,7 +102,7 @@ npm run dev
 | `NODE_ENV` | `production` |
 | `CLOUDBASE_ENV_ID` | 云开发环境 ID |
 | `WX_APPID` | 小程序 AppID |
-| `WXPAY_NOTIFY_URL` | `http://simu-api.cloud1-d8gh7xyw56d7c185f.wxcloudrun/api/pay/notify` |
+| `WXPAY_NOTIFY_URL` | `http://simu-api.cloud1-d8gpj5gwue506a774.wxcloudrun/api/pay/notify` |
 | `PAY_TIMEOUT_SEC` | `1800` |
 
 > `MYSQL_ADDRESS/USERNAME/PASSWORD/DATABASE` 由平台自动注入，无需配置。
@@ -112,8 +112,8 @@ npm run dev
 ```bash
 npm install -g @cloudbase/cli
 tcb login
-tcb fn deploy pay-timeout-sweep --env cloud1-d8gh7xyw56d7c185f --root cloudfunctions
-tcb fn deploy auto-complete-orders --env cloud1-d8gh7xyw56d7c185f --root cloudfunctions
+tcb fn deploy pay-timeout-sweep --env cloud1-d8gpj5gwue506a774 --root cloudfunctions
+tcb fn deploy auto-complete-orders --env cloud1-d8gpj5gwue506a774 --root cloudfunctions
 ```
 
 在控制台为两个函数配置触发器：

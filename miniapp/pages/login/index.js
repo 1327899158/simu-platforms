@@ -31,10 +31,12 @@ Page({
     smsCountdown: 0,
     smsSending: false,
 
-    // 资料完善（微信登录后如果没昵称则显示）
+    // 资料完善（任一登录方式首次建档、尚未设置昵称时显示）
     needProfile: false,
     tempAvatarPath: '',   // chooseAvatar 返回的临时路径
     nickname: '',
+    profileReviewPending: false,
+    profileSuccessTitle: '登录成功',
   },
 
   onLoad() {
@@ -91,6 +93,55 @@ Page({
     return this.confirmAgreement();
   },
 
+  showPendingReviewAndEnter(title = '登录成功') {
+    const enterHome = () => wx.switchTab({ url: '/pages/home/index' });
+    wx.showModal({
+      title,
+      content: '身份认证正在审核，审核通过后即可使用完整功能。',
+      showCancel: false,
+      confirmText: '确定',
+      success: (result) => {
+        if (result.confirm) enterHome();
+      },
+      fail: enterHome,
+    });
+  },
+
+  needsProfile(user) {
+    const nickname = String((user && user.nickname) || '').trim();
+    return !nickname || nickname === '仿真客户' || nickname === '仿真工程师';
+  },
+
+  handleAuthenticatedUser(user, successTitle = '登录成功') {
+    this.setData({ loading: false });
+    if (this.needsProfile(user)) {
+      this.setData({
+        needProfile: true,
+        tempAvatarPath: '',
+        nickname: '',
+        profileReviewPending: !!(user && user.verifyStatus === 'PENDING'),
+        profileSuccessTitle: successTitle,
+      });
+      wx.showToast({ title: '请完善资料', icon: 'none' });
+      return;
+    }
+    if (user && user.verifyStatus === 'PENDING') {
+      this.showPendingReviewAndEnter(successTitle);
+      return;
+    }
+    wx.showToast({ title: successTitle, icon: 'success' });
+    setTimeout(() => wx.switchTab({ url: '/pages/home/index' }), 800);
+  },
+
+  finishProfileSetup(successMessage) {
+    if (this.data.profileReviewPending) {
+      this.showPendingReviewAndEnter(this.data.profileSuccessTitle || '登录成功');
+      return;
+    }
+    wx.showToast({ title: successMessage, icon: 'success' });
+    setTimeout(() => wx.switchTab({ url: '/pages/home/index' }), 500);
+  },
+
   // ========== 微信登录 ==========
   async wxLogin() {
     if (!this.data.role) {
@@ -103,15 +154,7 @@ Page({
       wx.showLoading({ title: '登录中…', mask: true });
       const user = await login(this.data.role);
       wx.hideLoading();
-      // 检查是否已有昵称
-      if (!user.nickname || user.nickname === '仿真客户' || user.nickname === '仿真工程师') {
-        this.setData({ needProfile: true, loading: false });
-        wx.showToast({ title: '请完善资料', icon: 'none' });
-      } else {
-        wx.showToast({ title: '登录成功', icon: 'success' });
-        setTimeout(() => wx.switchTab({ url: '/pages/home/index' }), 800);
-        this.setData({ loading: false });
-      }
+      this.handleAuthenticatedUser(user, '登录成功');
     } catch (e) {
       wx.hideLoading();
       wx.showToast({ title: e.message || '登录失败', icon: 'none' });
@@ -157,8 +200,7 @@ Page({
       });
       saveUser(updated);
       wx.hideLoading();
-      wx.showToast({ title: '资料已保存', icon: 'success' });
-      setTimeout(() => wx.switchTab({ url: '/pages/home/index' }), 800);
+      this.finishProfileSetup('资料已保存');
     } catch (e) {
       wx.hideLoading();
       wx.showToast({ title: e.message || '保存失败', icon: 'none' });
@@ -167,8 +209,7 @@ Page({
   },
 
   skipProfile() {
-    wx.showToast({ title: '登录成功', icon: 'success' });
-    setTimeout(() => wx.switchTab({ url: '/pages/home/index' }), 500);
+    this.finishProfileSetup(this.data.profileSuccessTitle || '登录成功');
   },
 
   // ========== 账号密码 ==========
@@ -191,13 +232,7 @@ Page({
       wx.showLoading({ title: '登录中…', mask: true });
       const loggedIn = await loginByUsername(this.data.username, this.data.password);
       wx.hideLoading();
-      if (loggedIn && loggedIn.verifyStatus === 'PENDING') {
-        wx.showModal({ title: '登录成功', content: '身份认证正在审核，审核通过后即可报价。', showCancel: false });
-        this.setData({ loading: false });
-        return;
-      }
-      wx.showToast({ title: '登录成功', icon: 'success' });
-      setTimeout(() => wx.switchTab({ url: '/pages/home/index' }), 800);
+      this.handleAuthenticatedUser(loggedIn, '登录成功');
     } catch (e) {
       wx.hideLoading();
       wx.showToast({ title: e.message || '登录失败', icon: 'none' });
@@ -222,14 +257,7 @@ Page({
       wx.showLoading({ title: '注册中…', mask: true });
       const registered = await registerByPhone(this.data.username, this.data.phone, this.data.password, this.data.smsCode, this.data.role || 'customer');
       wx.hideLoading();
-      if (registered && registered.verifyStatus === 'PENDING') {
-        wx.showModal({ title: '注册成功', content: '身份认证正在审核，审核通过后即可报价。', showCancel: false });
-        this.setData({ loading: false });
-        return;
-      } else {
-        wx.showToast({ title: '注册成功', icon: 'success' });
-      }
-      setTimeout(() => wx.switchTab({ url: '/pages/home/index' }), 800);
+      this.handleAuthenticatedUser(registered, '注册成功');
     } catch (e) {
       wx.hideLoading();
       wx.showToast({ title: e.message || '注册失败', icon: 'none' });
@@ -310,13 +338,7 @@ Page({
       wx.showLoading({ title: '登录中…', mask: true });
       const loggedIn = await loginByPhone(this.data.phone, this.data.smsCode, this.data.role || 'customer');
       wx.hideLoading();
-      if (loggedIn && loggedIn.verifyStatus === 'PENDING') {
-        wx.showModal({ title: '登录成功', content: '身份认证正在审核，审核通过后即可报价。', showCancel: false });
-        this.setData({ loading: false });
-        return;
-      }
-      wx.showToast({ title: '登录成功', icon: 'success' });
-      setTimeout(() => wx.switchTab({ url: '/pages/home/index' }), 800);
+      this.handleAuthenticatedUser(loggedIn, '登录成功');
     } catch (e) {
       wx.hideLoading();
       wx.showToast({ title: e.message || '登录失败', icon: 'none' });

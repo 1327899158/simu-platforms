@@ -112,7 +112,7 @@
     </view>
 
     <!-- 手机号登录：第一步输入手机号 -->
-    <view class="form-container phone-login-card" wx:if="{{tab === 'phone' && phoneStep === 'phone'}}">
+    <view class="form-container phone-login-card" wx:if="{{!needProfile && tab === 'phone' && phoneStep === 'phone'}}">
       <text class="login-heading">登录后，体验完整功能</text>
       <text class="login-desc">未注册的手机号验证通过后将自动创建账号</text>
 
@@ -142,7 +142,7 @@
     </view>
 
     <!-- 手机号登录：第二步输入验证码 -->
-    <view class="form-container phone-login-card verification-card" wx:if="{{tab === 'phone' && phoneStep === 'code'}}">
+    <view class="form-container phone-login-card verification-card" wx:if="{{!needProfile && tab === 'phone' && phoneStep === 'code'}}">
       <view class="back-link" bindtap="switchPhoneStep">‹ 返回修改手机号</view>
       <text class="login-heading">输入验证码</text>
       <text class="login-desc">验证码已发送至 +86 {{phone}}</text>
@@ -156,7 +156,7 @@
     </view>
 
     <!-- 账号密码登录 / 注册 -->
-    <view class="form-container account-login-card" wx:if="{{tab === 'phone' && phoneStep === 'account'}}">
+    <view class="form-container account-login-card" wx:if="{{!needProfile && tab === 'phone' && phoneStep === 'account'}}">
       <view class="back-link" bindtap="switchPhoneLogin">‹ 手机号验证码登录</view>
       <text class="login-heading">{{isRegister ? '创建账号' : '账号密码登录'}}</text>
       <text class="login-desc">{{isRegister ? '使用手机号验证完成账号注册' : '输入用户名和密码继续'}}</text>
@@ -203,8 +203,8 @@
       <button class="guest-entry" bindtap="goGuestMarket">以游客身份浏览接单大厅</button>
     </view>
 
-    <!-- 微信登录后资料完善 -->
-    <view class="form-container wechat-login-card" wx:if="{{tab === 'wechat' && needProfile}}">
+    <!-- 任一登录方式首次建档后的资料完善 -->
+    <view class="form-container wechat-login-card" wx:if="{{needProfile}}">
       <view class="profile-setup">
         <text class="login-heading">完善个人资料</text>
         <text class="login-desc">选择头像并输入昵称，其他用户将看到这些信息</text>

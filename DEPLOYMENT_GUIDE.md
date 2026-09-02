@@ -1,10 +1,10 @@
 # 云开发部署完整指南
 
-你的环境 ID 已经配好了：`cloud1-d8gh7xyw56d7c185f`
+你的环境 ID 已经配好了：`cloud1-d8gpj5gwue506a774`
 
 ## 第一步：云开发控制台 → 开通 MySQL
 
-1. 打开 https://console.cloud.tencent.com/tcb → 切到环境 `cloud1-d8gh7xyw56d7c185f`
+1. 打开 https://console.cloud.tencent.com/tcb → 切到环境 `cloud1-d8gpj5gwue506a774`
 2. 左侧 **数据库** → 选择 **MySQL** → 点 **开通**
 3. 选择配置（默认 Serverless 即可）
 4. 开通成功后，进入 **MySQL 管理界面**，记录以下信息：
@@ -25,14 +25,14 @@
 | 变量名 | 值 | 说明 |
 |-------|----|----|
 | `NODE_ENV` | `production` | 生产环境 |
-| `CLOUDBASE_ENV_ID` | `cloud1-d8gh7xyw56d7c185f` | 你的环境 ID |
+| `CLOUDBASE_ENV_ID` | `cloud1-d8gpj5gwue506a774` | 你的环境 ID |
 | `WX_APPID` | `your-wechat-miniapp-appid` | 小程序 AppID（仅在部署环境中填写，不要提交真实值） |
 | `MAX_UPLOAD_MB` | `30` | 单个附件上限（MB，允许 1-100）；修改后前端自动同步 |
 | `MYSQL_ADDRESS` | `xxx.gz.cdb.tencentcdb.com:3306` | ← 从第一步复制 |
 | `MYSQL_USERNAME` | `root` | ← 从第一步复制 |
 | `MYSQL_PASSWORD` | `**your-password**` | ← 从第一步复制 |
 | `MYSQL_DATABASE` | `simu` | 保持不变 |
-| `WXPAY_NOTIFY_URL` | `http://simu-api.cloud1-d8gh7xyw56d7c185f.wxcloudrun/api/pay/notify` | 支付回调地址 |
+| `WXPAY_NOTIFY_URL` | `http://simu-api.cloud1-d8gpj5gwue506a774.wxcloudrun/api/pay/notify` | 支付回调地址 |
 | `PAY_TIMEOUT_SEC` | `1800` | 支付超时（秒） |
 | `PAY_AMOUNT_OVERRIDE_FEN` | ~~`1`~~ | **生产环境一定要删除或留空**！否则所有订单只能实付 0.01 元 |
 
@@ -103,7 +103,7 @@ cd cloudfunctions/pay-timeout-sweep
 npm install
 cd ..
 
-tcb fn deploy pay-timeout-sweep --env cloud1-d8gh7xyw56d7c185f --root .
+tcb fn deploy pay-timeout-sweep --env cloud1-d8gpj5gwue506a774 --root .
 ```
 
 ### 4.3 部署自动完成函数
@@ -113,7 +113,7 @@ cd auto-complete-orders
 npm install
 cd ..
 
-tcb fn deploy auto-complete-orders --env cloud1-d8gh7xyw56d7c185f --root .
+tcb fn deploy auto-complete-orders --env cloud1-d8gpj5gwue506a774 --root .
 ```
 
 ### 4.4 配置定时触发器
@@ -185,9 +185,9 @@ tcb fn deploy auto-complete-orders --env cloud1-d8gh7xyw56d7c185f --root .
 
 ```bash
 # 获取云托管地址
-# 格式：http://simu-api.cloud1-d8gh7xyw56d7c185f.wxcloudrun
+# 格式：http://simu-api.cloud1-d8gpj5gwue506a774.wxcloudrun
 
-curl http://simu-api.cloud1-d8gh7xyw56d7c185f.wxcloudrun/api/health
+curl http://simu-api.cloud1-d8gpj5gwue506a774.wxcloudrun/api/health
 ```
 
 返回 `{"code":0,"data":{"ok":true}}` 即成功。
@@ -230,7 +230,7 @@ curl http://simu-api.cloud1-d8gh7xyw56d7c185f.wxcloudrun/api/health
 
 **A:**
 1. 确认 `miniapp/utils/config.js` 的 `ENV_ID` 正确
-2. 打开微信开发者工具 → 云开发，确认能正常访问（环境列表中有 `cloud1-d8gh7xyw56d7c185f`）
+2. 打开微信开发者工具 → 云开发，确认能正常访问（环境列表中有 `cloud1-d8gpj5gwue506a774`）
 3. 检查小程序 AppID 是否与云开发环境 AppID 一致
 
 ### Q: 聊天消息不实时（轮询延迟较大）
@@ -243,7 +243,7 @@ curl http://simu-api.cloud1-d8gh7xyw56d7c185f.wxcloudrun/api/health
 ### Q: 支付没有回调（订单卡在 AWAITING_PAYMENT）
 
 **A:**
-1. 确认 `WXPAY_NOTIFY_URL` 正确：`http://simu-api.cloud1-d8gh7xyw56d7c185f.wxcloudrun/api/pay/notify`
+1. 确认 `WXPAY_NOTIFY_URL` 正确：`http://simu-api.cloud1-d8gpj5gwue506a774.wxcloudrun/api/pay/notify`
 2. 微信支付控制台 → 检查商户号是否已绑定 AppID
 3. 云托管日志中有无 `POST /api/pay/notify` 的记录？如有 5xx，说明后端处理失败
 

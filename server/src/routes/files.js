@@ -23,15 +23,28 @@ const KINDS = ['MODEL', 'DOC', 'IMAGE', 'RESULT'];
 const MAX_UPLOAD_BYTES = config.uploadMaxBytes;
 const MAX_ENGINEER_VERIFICATION_FILES = 10;
 
-function assertCloudFileId(fileID) {
+function assertCloudFileId(fileID, expectedEnv = config.cloudbaseEnv) {
   if (typeof fileID !== 'string' || !fileID.startsWith('cloud://')) {
     throw err.bad('fileID 格式不合法，请使用云存储上传');
   }
   const authority = fileID.slice('cloud://'.length).split('/')[0];
   const fileEnv = authority.split('.')[0];
-  if (config.cloudbaseEnv && fileEnv !== config.cloudbaseEnv) {
+  if (expectedEnv && fileEnv !== expectedEnv) {
     throw err.bad('fileID 不属于当前云开发环境');
   }
+}
+
+function requestCloudEnv(req) {
+  const gatewayEnv = String(req?.headers?.['x-wx-env'] || '').trim();
+  if (gatewayEnv && config.cloudbaseEnv && gatewayEnv !== config.cloudbaseEnv) {
+    console.warn(JSON.stringify({
+      t: new Date().toISOString(),
+      evt: 'cloud-env-config-mismatch',
+      configuredEnv: config.cloudbaseEnv,
+      requestEnv: gatewayEnv,
+    }));
+  }
+  return gatewayEnv || config.cloudbaseEnv;
 }
 
 async function assertOrderUploadAccess(user, orderId) {
@@ -46,8 +59,8 @@ async function assertOrderUploadAccess(user, orderId) {
   }
 }
 
-async function saveFileRecord(user, { fileID, name, kind, orderId, sizeBytes, mime }) {
-  assertCloudFileId(fileID);
+async function saveFileRecord(req, user, { fileID, name, kind, orderId, sizeBytes, mime }) {
+  assertCloudFileId(fileID, requestCloudEnv(req));
   // 文件已经由当前小程序通过 wx.cloud.uploadFile 直传成功。这里只验证
   // CloudBase 环境和业务权限，避免云托管后端访问内部凭据服务而长时间阻塞。
   await assertOrderUploadAccess(user, orderId);
@@ -208,7 +221,7 @@ function register(router) {
     let uploaded;
     try {
       uploaded = await getStorage().uploadFile({ cloudPath, fileContent: file.data });
-      ok(res, await saveFileRecord(user, {
+      ok(res, await saveFileRecord(req, user, {
         fileID: uploaded.fileID, name, kind, orderId,
         sizeBytes: file.data.length, mime: file.contentType || '',
       }));
@@ -237,7 +250,7 @@ function register(router) {
       throw err.bad(`单个文件不能超过 ${config.uploadMaxMb}MB`);
     }
 
-    ok(res, await saveFileRecord(user, { fileID, name, kind, orderId, sizeBytes, mime }));
+    ok(res, await saveFileRecord(req, user, { fileID, name, kind, orderId, sizeBytes, mime }));
   });
 
   // 身份认证材料：文件先按普通无订单附件提交，再通过关系表关联到工程师。
@@ -417,4 +430,4 @@ function register(router) {
   });
 }
 
-module.exports = { register, canReadFile };
+module.exports = { register, canReadFile, assertCloudFileId, requestCloudEnv };
