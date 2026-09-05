@@ -49,6 +49,7 @@ function verifyView(user) {
 }
 
 Page({
+  goLevel() { wx.navigateTo({url:'/pages/engineer-level/index'}); },
   data: { user: null, roleText: '', roleBadgeText: '客户', qualificationHint: '', verifyStatus: 'UNAPPLIED', verifyText: '未申请', showSelfVerify: true, selfVerifyLoading: false },
   async onShow() {
     // 先用缓存快速渲染（缓存里已是绝对路径，可直接显示）
@@ -60,6 +61,11 @@ Page({
     // 后台刷新最新数据
     try {
       const fresh = await request('GET', '/me');
+      if(fresh.role==='ENGINEER') {
+        request('GET','/engineers/level',null,{silent:true})
+          .then(level => this.setData({engineerLevel:level.current}))
+          .catch(() => this.setData({engineerLevel:null}));
+      }
       const resolved = resolveAvatar(fresh);
       wx.setStorageSync('user', resolved);   // 存绝对路径，下次启动可直接用
       this.setData({ user: resolved, roleText: resolved.role === 'ENGINEER' ? '工程师' : '客户', ...verifyView(resolved) });

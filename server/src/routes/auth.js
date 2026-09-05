@@ -284,6 +284,7 @@ function register(router) {
 
     if (body.engineer && user.role === 'ENGINEER') {
       const e = body.engineer;
+      if(e.specialties && (!Array.isArray(e.specialties) || e.specialties.some(x=>!require('./dicts').DICTS.directions.includes(x)))) throw err.bad('请从专业方向列表中选择');
       await query(
         `UPDATE engineer_profiles SET
            realName    = COALESCE(?, realName),

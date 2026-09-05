@@ -5,6 +5,7 @@ const { newId, nowIso, v } = require('../lib/util');
 const { query, queryOne, tx, parseJson } = require('../db');
 const { requireUser, requireEngineer } = require('../lib/auth-mw');
 const { DICTS } = require('./dicts');
+const { getLevel } = require('../services/engineer-level');
 
 const quoteView = (qt, extra = {}) => ({
   id: qt.id,
@@ -181,6 +182,7 @@ function register(router) {
         isMine: user.role === 'ENGINEER' && qt.engineerId === user.id,
         engineer: {
           id: qt.engineerId,
+          level: await getLevel(qt.engineerId),
           nickname: qt.nickname,
           avatarUrl: qt.avatarUrl,
           specialties: prof ? parseJson(prof.specialties) : [],
@@ -190,6 +192,7 @@ function register(router) {
         },
       });
     }));
+    result.sort((a, b) => b.engineer.level.weight - a.engineer.level.weight);
     ok(res, result);
   });
 }

@@ -11,6 +11,7 @@ Page({
       const admin = await loadAdmin();
       const stats = await request('GET', '/admin/dashboard', null, { silent: true });
       const definitions = [
+        { key:'campaigns',title:'首页活动管理',desc:'编辑轮播与活动规则',path:'/admin/pages/campaigns/index',permission:'CAMPAIGN_MANAGE' },
         { key: 'users', title: '用户管理', desc: '查看账号与状态', path: '/admin/pages/users/index', permission: 'USER_READ' },
         { key: 'engineers', title: '身份认证审核', desc: '审核用户身份认证', path: '/admin/pages/engineers/index', permission: 'ENGINEER_READ', count: stats.engineerReviews.pending },
         { key: 'orders', title: '订单管理', desc: '查看平台全部订单', path: '/admin/pages/orders/index', permission: 'ORDER_READ' },

@@ -22,6 +22,10 @@ async function myConversation(user, convId) {
 }
 
 async function conversationSendAccess(c) {
+  if (!c.orderId && c.directKey) {
+    const active = await queryOne("SELECT COUNT(*) AS count FROM users WHERE id IN (?,?) AND status='ACTIVE' AND deletedAt IS NULL", [c.customerId,c.engineerId]);
+    return { canSend: Number(active.count)===2, reason: Number(active.count)===2?'':'对方账号不可用' };
+  }
   const state = await queryOne(
     `SELECT o.status AS orderStatus, o.deletedAt,
             selected.engineerId AS selectedEngineerId,
@@ -45,6 +49,17 @@ async function conversationSendAccess(c) {
 }
 
 function register(router) {
+  router.post('/api/engineers/:id/conversation', async(req,res,params)=>{
+    const user=await requireUser(req);
+    if(user.role!=='CUSTOMER'||user.id===params.id) throw err.forbidden('仅客户可发起工程师咨询');
+    const target=await queryOne("SELECT u.id FROM users u JOIN identity_verifications iv ON iv.userId=u.id WHERE u.id=? AND u.role='ENGINEER' AND u.status='ACTIVE' AND u.deletedAt IS NULL AND iv.verifyStatus='APPROVED'",[params.id]);
+    if(!target) throw err.notFound('工程师不可用');
+    const key=`${user.id}:${target.id}`,now=nowIso();
+    const inserted = await query('INSERT IGNORE INTO conversations(id,orderId,customerId,engineerId,lastMsgAt,createdAt,directKey) VALUES(?,NULL,?,?,?,?,?)',[newId(),user.id,target.id,now,now,key]);
+    const c=await queryOne('SELECT * FROM conversations WHERE directKey=?',[key]);
+    if (inserted.affectedRows) publishConversationDoc(c);
+    ok(res,{id:c.id});
+  });
   // GET /api/conversations —— 我的会话列表（含未读数与最后一条消息）
   router.get('/api/conversations', async (req, res) => {
     const user = await requireUser(req);
@@ -218,7 +233,7 @@ function register(router) {
     // 1) MySQL 主写（同步，快）
     const now = nowIso();
     const msgId = await tx(async (conn) => {
-      if (attachedFile && !attachedFile.orderId) {
+      if (attachedFile && !attachedFile.orderId && c.orderId) {
         const [linked] = await conn.execute(
           `UPDATE uploaded_files SET orderId = ? WHERE id = ? AND uploaderId = ? AND orderId IS NULL`,
           [c.orderId, fileId, user.id]
@@ -229,7 +244,7 @@ function register(router) {
            VALUES(?, ?, ?, 'CHAT', ?)`,
           [c.orderId, fileId, user.id, now]
         );
-      } else if (attachedFile) {
+      } else if (attachedFile && c.orderId) {
         // 升级前已经挂到同一订单、但尚未建立关系记录的聊天文件在此补齐。
         // 若它本来就是需求/成果附件，唯一键会保留原有 purpose。
         await conn.execute(

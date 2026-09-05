@@ -104,6 +104,8 @@ async function canReadFile(user, file) {
   // 无订单关联的文件：先判断是否为纠纷证据（仅当事人/管理员可读），
   // 避免通用 IMAGE 规则把纠纷证据泄漏给所有登录用户。
   if (!file.orderId) {
+    const chats = await query(`SELECT c.customerId,c.engineerId FROM messages m JOIN conversations c ON c.id=m.convId WHERE m.fileId=?`,[file.id]);
+    if(chats.length) return chats.some(c=>c.customerId===user.id||c.engineerId===user.id);
     if (await canReadDisputeEvidence(user, file)) return true;
     const refundAccess = await refundRequestFileAccess(user, file);
     if (refundAccess !== null) return refundAccess;

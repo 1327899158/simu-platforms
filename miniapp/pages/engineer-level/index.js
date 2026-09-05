@@ -1,0 +1,1 @@
+const {request}=require('../../utils/request');Page({data:{current:null,levels:[]},async onShow(){try{const d=await request('GET','/engineers/level');this.setData({...d,positiveText:d.current.positiveRate===null?'暂无评价':d.current.positiveRate.toFixed(2)+'%',disputeText:d.current.disputeRate.toFixed(2)+'%'});}catch(_){}}});

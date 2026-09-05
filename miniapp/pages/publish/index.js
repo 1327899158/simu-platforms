@@ -82,7 +82,7 @@ Page({
     agreed: false,
     submitting: false,
   },
-  async onLoad() {
+  async onLoad(options = {}) {
     let user = ensureLogin();
     if (!user) return;
     this._userId = user.id;
@@ -107,6 +107,8 @@ Page({
         directionTags: (draft.directionTags || []).filter((item) => item !== '其他'),
       });
     }
+    if(options.estimateBudget && !draft) this.setData({budgetYuan:String(options.estimateBudget),directionTags:options.estimateDirection?[options.estimateDirection]:[]});
+    else if(options.estimateBudget && draft) wx.showToast({title:'已保留原有草稿预算',icon:'none'});
     try {
       const dicts = await request('GET', '/dicts');
       const limits = dicts.limits || {};

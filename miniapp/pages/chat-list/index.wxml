@@ -19,9 +19,10 @@
           <text class="conv-name">{{item.peer.nickname}}</text>
           <text class="conv-time">{{item.time}}</text>
         </view>
-        <view class="conv-order" catchtap="goOrder" data-oid="{{item.orderId}}" data-role="{{role}}">
+        <view wx:if="{{item.orderId}}" class="conv-order" catchtap="goOrder" data-oid="{{item.orderId}}" data-role="{{role}}">
           📋 {{item.order.projectName}} ›
         </view>
+        <view wx:else class="conv-order">💬 项目咨询</view>
         <view class="conv-bottom">
           <text class="conv-last-msg">{{item.lastText}}</text>
           <view class="unread-dot" wx:if="{{item.unread}}">{{item.unread > 99 ? '99+' : item.unread}}</view>

@@ -1,0 +1,2 @@
+const {request}=require('../../utils/request');
+Page({data:{campaign:null},async onLoad(q){try{const rows=await request('GET','/home/campaigns');this.setData({campaign:rows.find(x=>x.id===q.id)||null});}catch(_){}},go(){if(!this.data.campaign)return;wx.navigateTo({url:this.data.campaign.action==='ORDERS'?'/pages/orders/index':'/pages/publish/index'});},onShareAppMessage(){return{title:this.data.campaign?.title||'邀请你体验仿真服务平台',path:'/pages/guest-home/index'};}});

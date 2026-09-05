@@ -28,8 +28,7 @@
     </view>
     <view class="form-group">
       <label>专业方向</label>
-      <input type="text" maxlength="500" value="{{specialtiesStr}}" bindinput="inputSpecialties"
-        placeholder="多个方向用逗号分隔，如：结构分析，热分析" />
+      <checkbox-group bindchange="inputSpecialties"><label wx:for="{{specialtyOptions}}" wx:key="value" style="display:inline-block;padding:16rpx"><checkbox value="{{item.value}}" checked="{{item.checked}}"/>{{item.value}}</label></checkbox-group>
     </view>
     <view class="form-group">
       <label>擅长软件</label>

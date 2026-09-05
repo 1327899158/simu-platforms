@@ -25,6 +25,7 @@ require('./routes/auth-multi').register(router);  // 新增：多种登录方式
 require('./routes/dicts').register(router);
 require('./routes/files').register(router);
 require('./routes/identity').register(router);
+require('./routes/home').register(router);
 require('./routes/orders').register(router);
 require('./routes/market').register(router);
 require('./routes/quotes').register(router);
@@ -72,6 +73,7 @@ const server = http.createServer(async (req, res) => {
 async function bootstrap() {
   // 初始化数据库（建表）
   await dbInit();
+  await require('./services/home-migration')(require('./db').query);
   server.listen(config.port, '0.0.0.0', () => {
     console.log(JSON.stringify({
       t: new Date().toISOString(), evt: 'listening', port: config.port,

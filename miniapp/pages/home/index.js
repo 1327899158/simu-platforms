@@ -15,6 +15,7 @@ Page({
     unreadOrderCount: 0,
     // 工程师
     hall: [],
+    campaigns: [], notices: [], engineers: [], categories: [],
   },
   async onShow() {
     let user = ensureLogin();
@@ -36,12 +37,33 @@ Page({
       else this.setData({ hall: [] });
     } else {
       this.loadCustomer();
+      this.loadDiscovery();
+      clearInterval(this._noticeTimer);
+      this._noticeTimer = setInterval(() => this.loadNotices(), 15000);
     }
+  },
+  onHide() { clearInterval(this._noticeTimer); },
+  onUnload() { clearInterval(this._noticeTimer); },
+  async loadNotices() {
+    try { this.setData({ notices: await request('GET','/home/notices',null,{silent:true}) }); } catch (_) {}
+  },
+  async loadDiscovery() {
+    this.loadNotices();
+    try {
+      const [campaigns,directory] = await Promise.all([request('GET','/home/campaigns'),request('GET','/home/engineers')]);
+      this.setData({ campaigns, categories:directory.categories, engineers:directory.items.slice(0,4).map(x=>({...x,positiveText:x.level.positiveRate===null?'暂无评价':x.level.positiveRate.toFixed(1)+'%'})) });
+    } catch (_) {}
+  },
+  openCampaign(e) { wx.navigateTo({url:'/pages/activity/index?id='+e.currentTarget.dataset.id}); },
+  goEstimate() { wx.navigateTo({url:'/pages/estimate/index'}); },
+  goEngineers(e) { wx.navigateTo({url:'/pages/engineer-directory/index?direction='+encodeURIComponent(e.currentTarget.dataset.direction||'')}); },
+  async contactEngineer(e) {
+    try { const c=await request('POST',`/engineers/${e.currentTarget.dataset.id}/conversation`,{}); wx.navigateTo({url:'/pages/chat-room/index?id='+c.id}); } catch (_) {}
   },
   onPullDownRefresh() {
     const p = this.data.role === 'ENGINEER'
       ? (this.data.canTakeOrders ? this.loadHall() : Promise.resolve())
-      : this.loadCustomer();
+      : Promise.all([this.loadCustomer(), this.loadDiscovery()]);
     p.finally(() => wx.stopPullDownRefresh());
   },
 

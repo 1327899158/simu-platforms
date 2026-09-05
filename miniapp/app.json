@@ -1,6 +1,10 @@
 {
   "pages": [
     "pages/home/index",
+    "pages/estimate/index",
+    "pages/activity/index",
+    "pages/engineer-directory/index",
+    "pages/engineer-level/index",
     "pages/market/index",
     "pages/guest-home/index",
     "pages/guest-market/index",
@@ -34,6 +38,7 @@
       "pages": [
         "pages/gate/index",
         "pages/dashboard/index",
+        "pages/campaigns/index",
         "pages/users/index",
         "pages/user-detail/index",
         "pages/engineers/index",

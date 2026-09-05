@@ -7,6 +7,10 @@
       <view class="hero-greet">你好，<text class="hl">{{user.nickname || '客户'}}</text></view>
     </view>
 
+    <swiper class="campaign-swiper" indicator-dots autoplay circular wx:if="{{campaigns.length}}">
+      <swiper-item wx:for="{{campaigns}}" wx:key="id"><view class="campaign-banner" data-id="{{item.id}}" bindtap="openCampaign"><text class="campaign-kicker">限时活动 · 查看详情 ›</text><text class="campaign-title">{{item.title}}</text><text>{{item.subtitle}}</text></view></swiper-item>
+    </swiper>
+    <view class="home-notice" wx:for="{{notices}}" wx:key="id" data-id="{{item.id}}" bindtap="openMine">🔔 {{item.text}}<text class="notice-project">{{item.projectName}} ›</text></view>
     <view class="tile-grid">
       <view class="tile" bindtap="goPublish" hover-class="tile-hover" hover-stay-time="80">
         <text class="tile-icon">📝</text>
@@ -56,6 +60,12 @@
       </view>
     </view>
 
+    <view class="estimate-entry" bindtap="goEstimate"><text class="campaign-title">💡 不确定预算？先快速预估项目费用</text><text>10秒了解市场行情价，发布需求更精准</text><text class="estimate-cta">开始预估 ›</text></view>
+    <view class="sec-title">服务分类</view>
+    <view class="category-grid"><view class="category-chip" bindtap="goEngineers">全部方向 ›</view><view class="category-chip" wx:for="{{categories}}" wx:key="*this" data-direction="{{item}}" bindtap="goEngineers">{{item}}</view></view>
+    <view class="lc-head"><text class="sec-title">推荐工程师</text><text bindtap="goEngineers">查看全部 ›</text></view>
+    <view class="recommended-card" wx:for="{{engineers}}" wx:key="id"><image wx:if="{{item.avatarUrl}}" src="{{item.avatarUrl}}" mode="aspectFill"/><view class="engineer-copy"><text class="campaign-title">{{item.nickname || '工程师'}}</text><text>{{item.level.icon}} {{item.level.name}} · 好评率 {{item.positiveText}}</text><view><text wx:for="{{item.specialties}}" wx:for-item="tag" wx:key="*this" class="tag">{{tag}}</text></view></view><button size="mini" data-id="{{item.id}}" bindtap="contactEngineer">发起沟通</button></view>
+    <view wx:if="{{!engineers.length}}" class="empty-state">暂无已认证工程师</view>
     <view class="sec-title">我的需求</view>
     <view class="list-card req-card" wx:for="{{recent}}" wx:key="id" data-id="{{item.id}}"
       bindtap="openMine" hover-class="card-press" hover-stay-time="80">

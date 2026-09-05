@@ -10,6 +10,7 @@ Page({
     realName: '',
     intro: '',
     specialties: [],
+    specialtyOptions: [],
     softwares: [],
     specialtiesStr: '',
     softwaresStr: '',
@@ -21,6 +22,10 @@ Page({
   onLoad() {
     const user = ensureLogin();
     if (!user) return;
+    request('GET','/dicts').then(d => this.setData({
+      specialtyOptions: d.directions.map(value => ({value,checked:this.data.specialties.includes(value)})),
+      specialties: this.data.specialties.filter(value => d.directions.includes(value)),
+    })).catch(() => {});
     const specialties = parseJson(user.engineer?.specialties) || [];
     const softwares = parseJson(user.engineer?.softwares) || [];
     this.setData({
@@ -58,10 +63,8 @@ Page({
   inputRealName(e) { this.setData({ realName: e.detail.value }); },
   inputIntro(e) { this.setData({ intro: e.detail.value }); },
   inputSpecialties(e) {
-    const str = e.detail.value;
     this.setData({
-      specialtiesStr: str,
-      specialties: str.split(/[，,\s]+/).map(x => x.trim()).filter(x => x),
+      specialties: e.detail.value,
     });
   },
   inputSoftwares(e) {

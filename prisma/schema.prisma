@@ -105,6 +105,11 @@ model EngineerProfile {
   specialties  Json // ["结构分析","流体分析"]
   softwares    Json // ["ANSYS全系列"]
   intro        String?      @db.Text
+  levelKey             String   @default("UNQUALIFIED") @db.VarChar(24)
+  completedOrderCount  Int      @default(0)
+  positiveReviewRate   Decimal? @db.Decimal(8, 4)
+  disputeRate          Decimal  @default(0) @db.Decimal(8, 4)
+  levelUpdatedAt       DateTime? @db.DateTime(3)
   verifyStatus VerifyStatus @default(PENDING)
   user         User         @relation(fields: [userId], references: [id])
 }
@@ -213,9 +218,23 @@ model OrderAttachment {
   @@map("order_attachments")
 }
 
+model HomeCampaign {
+  id        String @id @db.VarChar(32)
+  title     String @db.VarChar(120)
+  subtitle  String @db.VarChar(240)
+  content   String @db.Text
+  action    String @db.VarChar(20)
+  enabled   Int @default(1) @db.TinyInt
+  sortOrder Int @default(0)
+  updatedAt DateTime @db.DateTime(3)
+
+  @@map("home_campaigns")
+}
+
 model Conversation {
   id         String    @id @default(cuid())
-  orderId    String
+  orderId    String?
+  directKey  String?   @unique @db.VarChar(70)
   customerId String
   engineerId String
   lastMsgAt  DateTime  @default(now())
