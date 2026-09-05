@@ -9,7 +9,9 @@ module.exports = async function migrate(query) {
   for (const row of defaults) await query(`INSERT IGNORE INTO home_campaigns(id,title,subtitle,content,action,sortOrder,updatedAt) VALUES(?,?,?,?,?,?,UTC_TIMESTAMP(3))`,row);
   const columns = { levelKey: "VARCHAR(24) NOT NULL DEFAULT 'UNQUALIFIED'", completedOrderCount: 'INT NOT NULL DEFAULT 0', positiveReviewRate: 'DECIMAL(8,4) NULL', disputeRate: 'DECIMAL(8,4) NOT NULL DEFAULT 0', levelUpdatedAt: 'DATETIME(3) NULL' };
   for (const [name,type] of Object.entries(columns)) {
-    const found = await query('SHOW COLUMNS FROM engineer_profiles LIKE ?', [name]);
+    // 腾讯云 TDSQL 不支持在 SHOW COLUMNS 的 LIKE 子句中使用预处理占位符。
+    // name 仅来自上面的静态白名单，因此可以安全地直接写入 SQL。
+    const found = await query(`SHOW COLUMNS FROM engineer_profiles LIKE '${name}'`);
     if (!found.length) {
       try { await query(`ALTER TABLE engineer_profiles ADD COLUMN ${name} ${type}`); }
       catch (e) { if (e.code !== 'ER_DUP_FIELDNAME') throw e; }
