@@ -148,7 +148,7 @@ function register(router) {
         `INSERT INTO engineer_profiles(userId, specialties, softwares, verifyStatus)
          VALUES(?, ?, ?, ?)`,
         [id, JSON.stringify([]), JSON.stringify([]),
-         process.env.NODE_ENV === 'development' ? 'APPROVED' : 'PENDING']
+         'PENDING']
       );
     }
 

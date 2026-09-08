@@ -29,7 +29,7 @@ function register(router) {
     const solution = v.str(b.solution, '技术方案', { min: 10, max: 3000 });
     const quote = await tx(async (conn) => {
       const [[o]] = await conn.execute(
-        `SELECT id, status, customerId, budgetFen, budgetFlexible FROM orders WHERE id=? AND deletedAt IS NULL`,
+        `SELECT id, status, customerId, budgetFen, budgetFlexible FROM orders WHERE id=? AND deletedAt IS NULL FOR UPDATE`,
         [params.id]);
       if (!o) throw err.notFound('订单不存在');
       if (o.status !== 'QUOTING') throw err.conflict('该需求已停止报价');
@@ -70,17 +70,23 @@ function register(router) {
     const user = await requireEngineer(req);
     const b = await readJson(req);
     const quote = await tx(async (conn) => {
-      const [[qt]] = await conn.execute(`SELECT * FROM quotes WHERE id=? AND engineerId=?`, [params.id, user.id]);
+      const [[lookup]] = await conn.execute('SELECT orderId FROM quotes WHERE id=? AND engineerId=?', [params.id, user.id]);
+      if (!lookup) throw err.notFound('报价不存在');
+      const [[o]] = await conn.execute('SELECT status,budgetFen,budgetFlexible FROM orders WHERE id=? AND deletedAt IS NULL FOR UPDATE', [lookup.orderId]);
+      const [[qt]] = await conn.execute('SELECT * FROM quotes WHERE id=? AND engineerId=? FOR UPDATE', [params.id, user.id]);
       if (!qt) throw err.notFound('报价不存在');
       if (qt.status !== 'PENDING') throw err.conflict('仅待确认的报价可修改');
-      const [[o]] = await conn.execute(`SELECT status FROM orders WHERE id=?`, [qt.orderId]);
       if (!o || o.status !== 'QUOTING') throw err.conflict('该需求已停止报价');
+      const amountFen = v.int(b.amountFen, '报价金额', { min: 100, max: 1000000000, optional: true });
+      if (!o.budgetFlexible && (!o.budgetFen || (amountFen != null && amountFen !== Number(o.budgetFen)))) {
+        throw err.conflict('固定预算订单不能修改报价金额');
+      }
       await conn.execute(
         `UPDATE quotes SET
            amountFen=COALESCE(?,amountFen), days=COALESCE(?,days),
            solution=COALESCE(?,solution), updatedAt=?
          WHERE id=?`,
-        [v.int(b.amountFen, '报价金额', { min: 100, max: 1000000000, optional: true }) ?? null,
+        [!o.budgetFlexible ? Number(o.budgetFen) : amountFen ?? null,
          v.int(b.days, '工期', { min: 1, max: 90, optional: true }) ?? null,
          v.str(b.solution, '技术方案', { min: 10, max: 3000, optional: true }) ?? null,
          nowIso(), qt.id]);
@@ -99,6 +105,8 @@ function register(router) {
     if (!quote) throw err.conflict('仅待确认的报价可撤回');
     const now = nowIso();
     await tx(async (conn) => {
+      const [[order]] = await conn.execute('SELECT status FROM orders WHERE id=? AND deletedAt IS NULL FOR UPDATE', [quote.orderId]);
+      if (!order || order.status !== 'QUOTING') throw err.conflict('该需求已停止报价');
       const [r] = await conn.execute(
         `UPDATE quotes SET status='WITHDRAWN', updatedAt=? WHERE id=? AND engineerId=? AND status='PENDING'`,
         [now, params.id, user.id]);

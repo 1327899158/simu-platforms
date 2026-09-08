@@ -73,7 +73,7 @@ async function getOrCreateUser(openid, roleHint = 'CUSTOMER') {
       `INSERT INTO engineer_profiles(userId, specialties, softwares, verifyStatus)
        VALUES(?, ?, ?, ?)`,
       [id, JSON.stringify([]), JSON.stringify([]),
-       config.env === 'development' ? 'APPROVED' : 'APPROVED']
+       'PENDING']
     );
   }
   return queryOne(`SELECT * FROM users WHERE id = ?`, [id]);
@@ -96,7 +96,7 @@ async function switchUserRole(user, targetRole) {
         `INSERT INTO engineer_profiles(userId, specialties, softwares, verifyStatus)
          VALUES(?, ?, ?, ?)`,
         [user.id, JSON.stringify([]), JSON.stringify([]),
-         config.env === 'development' ? 'APPROVED' : 'PENDING']
+         'PENDING']
       );
     }
     // 已有 profile 时不再强制改 verifyStatus——保留原有审核结果。
@@ -205,7 +205,7 @@ async function getOrCreateUserByPhone(phone, roleHint = 'CUSTOMER') {
         `INSERT INTO engineer_profiles(userId, specialties, softwares, verifyStatus)
          VALUES(?, ?, ?, ?)`,
         [id, JSON.stringify([]), JSON.stringify([]),
-         config.env === 'development' ? 'APPROVED' : 'PENDING']
+         'PENDING']
       );
     }
     user = await queryOne(`SELECT * FROM users WHERE id = ?`, [id]);

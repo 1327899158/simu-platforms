@@ -233,6 +233,22 @@ function register(router) {
     // 1) MySQL 主写（同步，快）
     const now = nowIso();
     const msgId = await tx(async (conn) => {
+      if (attachedFile) {
+        const [[current]] = await conn.execute(
+          `SELECT f.*,
+             EXISTS(SELECT 1 FROM identity_verification_files WHERE fileId=f.id) AS identityUse,
+             EXISTS(SELECT 1 FROM engineer_verification_files WHERE fileId=f.id) AS verificationUse,
+             EXISTS(SELECT 1 FROM invoice_request_files WHERE fileId=f.id) AS invoiceUse,
+             EXISTS(SELECT 1 FROM dispute_evidence WHERE fileId=f.id) AS disputeUse,
+             EXISTS(SELECT 1 FROM refund_request_files WHERE fileId=f.id) AS refundUse
+           FROM uploaded_files f WHERE f.id=? FOR UPDATE`, [fileId]);
+        if (!current || current.uploaderId !== user.id) throw err.bad('文件不存在或不属于你');
+        if (current.orderId && current.orderId !== c.orderId) throw err.forbidden('不能发送其他订单的文件');
+        if (current.identityUse || current.verificationUse || current.invoiceUse || current.disputeUse || current.refundUse) {
+          throw err.conflict('认证资料、发票和证据不能作为聊天附件复用，请重新上传');
+        }
+        attachedFile = current;
+      }
       if (attachedFile && !attachedFile.orderId && c.orderId) {
         const [linked] = await conn.execute(
           `UPDATE uploaded_files SET orderId = ? WHERE id = ? AND uploaderId = ? AND orderId IS NULL`,

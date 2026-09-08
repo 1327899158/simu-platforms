@@ -3,7 +3,10 @@
 const { readJson, ok, err } = require('../lib/http');
 const { newId, nowIso, v } = require('../lib/util');
 const { query, queryOne, tx, parseJson } = require('../db');
-const { requireCustomer, requireUser } = require('../lib/auth-mw');
+const { requireCustomer, requireUser, requireEngineer } = require('../lib/auth-mw');
+const { requireAdmin } = require('../lib/admin-mw');
+
+const { saveReview } = require('../services/customer-review-svc');
 
 function score(value, label) {
   return v.int(value, label, { min: 1, max: 5 });
@@ -53,6 +56,21 @@ async function ensureReviewableOrder(conn, orderId, customerId) {
 }
 
 function register(router) {
+  router.get('/api/admin/customer-reviews', async (req, res, _params, q) => {
+    await requireAdmin(req, 'ORDER_READ');
+    const customerId = q.get('customerId');
+    const rows = await query(`SELECT cr.*, o.orderNo, o.projectName, c.nickname AS customerNickname, e.nickname AS engineerNickname FROM customer_reviews cr JOIN orders o ON o.id=cr.orderId JOIN users c ON c.id=cr.customerId JOIN users e ON e.id=cr.engineerId ${customerId ? 'WHERE cr.customerId=?' : ''} ORDER BY cr.updatedAt DESC LIMIT 200`, customerId ? [customerId] : []);
+    ok(res, { items: rows.map(row => ({ ...row, score: Number(row.score), tags: parseJson(row.tags), content: row.content || '', customerNickname: row.customerNickname || '客户', engineerNickname: row.engineerNickname || '工程师' })) });
+  });
+
+  router.post('/api/orders/:id/customer-review', async (req, res, params) => {
+    const engineer = await requireEngineer(req);
+    ok(res, await saveReview(params.id, engineer.id, await readJson(req), false));
+  });
+  router.patch('/api/orders/:id/customer-review', async (req, res, params) => {
+    const engineer = await requireEngineer(req);
+    ok(res, await saveReview(params.id, engineer.id, await readJson(req), true));
+  });
   // POST /api/orders/:id/review：首次评价，评价数据只能由订单发布者写入。
   router.post('/api/orders/:id/review', async (req, res, params) => {
     const user = await requireCustomer(req);

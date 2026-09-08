@@ -257,6 +257,16 @@ async function init() {
       FOREIGN KEY(engineerId) REFERENCES users(id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
 
+    `CREATE TABLE IF NOT EXISTS customer_reviews (
+      id VARCHAR(32) PRIMARY KEY, orderId VARCHAR(32) NOT NULL, customerId VARCHAR(32) NOT NULL,
+      engineerId VARCHAR(32) NOT NULL, score TINYINT UNSIGNED NOT NULL, tags JSON NOT NULL,
+      content VARCHAR(500), revisionCount TINYINT UNSIGNED NOT NULL DEFAULT 0,
+      createdAt DATETIME(3) NOT NULL, updatedAt DATETIME(3) NOT NULL, revisedAt DATETIME(3),
+      UNIQUE KEY uq_customer_review_order(orderId), INDEX idx_customer_reviews_customer(customerId, createdAt),
+      INDEX idx_customer_reviews_engineer(engineerId, createdAt), FOREIGN KEY(orderId) REFERENCES orders(id),
+      FOREIGN KEY(customerId) REFERENCES users(id), FOREIGN KEY(engineerId) REFERENCES users(id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+
     `CREATE TABLE IF NOT EXISTS conversations (
       id          VARCHAR(32) PRIMARY KEY,
       orderId     VARCHAR(32) NOT NULL,

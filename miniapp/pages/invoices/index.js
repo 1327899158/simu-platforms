@@ -14,6 +14,8 @@ function sizeText(sizeBytes) {
 function withFileDisplay(item) {
   return {
     ...item,
+    amountText: item.amountFen == null ? '0.00' : (Number(item.amountFen) / 100).toFixed(2),
+    completedText: item.completedAt ? String(item.completedAt).slice(5, 10) : '',
     files: (item.files || []).map((file) => ({
       ...file,
       fileId: file.fileId || file.id,
@@ -24,20 +26,75 @@ function withFileDisplay(item) {
 
 Page({
   data: {
-    items: [], loading: true, processingId: '',
+    items: [], displayItems: [], tabs: [{key:'ALL',label:'全部'},{key:'PENDING',label:'待开票'},{key:'PROCESSING',label:'开票中'},{key:'ISSUED',label:'已开票'}], loading: true, processingId: '', role: '', filter: 'ALL',
+    page: 0, hasMore: false, batchCandidates: [], batchIds: [],
+    billableCount: 0, billableAmountYuan: '0.00',
+    batchOpen: false, batchTitle: '', batchTaxNumber: '', batchEmail: '', batchSubmitting: false,
     uploadOpen: false, uploadInvoiceId: '', invoiceUploads: [],
     uploading: false, submittingFiles: false, downloadingFileId: '',
   },
-  onShow() { const user = ensureLogin(); if (user && user.role === 'ENGINEER') this.load(); },
+  onShow() { const user = ensureLogin(); if (user) { this.setData({ role: user.role }); wx.setNavigationBarTitle({ title: user.role === 'CUSTOMER' ? '发票管理' : '发票处理' }); this.load(); } },
   onPullDownRefresh() { this.load().finally(() => wx.stopPullDownRefresh()); },
-  async load() {
+  onReachBottom() { if (this.data.role === 'CUSTOMER' && this.data.hasMore && !this.data.loading) this.load(true); },
+  async load(more = false) {
+    const page = more ? this.data.page + 1 : 1;
+    const loadToken = this._loadToken = (this._loadToken || 0) + 1;
     this.setData({ loading: true });
     try {
-      const data = await request('GET', '/invoices/mine');
-      this.setData({ items: (data.items || []).map(withFileDisplay) });
+      const data = this.data.role === 'CUSTOMER'
+        ? await request('GET', `/invoices/customer?page=${page}&status=${this.data.filter}`)
+        : await request('GET', '/invoices/mine');
+      if (loadToken !== this._loadToken) return false;
+      const incoming = (data.items || []).map(withFileDisplay);
+      const items = more ? this.data.items.concat(incoming) : incoming;
+      this.setData({ page, hasMore: !!data.hasMore, items, displayItems: this.filterItems(items, this.data.filter), billableCount: data.billableCount || 0, billableAmountYuan: (Number(data.billableAmountFen || 0) / 100).toFixed(2) });
+      return true;
     }
-    catch (error) { wx.showToast({ title: error.message || '加载失败', icon: 'none' }); }
-    finally { this.setData({ loading: false }); }
+    catch (error) { if (loadToken === this._loadToken) wx.showToast({ title: error.message || '加载失败', icon: 'none' }); return false; }
+    finally { if (loadToken === this._loadToken) this.setData({ loading: false }); }
+  },
+  filterItems(items, filter) {
+    const f = filter;
+    if (this.data.role !== 'CUSTOMER' || f === 'ALL') return items;
+    return items.filter(item =>
+      (f === 'PENDING' && item.status === 'PENDING') ||
+      (f === 'PROCESSING' && ['REQUESTED', 'SELF_ISSUE', 'PLATFORM_REQUESTED'].includes(item.status)) ||
+      (f === 'ISSUED' && item.status === 'ISSUED'));
+  },
+  setFilter(e) {
+    if (this.data.loading) return;
+    const filter = e.currentTarget.dataset.value;
+    this.setData({ filter, items: [], displayItems: [] });
+    this.load();
+  },
+  visible(item) {
+    const f = this.data.filter;
+    return f === 'ALL' || (f === 'PENDING' && item.status === 'PENDING') || (f === 'PROCESSING' && ['REQUESTED', 'SELF_ISSUE', 'PLATFORM_REQUESTED'].includes(item.status)) || (f === 'ISSUED' && item.status === 'ISSUED');
+  },
+  applyInvoice(e) { wx.navigateTo({ url: `/pages/invoice-request/index?orderId=${e.currentTarget.dataset.id}` }); },
+  async openBatch() {
+    if (this.data.loading || this.data.batchOpen) return;
+    this.setData({ filter: 'PENDING' });
+    if (!await this.load()) return;
+    const batchCandidates = this.data.items.filter(item => item.status === 'PENDING').map(item => ({ ...item, checked: true }));
+    if (!batchCandidates.length) return wx.showToast({ title: '暂无待开票订单', icon: 'none' });
+    this.setData({ batchOpen: true, batchCandidates, batchIds: batchCandidates.map(item => item.orderId), batchTitle: '', batchTaxNumber: '', batchEmail: '' });
+  },
+  batchSelection(e) { this.setData({ batchIds: e.detail.value || [] }); },
+  closeBatch() { if (!this.data.batchSubmitting) this.setData({ batchOpen: false }); },
+  batchField(e) { this.setData({ ['batch' + e.currentTarget.dataset.key]: e.detail.value }); },
+  async submitBatch() {
+    if (this.data.batchSubmitting) return;
+    const ids = this.data.batchIds;
+    if (ids.length > 50) return wx.showToast({ title: '每批最多 50 笔订单', icon: 'none' });
+    if (!ids.length) return wx.showToast({ title: '请选择开票订单', icon: 'none' });
+    if (this.data.batchTitle.trim().length < 2) return wx.showToast({ title: '请填写发票抬头', icon: 'none' });
+    this.setData({ batchSubmitting: true });
+    try {
+      await request('POST', '/invoices/customer/batch', { orderIds: ids, invoiceTitle: this.data.batchTitle.trim(), taxNumber: this.data.batchTaxNumber.trim(), email: this.data.batchEmail.trim() });
+      this.setData({ batchOpen: false }); wx.showToast({ title: `已提交 ${ids.length} 笔申请`, icon: 'success' }); await this.load();
+    } catch (e) { wx.showToast({ title: e.message || '批量申请失败', icon: 'none' }); }
+    finally { this.setData({ batchSubmitting: false }); }
   },
   async process(e) {
     const { id, action } = e.currentTarget.dataset;
@@ -171,5 +228,5 @@ Page({
     }
   },
   noop() {},
-  goOrder(e) { wx.navigateTo({ url: `/pages/order-detail/index?id=${e.currentTarget.dataset.id}&mode=market` }); },
+  goOrder(e) { wx.navigateTo({ url: `/pages/order-detail/index?id=${e.currentTarget.dataset.id}&mode=${this.data.role === 'ENGINEER' ? 'market' : 'customer'}` }); },
 });

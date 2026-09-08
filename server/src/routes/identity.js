@@ -27,10 +27,16 @@ async function ownedFiles(conn, userId, ids) {
   if (!ids.length) return [];
   const marks = ids.map(() => '?').join(',');
   const [rows] = await conn.execute(
-    `SELECT id, uploaderId, orderId, kind, mime, name FROM uploaded_files WHERE id IN (${marks}) FOR UPDATE`, ids);
+    `SELECT f.id, f.uploaderId, f.orderId, f.kind, f.mime, f.name,
+      EXISTS(SELECT 1 FROM messages WHERE fileId=f.id) AS chatUse,
+      EXISTS(SELECT 1 FROM invoice_request_files WHERE fileId=f.id) AS invoiceUse,
+      EXISTS(SELECT 1 FROM dispute_evidence WHERE fileId=f.id) AS disputeUse,
+      EXISTS(SELECT 1 FROM refund_request_files WHERE fileId=f.id) AS refundUse
+      FROM uploaded_files f WHERE f.id IN (${marks}) FOR UPDATE`, ids);
   if (rows.length !== ids.length || rows.some((file) => file.uploaderId !== userId || file.orderId)) {
     throw err.forbidden('只能提交本人上传的非订单文件');
   }
+  if (rows.some(f => f.chatUse || f.invoiceUse || f.disputeUse || f.refundUse)) throw err.conflict('文件已用于其他业务，请重新上传认证资料');
   return rows;
 }
 

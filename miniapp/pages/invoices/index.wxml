@@ -1,13 +1,27 @@
 <view class="page-container">
-  <view class="hero"><text class="hero-title">发票处理</text><text class="hero-desc">你可自行开票，或申请平台协助开票。平台开票可能收取服务费，费用另行确认。</text></view>
-  <view class="empty" wx:if="{{!loading && !items.length}}">暂无客户发票申请</view>
-  <view class="card" wx:for="{{items}}" wx:key="id">
+  <view class="hero" wx:if="{{role === 'CUSTOMER'}}"><text class="hero-title">发票管理 + 申请开票</text><text class="hero-desc">可开票订单 {{billableCount}} 笔 · 累计可开票金额 ¥{{billableAmountYuan}}</text></view>
+  <view class="hero" wx:else><text class="hero-title">发票处理</text><text class="hero-desc">你可自行开票，或申请平台协助开票。平台开票可能收取服务费，费用另行确认。</text></view>
+  <view wx:if="{{role === 'CUSTOMER'}}" class="invoice-tip">ℹ️ 申请后由工程师选择自行开票或申请平台协助；实际进度和发票文件请在申请详情中查看</view>
+  <button wx:if="{{role === 'CUSTOMER' && billableCount}}" class="primary batch-button" bindtap="openBatch">批量申请</button>
+  <view wx:if="{{role === 'CUSTOMER'}}" class="invoice-tabs"><text wx:for="{{tabs}}" wx:key="key" class="invoice-tab {{filter===item.key?'active':''}}" data-value="{{item.key}}" bindtap="setFilter">{{item.label}}</text></view>
+  <view class="empty" wx:if="{{!loading && !displayItems.length}}">{{role === 'CUSTOMER' ? '暂无符合条件的可开票订单' : '暂无客户发票申请'}}</view>
+  <view class="card" wx:for="{{displayItems}}" wx:key="id">
+    <block wx:if="{{role === 'CUSTOMER'}}">
+      <view class="row"><text class="title">{{item.projectName}}</text><text class="status">{{item.statusText}}</text></view>
+      <text class="desc">¥{{item.amountText}} · {{item.completedText}} 完成</text>
+      <text class="desc" wx:if="{{item.status === 'ISSUED'}}">{{item.files.length ? '电子发票已上传，可查看/下载' : '已标记开票完成，请联系平台确认发票文件'}}</text>
+      <button class="primary" wx:if="{{item.status === 'PENDING'}}" data-id="{{item.orderId}}" bindtap="applyInvoice">申请开票</button>
+      <button class="primary" wx:elif="{{item.status === 'ISSUED'}}" data-id="{{item.orderId}}" bindtap="applyInvoice">查看/下载</button>
+      <button class="primary" wx:else data-id="{{item.orderId}}" bindtap="applyInvoice">查看开票进度</button>
+      <text class="order-link" data-id="{{item.orderId}}" bindtap="goOrder">订单详情 ›</text>
+    </block>
+    <block wx:else>
     <view class="row"><text class="title">{{item.invoiceTitle}}</text><text class="status">{{item.statusText}}</text></view>
     <text class="desc">订单：{{item.projectName}} · 客户：{{item.customerName}}</text>
     <text class="desc" wx:if="{{item.taxNumber}}">税号：{{item.taxNumber}}</text><text class="desc" wx:if="{{item.email}}">邮箱：{{item.email}}</text><text class="desc" wx:if="{{item.customerNote}}">客户备注：{{item.customerNote}}</text><text class="desc" wx:if="{{item.engineerNote}}">处理说明：{{item.engineerNote}}</text>
     <view class="actions" wx:if="{{item.status === 'REQUESTED'}}"><button class="outline" data-id="{{item.id}}" data-action="SELF_ISSUE" bindtap="process">自行开票</button><button class="primary" data-id="{{item.id}}" data-action="PLATFORM_REQUESTED" bindtap="process">申请平台开票</button><button class="minor" data-id="{{item.id}}" data-action="REJECTED" bindtap="process">暂不支持</button></view>
     <button class="primary" wx:if="{{item.status === 'SELF_ISSUE'}}" data-id="{{item.id}}" bindtap="openUpload">上传发票文件</button>
-    <button class="primary" wx:if="{{item.status === 'PLATFORM_REQUESTED'}}" data-id="{{item.id}}" data-action="ISSUED" bindtap="process">标记已完成开票</button>
+    <text class="desc" wx:if="{{item.status === 'PLATFORM_REQUESTED'}}">已转交平台，等待平台处理</text>
     <view class="invoice-files" wx:if="{{item.files.length}}">
       <text class="files-title">已上传发票</text>
       <view class="file-row" wx:for="{{item.files}}" wx:key="fileId" bindtap="downloadFile" data-id="{{item.fileId}}">
@@ -15,8 +29,12 @@
         <text class="file-open">{{downloadingFileId === item.fileId ? '打开中…' : '查看'}}</text>
       </view>
     </view>
-    <text class="order-link" data-id="{{item.orderId}}" bindtap="goOrder">查看所属订单 ›</text>
+    <text class="order-link" data-id="{{item.orderId}}" bindtap="goOrder">查看所属订单 ›</text></block>
   </view>
+
+  <text class="desc" wx:if="{{role === 'CUSTOMER' && hasMore}}">{{loading ? '加载中…' : '上拉加载更多订单'}}</text>
+  <view class="upload-mask" wx:if="{{batchOpen}}" catchtouchmove="noop"><view class="upload-dialog"><text class="dialog-title">批量申请开票</text><text class="dialog-desc">本批可选 {{batchCandidates.length}} 笔，已选 {{batchIds.length}} 笔。每批最多 50 笔，提交后可继续申请剩余订单。</text>
+    <scroll-view scroll-y style="max-height: 300rpx;"><checkbox-group bindchange="batchSelection"><label class="batch-order" wx:for="{{batchCandidates}}" wx:key="orderId"><checkbox value="{{item.orderId}}" checked="{{item.checked}}"/><text>{{item.projectName}} · ¥{{item.amountText}}</text></label></checkbox-group></scroll-view><input class="input" data-key="Title" bindinput="batchField" placeholder="发票抬头（必填）"/><input class="input" data-key="TaxNumber" bindinput="batchField" placeholder="纳税人识别号（选填）"/><input class="input" data-key="Email" bindinput="batchField" placeholder="接收邮箱（选填）"/><view class="dialog-actions"><button class="dialog-cancel" bindtap="closeBatch">取消</button><button class="dialog-submit" loading="{{batchSubmitting}}" disabled="{{batchSubmitting || !batchIds.length}}" bindtap="submitBatch">提交申请</button></view></view></view>
 
   <view class="upload-mask" wx:if="{{uploadOpen}}" catchtouchmove="noop">
     <view class="upload-dialog">

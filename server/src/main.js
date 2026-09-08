@@ -88,7 +88,7 @@ async function bootstrap() {
         config.adminBootstrapOpenids.length || config.adminBootstrapUserIds.length
       ),
     }));
-    startSweeper(); // 支付超时清扫备用定时器（推荐用云函数触发器替代）
+    startSweeper(); // 真实支付必须由此清扫器先查单、关单，再回退订单
 
     // 云MySQL普通版防暂停心跳：每 15 分钟检测一次数据库连接
     if (config.env === 'production') {

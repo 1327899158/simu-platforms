@@ -96,6 +96,8 @@ model User {
   uploadedRefundRequestFiles RefundRequestFile[]
   customerInvoiceRequests InvoiceRequest[] @relation("CustomerInvoiceRequests")
   engineerInvoiceRequests InvoiceRequest[] @relation("EngineerInvoiceRequests")
+  customerReviewsGiven CustomerReview[] @relation("CustomerReviewsGiven")
+  customerReviewsReceived CustomerReview[] @relation("CustomerReviewsReceived")
   uploadedInvoiceRequestFiles InvoiceRequestFile[]
 }
 
@@ -146,6 +148,7 @@ model Order {
   disputes    Dispute[]
   refundRequests RefundRequest[]
   invoiceRequest InvoiceRequest?
+  customerReviews CustomerReview[]
 
   @@index([status, createdAt])
   @@index([customerId, status])
@@ -229,6 +232,26 @@ model HomeCampaign {
   updatedAt DateTime @db.DateTime(3)
 
   @@map("home_campaigns")
+}
+
+model CustomerReview {
+  id String @id
+  orderId String @unique
+  customerId String
+  engineerId String
+  score Int
+  tags Json
+  content String? @db.VarChar(500)
+  revisionCount Int @default(0)
+  createdAt DateTime @db.DateTime(3)
+  updatedAt DateTime @db.DateTime(3)
+  revisedAt DateTime? @db.DateTime(3)
+  order Order @relation(fields: [orderId], references: [id])
+  customer User @relation("CustomerReviewsGiven", fields: [customerId], references: [id])
+  engineer User @relation("CustomerReviewsReceived", fields: [engineerId], references: [id])
+  @@index([customerId, createdAt])
+  @@index([engineerId, createdAt])
+  @@map("customer_reviews")
 }
 
 model Conversation {

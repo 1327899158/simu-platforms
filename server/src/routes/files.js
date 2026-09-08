@@ -61,8 +61,13 @@ async function assertOrderUploadAccess(user, orderId) {
 
 async function saveFileRecord(req, user, { fileID, name, kind, orderId, sizeBytes, mime }) {
   assertCloudFileId(fileID, requestCloudEnv(req));
-  // 文件已经由当前小程序通过 wx.cloud.uploadFile 直传成功。这里只验证
-  // CloudBase 环境和业务权限，避免云托管后端访问内部凭据服务而长时间阻塞。
+  // 与小程序 upload() 的用户目录一致，防止冒领其他用户的已知 fileID。
+  // 云存储仍须配置上传者写权限；目录检查不是云对象所有权证明。
+  const objectPath = fileID.slice('cloud://'.length).split('/').slice(1).join('/');
+  const ownerSegment = String(user.id).replace(/[^a-zA-Z0-9_-]/g, '_');
+  if (!objectPath.startsWith('uploads/' + ownerSegment + '/') || objectPath.split('/').includes('..') || /[%\\\\]/.test(objectPath)) {
+    throw err.forbidden('只能登记本人上传目录中的文件');
+  }
   await assertOrderUploadAccess(user, orderId);
   const id = newId();
   const createdAt = nowIso();
@@ -104,15 +109,20 @@ async function canReadFile(user, file) {
   // 无订单关联的文件：先判断是否为纠纷证据（仅当事人/管理员可读），
   // 避免通用 IMAGE 规则把纠纷证据泄漏给所有登录用户。
   if (!file.orderId) {
-    const chats = await query(`SELECT c.customerId,c.engineerId FROM messages m JOIN conversations c ON c.id=m.convId WHERE m.fileId=?`,[file.id]);
-    if(chats.length) return chats.some(c=>c.customerId===user.id||c.engineerId===user.id);
-    if (await canReadDisputeEvidence(user, file)) return true;
+    const identity = await queryOne(
+      'SELECT fileId FROM identity_verification_files WHERE fileId=? UNION SELECT fileId FROM engineer_verification_files WHERE fileId=? LIMIT 1',
+      [file.id, file.id]);
+    if (identity) return false; // 审核人员通过专用审核接口获取材料。
+    const disputeAccess = await canReadDisputeEvidence(user, file);
+    if (disputeAccess !== null) return disputeAccess;
     const refundAccess = await refundRequestFileAccess(user, file);
     if (refundAccess !== null) return refundAccess;
     const invoiceAccess = await invoiceRequestFileAccess(user, file);
     if (invoiceAccess !== null) return invoiceAccess;
-    // 头像等公开 IMAGE 所有登录用户均可读
-    if (file.kind === 'IMAGE') return true;
+    const chats = await query(`SELECT c.customerId,c.engineerId FROM messages m JOIN conversations c ON c.id=m.convId WHERE m.fileId=?`,[file.id]);
+    if(chats.length) return chats.some(c=>c.customerId===user.id||c.engineerId===user.id);
+    // 仅实际作为头像使用的图片公开，未关联的普通图片仍然私有。
+    if (file.kind === 'IMAGE') return !!await queryOne('SELECT id FROM users WHERE avatarUrl=? LIMIT 1', [file.fileID]);
     return false;
   }
   const order = await queryOne(`SELECT * FROM orders WHERE id = ? AND deletedAt IS NULL`, [file.orderId]);
@@ -144,7 +154,7 @@ async function canReadDisputeEvidence(user, file) {
       ORDER BY ev.createdAt DESC LIMIT 1`,
     [file.id]
   );
-  if (!row) return false;
+  if (!row) return null;
   if (row.customerId === user.id) return true;
   if (row.selectedQuoteId) {
     const q = await queryOne(`SELECT engineerId FROM quotes WHERE id = ?`, [row.selectedQuoteId]);
@@ -407,22 +417,23 @@ function register(router) {
    */
   router.del('/api/files/:id', async (req, res, params) => {
     const user = await requireUser(req);
-    const file = await queryOne(`SELECT * FROM uploaded_files WHERE id = ?`, [params.id]);
-    if (!file) throw err.notFound('文件不存在');
-    if (file.uploaderId !== user.id) throw err.forbidden('仅上传者可删除');
-    if (file.orderId) throw err.conflict('订单附件不能直接删除');
-    const verification = await queryOne(
-      `SELECT fileId FROM identity_verification_files WHERE fileId = ?
-       UNION SELECT fileId FROM engineer_verification_files WHERE fileId = ? LIMIT 1`,
-      [file.id, file.id]
-    );
-    if (verification) throw err.conflict('身份认证材料请在“身份认证”页面删除');
-    const invoiceFile = await queryOne(
-      `SELECT fileId FROM invoice_request_files WHERE fileId = ?`,
-      [file.id]
-    );
-    if (invoiceFile) throw err.conflict('已提交的发票文件不能直接删除');
-    await query(`DELETE FROM uploaded_files WHERE id = ?`, [params.id]);
+    const file = await tx(async conn => {
+      const [[current]] = await conn.execute('SELECT * FROM uploaded_files WHERE id=? FOR UPDATE', [params.id]);
+      if (!current) throw err.notFound('文件不存在');
+      if (current.uploaderId !== user.id) throw err.forbidden('仅上传者可删除');
+      if (current.orderId) throw err.conflict('订单附件不能直接删除');
+      const [[usage]] = await conn.execute(
+        `SELECT fileId FROM identity_verification_files WHERE fileId=?
+         UNION SELECT fileId FROM engineer_verification_files WHERE fileId=?
+         UNION SELECT fileId FROM invoice_request_files WHERE fileId=?
+         UNION SELECT fileId FROM messages WHERE fileId=?
+         UNION SELECT fileId FROM dispute_evidence WHERE fileId=?
+         UNION SELECT fileId FROM refund_request_files WHERE fileId=? LIMIT 1`,
+        Array(6).fill(current.id));
+      if (usage) throw err.conflict('文件已用于业务，不能直接删除');
+      await conn.execute('DELETE FROM uploaded_files WHERE id=?', [current.id]);
+      return current;
+    });
     if (config.env !== 'production') {
       try { await getStorage().deleteFile({ fileList: [file.fileID] }); } catch (e) {
         console.error('[files] cloud delete failed', e.message);

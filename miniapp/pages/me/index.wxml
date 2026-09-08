@@ -45,6 +45,11 @@
       <text class="m-title">我的订单</text>
       <text class="m-arrow">›</text>
     </view>
+    <view class="menu-row" wx:if="{{user.role === 'CUSTOMER'}}" bindtap="goInvoices">
+      <text class="m-icon">🧾</text>
+      <text class="m-title">发票管理</text>
+      <text class="m-arrow">›</text>
+    </view>
     <view class="menu-row" wx:if="{{user.role === 'ENGINEER'}}" bindtap="goMyQuotes">
       <text class="m-icon">💰</text>
       <text class="m-title">我的报价</text>

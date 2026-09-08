@@ -67,8 +67,8 @@ const config = {
 
   // 微信支付（云托管代签名时 notify_url 用内部地址，mchid 仅部分接口需要显式传参）
   wxpayMchid: process.env.WXPAY_MCHID || '',
-  // 支付回调地址（云托管内部：http://<服务名>.<env>.wxcloudrun/api/pay/notify）
-  wxpayNotifyUrl: process.env.WXPAY_NOTIFY_URL || '',
+  // 云托管回调服务名；未配置时使用平台注入的 X-WX-SERVICE。
+  wxpayCallbackService: process.env.WXPAY_CALLBACK_SERVICE || '',
   // 演示价开关：设为 1 则实付 0.01 元；生产必须留空
   payAmountOverrideFen: int(process.env.PAY_AMOUNT_OVERRIDE_FEN, 0) || null,
   payTimeoutSec: int(process.env.PAY_TIMEOUT_SEC, 30 * 60),
@@ -77,9 +77,9 @@ const config = {
     ? 'mock'
     : 'wechat',
 
-  // 身份认证演示开关：当前阶段允许工程师自主认证通过，便于联调。
-  // 正式上线前设置 ALLOW_ENGINEER_SELF_VERIFY=false 关闭。
-  allowEngineerSelfVerify: process.env.ALLOW_ENGINEER_SELF_VERIFY !== 'false',
+  // 自核验仅限非生产环境显式开启；新账号仍必须先提交认证资料。
+  allowEngineerSelfVerify: process.env.NODE_ENV !== 'production'
+    && process.env.ALLOW_ENGINEER_SELF_VERIFY === 'true',
 
   // 身份证号使用 AES-256-GCM 加密保存。生产环境应设置独立且长期不变的随机密钥；
   // 未配置时使用云环境与数据库密码派生，保证升级可运行但不建议长期依赖。

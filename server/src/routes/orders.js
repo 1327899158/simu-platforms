@@ -530,8 +530,10 @@ function register(router) {
     const b = await readJson(req);
     const quoteId = v.str(b.quoteId, 'quoteId', { min: 1 });
     const result = await tx(async (conn) => {
+      const [[order]] = await conn.execute('SELECT id,status,customerId FROM orders WHERE id=? AND deletedAt IS NULL FOR UPDATE', [params.id]);
+      if (!order || order.customerId !== user.id || order.status !== 'QUOTING') throw err.conflict('订单状态已变化，选标失败');
       const [[quote]] = await conn.execute(
-        `SELECT * FROM quotes WHERE id=? AND orderId=? AND status='PENDING'`,
+        `SELECT * FROM quotes WHERE id=? AND orderId=? AND status='PENDING' FOR UPDATE`,
         [quoteId, params.id]);
       if (!quote) throw err.conflict('该报价不可选（不存在或已失效）');
       const [r] = await conn.execute(
@@ -573,22 +575,23 @@ function register(router) {
 
     const openid = user.openid; // 小程序 openid，用于 JSAPI 下单
     if (!openid) throw err.bad('无法获取用户 openid，请通过小程序调用');
-    const jsapiParams = await createJsapiOrder(o, openid);
+    const jsapiParams = await createJsapiOrder(o, openid, { service: req.headers['x-wx-service'], clientIp: String(req.headers['x-forwarded-for'] || '').split(',')[0].trim() || undefined });
     ok(res, jsapiParams);
   });
 
   // 注意：`GET /api/orders/:id/payment` 已迁移至 routes/payments.js，
   // 由支付模块统一维护支付相关查询，避免同名路由重复注册。
 
-  // POST /api/orders/:id/deliver { fileIds?, note? }
+  // POST /api/orders/:id/deliver { fileIds, note? }
   router.post('/api/orders/:id/deliver', async (req, res, params) => {
     const user = await requireEngineer(req);
     await assertNotDisputing(params.id);
     const b = await readJson(req);
     const note = v.str(b.note, '交付说明', { max: 1000, optional: true });
-    const fileIds = v.arr(b.fileIds, '成果文件', { maxLen: 20, optional: true }) || [];
+    const fileIds = v.arr(b.fileIds, '成果文件', { minLen: 1, maxLen: 20 }).map(id => v.str(id, '文件ID', { min: 1, max: 32 }));
+    if (new Set(fileIds).size !== fileIds.length) throw err.bad('成果文件不能重复');
     await tx(async (conn) => {
-      const [[o]] = await conn.execute(`SELECT * FROM orders WHERE id=? AND deletedAt IS NULL`, [params.id]);
+      const [[o]] = await conn.execute(`SELECT * FROM orders WHERE id=? AND deletedAt IS NULL FOR UPDATE`, [params.id]);
       if (!o) throw err.notFound('订单不存在');
       const [[sel]] = await conn.execute(`SELECT engineerId FROM quotes WHERE id=?`, [o.selectedQuoteId || '']);
       if (!sel || sel.engineerId !== user.id) throw err.forbidden('仅被选中的工程师可交付');
@@ -596,13 +599,29 @@ function register(router) {
         `UPDATE orders SET status='DELIVERED', deliveredAt=?, updatedAt=? WHERE id=? AND status='IN_PROGRESS'`,
         [nowIso(), nowIso(), params.id]);
       if (!r.affectedRows) throw err.conflict('订单不在执行中，无法交付');
-      for (const fid of fileIds) {
+      const [files] = await conn.execute(
+        `SELECT f.*,
+          EXISTS(SELECT 1 FROM messages WHERE fileId=f.id) AS usedForChat,
+          EXISTS(SELECT 1 FROM identity_verification_files WHERE fileId=f.id) AS usedForIdentity,
+          EXISTS(SELECT 1 FROM engineer_verification_files WHERE fileId=f.id) AS usedForVerification,
+          EXISTS(SELECT 1 FROM invoice_request_files WHERE fileId=f.id) AS usedForInvoice,
+          EXISTS(SELECT 1 FROM dispute_evidence WHERE fileId=f.id) AS usedForDispute,
+          EXISTS(SELECT 1 FROM refund_request_files WHERE fileId=f.id) AS usedForRefund
+         FROM uploaded_files f WHERE f.id IN (${fileIds.map(() => '?').join(',')}) FOR UPDATE`, fileIds);
+      if (files.length !== fileIds.length) throw err.bad('部分成果文件不存在，请重新上传');
+      for (const file of files) {
+        if (file.uploaderId !== user.id) throw err.forbidden('不能交付其他用户上传的文件');
+        if ((file.orderId && file.orderId !== params.id) || file.usedForChat || file.usedForIdentity
+          || file.usedForVerification || file.usedForInvoice || file.usedForDispute || file.usedForRefund) {
+          throw err.conflict('文件已用于其他业务，请重新上传成果文件');
+        }
+        await conn.execute("UPDATE uploaded_files SET orderId=?, kind='RESULT' WHERE id=?", [params.id, file.id]);
         await conn.execute(
-          `UPDATE uploaded_files SET orderId=?, kind='RESULT' WHERE id=? AND uploaderId=?`,
-          [params.id, String(fid), user.id]);
+          `INSERT INTO order_attachments(orderId,fileId,uploaderId,purpose,createdAt) VALUES(?,?,?,'RESULT',?)
+           ON DUPLICATE KEY UPDATE purpose='RESULT'`, [params.id, file.id, user.id, nowIso()]);
       }
     });
-    await systemMessageForOrder(params.id, `工程师已提交交付成果${note ? '：' + note : ''}，请客户查收并确认。`);
+    await systemMessageForOrder(params.id, `工程师已提交交付成果${note ? '：' + note : ''}，请客户查收并确认。`).catch(e => console.error('[deliver/message]', e.message));
     ok(res, { delivered: true });
   });
 
@@ -617,7 +636,7 @@ function register(router) {
         [nowIso(), nowIso(), params.id, user.id]);
       if (!r.affectedRows) throw err.conflict('订单不在待验收状态');
     });
-    await systemMessageForOrder(params.id, '客户已确认验收，订单完成。');
+    await systemMessageForOrder(params.id, '客户已确认验收，订单完成。').catch(e => console.error('[confirm/message]', e.message));
     ok(res, { completed: true });
   });
 
@@ -634,7 +653,7 @@ function register(router) {
         [nowIso(), params.id, user.id]);
       if (!r.affectedRows) throw err.conflict('订单不在待验收状态');
     });
-    await systemMessageForOrder(params.id, `客户驳回了本次交付：${reason}`);
+    await systemMessageForOrder(params.id, `客户驳回了本次交付：${reason}`).catch(e => console.error('[reject-delivery/message]', e.message));
     ok(res, { rejected: true });
   });
 }

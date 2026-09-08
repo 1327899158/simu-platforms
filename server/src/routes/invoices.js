@@ -5,7 +5,7 @@ const { readJson, ok, err } = require('../lib/http');
 const { newId, nowIso, v } = require('../lib/util');
 const { query, queryOne, tx } = require('../db');
 const { requireUser, requireCustomer, requireEngineer } = require('../lib/auth-mw');
-const { requireAdmin } = require('../lib/admin-mw');
+const { requireAdmin, writeAdminAudit } = require('../lib/admin-mw');
 const { systemMessageForOrder } = require('../services/chat-svc');
 
 const ALLOWED_INVOICE_EXTENSIONS = new Set([
@@ -137,6 +137,69 @@ function register(router) {
     ok(res, invoiceView(result, { files: [] }));
   });
 
+  // 客户发票管理：只展示已完成订单，未申请的订单也作为“待开票”返回。
+  router.get('/api/invoices/customer', async (req, res, _params, q) => {
+    const customer = await requireCustomer(req);
+    const page = v.int(q.get('page') || 1, '页码', { min: 1, max: 100000 });
+    const filter = v.oneOf(q.get('status') || 'ALL', '发票筛选', ['ALL', 'PENDING', 'PROCESSING', 'ISSUED']);
+    const filters = {
+      ALL: '', PENDING: ' AND ir.id IS NULL',
+      PROCESSING: " AND ir.status IN ('REQUESTED','SELF_ISSUE','PLATFORM_REQUESTED')",
+      ISSUED: " AND ir.status='ISSUED'",
+    };
+    const from = `FROM orders o LEFT JOIN invoice_requests ir ON ir.orderId=o.id
+      WHERE o.customerId=? AND o.status='COMPLETED' AND o.deletedAt IS NULL`;
+    const summary = await queryOne(
+      `SELECT COUNT(*) AS count, COALESCE(SUM(o.finalAmountFen),0) AS amount ${from} AND ir.id IS NULL`, [customer.id]);
+    const count = await queryOne(`SELECT COUNT(*) AS total ${from}${filters[filter]}`, [customer.id]);
+    const limit = 50, offset = (page - 1) * limit;
+    const rows = await query(
+      `SELECT o.id AS orderId, o.orderNo, o.projectName, o.finalAmountFen, o.completedAt,
+              ir.id, ir.invoiceTitle, ir.taxNumber, ir.email, ir.status, ir.requestedAt,
+              ir.handledAt, ir.updatedAt
+         ${from}${filters[filter]}
+        ORDER BY o.completedAt DESC,o.id DESC LIMIT ${limit} OFFSET ${offset}`, [customer.id]);
+    const items = await invoiceViewsWithFiles(rows.map(row => ({
+      ...row, id: row.id || `pending-${row.orderId}`, status: row.status || 'PENDING',
+      amountFen: row.finalAmountFen == null ? null : Number(row.finalAmountFen),
+    })));
+    for (const item of items) {
+      if (item.status === 'PENDING') item.statusText = '待开票';
+      else if (['REQUESTED', 'SELF_ISSUE', 'PLATFORM_REQUESTED'].includes(item.status)) item.statusText = '开票中';
+      else if (item.status === 'ISSUED') item.statusText = '已开票';
+    }
+    ok(res, { items, page, total: Number(count.total), hasMore: offset + rows.length < Number(count.total),
+      billableCount: Number(summary.count), billableAmountFen: Number(summary.amount) });
+  });
+
+  router.post('/api/invoices/customer/batch', async (req, res) => {
+    const customer = await requireCustomer(req);
+    const body = await readJson(req);
+    const orderIds = v.arr(body.orderIds, '订单', { minLen: 1, maxLen: 50 }).map(id => v.str(id, '订单ID', { min: 1, max: 32 }));
+    if (new Set(orderIds).size !== orderIds.length) throw err.bad('订单不能重复');
+    const invoiceTitle = v.str(body.invoiceTitle, '发票抬头', { min: 2, max: 120 });
+    const taxNumber = optionalString(body, 'taxNumber', '纳税人识别号', 50);
+    const email = optionalString(body, 'email', '接收邮箱', 120);
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw err.bad('接收邮箱格式不正确');
+    const created = await tx(async conn => {
+      const [orders] = await conn.execute(
+        `SELECT o.id, q.engineerId FROM orders o LEFT JOIN quotes q ON q.id=o.selectedQuoteId
+          WHERE o.id IN (${orderIds.map(() => '?').join(',')}) AND o.customerId=? AND o.status='COMPLETED' AND o.deletedAt IS NULL FOR UPDATE`,
+        [...orderIds, customer.id]
+      );
+      if (orders.length !== orderIds.length || orders.some(o => !o.engineerId)) throw err.conflict('部分订单不可申请发票，请刷新后重试');
+      const [existing] = await conn.execute(`SELECT orderId FROM invoice_requests WHERE orderId IN (${orderIds.map(() => '?').join(',')}) FOR UPDATE`, orderIds);
+      if (existing.length) throw err.conflict('部分订单已提交发票申请，请刷新后重试');
+      const now = nowIso();
+      for (const order of orders) await conn.execute(
+        `INSERT INTO invoice_requests(id,orderId,customerId,engineerId,invoiceTitle,taxNumber,email,status,requestedAt,createdAt,updatedAt) VALUES(?,?,?,?,?,?,?,'REQUESTED',?,?,?)`,
+        [newId(), order.id, customer.id, order.engineerId, invoiceTitle, taxNumber, email, now, now, now]
+      );
+      return orderIds.length;
+    });
+    ok(res, { created });
+  });
+
   router.get('/api/invoices/mine', async (req, res) => {
     const engineer = await requireEngineer(req);
     const rows = await query(
@@ -161,6 +224,7 @@ function register(router) {
       if ((action === 'SELF_ISSUE' || action === 'PLATFORM_REQUESTED' || action === 'REJECTED') && !isRequested) {
         throw err.conflict('该申请已处理，请勿重复选择处理方式');
       }
+      if (action === 'ISSUED' && record.status === 'PLATFORM_REQUESTED') throw err.forbidden('平台开票需由平台处理，工程师不能标记完成');
       if (action === 'ISSUED' && !['SELF_ISSUE', 'PLATFORM_REQUESTED'].includes(record.status)) {
         throw err.conflict('请先选择开票处理方式');
       }
@@ -187,9 +251,10 @@ function register(router) {
     ok(res, invoiceView(result, { files: await invoiceFilesOf(result.id) }));
   });
 
-  // 工程师自行开票：上传电子发票文件后自动标记为已完成开票。
-  router.post('/api/invoices/:id/files', async (req, res, params) => {
-    const engineer = await requireEngineer(req);
+  // 共用文件校验和原子提交：自行开票由工程师交付，平台协助由有权限的管理员交付。
+  const submitInvoiceFiles = (platform = false) => async (req, res, params) => {
+    const adminAuth = platform ? await requireAdmin(req, 'INVOICE_PROCESS') : null;
+    const engineer = adminAuth ? adminAuth.user : await requireEngineer(req);
     const body = await readJson(req);
     const rawFileIds = v.arr(body.fileIds, '发票文件', { minLen: 1, maxLen: 5 });
     const fileIds = rawFileIds.map((fileId) => v.str(fileId, '文件ID', { min: 1, max: 32 }));
@@ -197,12 +262,14 @@ function register(router) {
 
     const result = await tx(async (conn) => {
       const [[record]] = await conn.execute(
-        `SELECT * FROM invoice_requests WHERE id=? AND engineerId=? FOR UPDATE`,
-        [params.id, engineer.id]
+        `SELECT * FROM invoice_requests WHERE id=?${platform ? '' : ' AND engineerId=?'} FOR UPDATE`,
+        platform ? [params.id] : [params.id, engineer.id]
       );
       if (!record) throw err.notFound('发票申请不存在');
-      if (record.status !== 'SELF_ISSUE' || record.handlingMode !== 'SELF_ISSUE') {
-        throw err.conflict('仅选择“自行开票”后可以上传发票文件');
+      if (platform
+        ? record.status !== 'PLATFORM_REQUESTED' || record.handlingMode !== 'PLATFORM'
+        : record.status !== 'SELF_ISSUE' || record.handlingMode !== 'SELF_ISSUE') {
+        throw err.conflict(platform ? '仅平台协助开票申请可由管理员交付' : '仅选择“自行开票”后可以上传发票文件');
       }
 
       const [files] = await conn.execute(
@@ -211,7 +278,8 @@ function register(router) {
                 EXISTS(SELECT 1 FROM engineer_verification_files evf WHERE evf.fileId=f.id) AS usedForVerification,
                 EXISTS(SELECT 1 FROM dispute_evidence de WHERE de.fileId=f.id) AS usedForDispute,
                 EXISTS(SELECT 1 FROM refund_request_files rf WHERE rf.fileId=f.id) AS usedForRefund,
-                EXISTS(SELECT 1 FROM invoice_request_files irf WHERE irf.fileId=f.id) AS usedForInvoice
+                EXISTS(SELECT 1 FROM invoice_request_files irf WHERE irf.fileId=f.id) AS usedForInvoice,
+                EXISTS(SELECT 1 FROM messages m WHERE m.fileId=f.id) AS usedForChat
            FROM uploaded_files f
           WHERE f.id IN (${fileIds.map(() => '?').join(',')})
           FOR UPDATE`,
@@ -221,7 +289,7 @@ function register(router) {
       for (const file of files) {
         if (file.uploaderId !== engineer.id) throw err.forbidden('不能使用其他用户上传的文件');
         if (file.orderId || file.usedForIdentity || file.usedForVerification
-          || file.usedForDispute || file.usedForRefund || file.usedForInvoice) {
+          || file.usedForDispute || file.usedForRefund || file.usedForInvoice || file.usedForChat) {
           throw err.conflict('文件已用于其他业务，请重新上传');
         }
         if (!['IMAGE', 'DOC'].includes(file.kind)
@@ -241,22 +309,25 @@ function register(router) {
       await conn.execute(
         `UPDATE invoice_requests
             SET status='ISSUED', handledAt=COALESCE(handledAt, ?), updatedAt=?
-          WHERE id=? AND status='SELF_ISSUE'`,
-        [now, now, record.id]
+          WHERE id=? AND status=?`,
+        [now, now, record.id, platform ? 'PLATFORM_REQUESTED' : 'SELF_ISSUE']
       );
+      if (adminAuth) await writeAdminAudit(req, adminAuth.admin, 'INVOICE_FILES_DELIVER', 'INVOICE', record.id, { fileIds }, conn);
       return { ...record, status: 'ISSUED', updatedAt: now };
     });
 
     const files = await invoiceFilesOf(result.id);
     systemMessageForOrder(
       result.orderId,
-      '工程师已上传电子发票，你可以在订单的发票详情中查看和下载。',
+      (platform ? '平台' : '工程师') + '已上传电子发票，你可以在订单的发票详情中查看和下载。',
       { senderId: engineer.id, actionOrderId: result.orderId }
     ).catch(() => {});
     ok(res, invoiceView(result, { files }));
-  });
+  };
+  router.post('/api/invoices/:id/files', submitInvoiceFiles());
+  router.post('/api/admin/invoices/:id/files', submitInvoiceFiles(true));
 
-  // 管理员先提供只读预览；平台开票的收费、审核与实际开具将独立接入。
+  // 管理员可预览申请并交付已实际开具的文件；不调用税务开票或收费接口。
   router.get('/api/admin/invoices', async (req, res, _params, q) => {
     await requireAdmin(req, 'INVOICE_READ');
     const status = String(q.get('status') || '').toUpperCase();

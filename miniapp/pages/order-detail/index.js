@@ -300,6 +300,11 @@ Page({
       url: `/pages/review-form/index?orderId=${this.data.id}${review ? '&edit=1' : ''}`,
     });
   },
+  goCustomerReview() {
+    const review = this.data.order && this.data.order.customerReview;
+    if (review && Number(review.revisionCount || 0) >= 1) return wx.showToast({ title: '该评价已修改过，不能再次修改', icon: 'none' });
+    wx.navigateTo({ url: `/pages/customer-review-form/index?orderId=${this.data.id}${review ? '&edit=1' : ''}` });
+  },
   goEngineerProfile(e) {
     const id = e.currentTarget.dataset.id;
     if (!id) return;

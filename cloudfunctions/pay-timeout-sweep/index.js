@@ -15,6 +15,8 @@ const mysql = require('mysql2/promise');
 const PAY_TIMEOUT_SEC = parseInt(process.env.PAY_TIMEOUT_SEC || '1800', 10);
 
 exports.main = async (event, context) => {
+  // 真实支付必须先查单并关闭微信侧支付单，由云托管 pay-svc 统一处理。
+  if (process.env.PAYMENT_MODE !== 'mock') return { success: true, skipped: 'handled-by-container-payment-sweeper' };
   const mysqlAddr = process.env.MYSQL_ADDRESS || '127.0.0.1:3306';
   const [host, portStr] = mysqlAddr.split(':');
   const pool = mysql.createPool({
@@ -46,14 +48,14 @@ exports.main = async (event, context) => {
         const [r] = await conn.execute(
           `UPDATE orders SET status='QUOTING', selectedQuoteId=NULL,
              finalAmountFen=NULL, selectedAt=NULL, updatedAt=?
-           WHERE id=? AND status='AWAITING_PAYMENT'`,
-          [now.toISOString(), o.id]
+           WHERE id=? AND status='AWAITING_PAYMENT' AND selectedQuoteId=? AND selectedAt < ?`,
+          [now.toISOString().slice(0, 19).replace('T', ' '), o.id, o.selectedQuoteId, deadline]
         );
         if (!r.affectedRows) continue;
         await conn.execute(
           `UPDATE quotes SET status='PENDING', updatedAt=?
            WHERE orderId=? AND status IN ('SELECTED','REJECTED')`,
-          [now.toISOString(), o.id]
+          [now.toISOString().slice(0, 19).replace('T', ' '), o.id]
         );
         await conn.execute(
           `UPDATE payments SET status='FAILED' WHERE orderId=? AND status='PENDING'`,

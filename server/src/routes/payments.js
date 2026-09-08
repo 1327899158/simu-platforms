@@ -13,15 +13,15 @@
  *   → 前端轮询确认支付状态
  */
 const { readJson, ok, sendJson, err } = require('../lib/http');
-const { query, queryOne } = require('../db');
+const { queryOne } = require('../db');
 const { requireUser } = require('../lib/auth-mw');
-const { createJsapiOrder, applyPaymentSuccess } = require('../services/pay-svc');
-const { getOpenid } = require('../lib/auth-mw');
+const { reconcilePayment, applyPaymentSuccess } = require('../services/pay-svc');
 const { config } = require('../config');
 
 function register(router) {
   // POST /api/pay/notify —— 微信支付回调（@Public，内部投递不带 X-WX-OPENID）
   router.post('/api/pay/notify', async (req, res) => {
+    if (config.paymentMode !== 'wechat') throw err.notFound('真实支付回调未开启');
     let body;
     try {
       body = await readJson(req);
@@ -30,15 +30,19 @@ function register(router) {
       return;
     }
     // 云托管代解密：body 即 trade_state/out_trade_no/transaction_id 等字段
-    if (body.trade_state !== 'SUCCESS') {
+    if (body.trade_state !== 'SUCCESS' && body.tradeState !== 'SUCCESS'
+      && (body.result_code || body.resultCode) !== 'SUCCESS') {
       sendJson(res, 200, { errcode: 0, errmsg: 'OK' });
       return;
     }
     try {
-      await applyPaymentSuccess(body.out_trade_no, body.transaction_id, body);
+      const result = await reconcilePayment(body.out_trade_no || body.outTradeNo);
+      if (result.reason === 'not-paid') throw new Error('微信支付查单尚未确认成功');
     } catch (e) {
-      // 幂等失败或业务异常：log 但仍返回成功避免微信重试
+      // 不吞掉失败，否则微信停止重试，用户已付款的订单可能一直待支付。
       console.error('[pay/notify]', e.message);
+      sendJson(res, 500, { errcode: -1, errmsg: 'payment verification failed' });
+      return;
     }
     // 云托管版回调返回格式（注意：不是 v3 标准的 {code:"SUCCESS"} 格式）
     sendJson(res, 200, { errcode: 0, errmsg: 'OK' });
@@ -76,11 +80,19 @@ function register(router) {
   // GET /api/orders/:id/payment
   router.get('/api/orders/:id/payment', async (req, res, params) => {
     const user = await requireUser(req);
-    const o = await queryOne(`SELECT * FROM orders WHERE id = ?`, [params.id]);
+    let o = await queryOne(`SELECT * FROM orders WHERE id = ?`, [params.id]);
     if (!o || o.customerId !== user.id) throw err.notFound('订单不存在');
-    const p = await queryOne(
+    let p = await queryOne(
       `SELECT outTradeNo, amountFen, status, paidAt FROM payments
        WHERE orderId = ? ORDER BY createdAt DESC LIMIT 1`, [params.id]);
+    // 用户已付款但通知延迟时，轮询主动查单；失败仍显示待确认，不伪造成功。
+    if (config.paymentMode === 'wechat' && p?.status === 'PENDING') {
+      try {
+        await reconcilePayment(p.outTradeNo);
+        o = await queryOne('SELECT * FROM orders WHERE id=?', [params.id]);
+        p = await queryOne('SELECT outTradeNo,amountFen,status,paidAt FROM payments WHERE outTradeNo=?', [p.outTradeNo]);
+      } catch (e) { console.error('[pay/query]', e.message); }
+    }
     ok(res, { orderStatus: o.status, payment: p || null });
   });
 }

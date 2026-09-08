@@ -5,6 +5,7 @@ const { v } = require('../lib/util');
 const { query, queryOne, tx } = require('../db');
 const { requireEngineer } = require('../lib/auth-mw');
 const { orderView, quoteCountOf } = require('./orders');
+const { reviewView: customerReviewView } = require('../services/customer-review-svc');
 
 function register(router) {
   // GET /api/market/orders?direction=&software=&sort=latest|hot&cursor=&limit=
@@ -87,9 +88,11 @@ function register(router) {
     });
     o = await queryOne(`SELECT * FROM orders WHERE id=? AND deletedAt IS NULL`, [params.id]);
     let customer = null;
+    let customerReview = null;
     if (iAmSelected && ['IN_PROGRESS', 'DELIVERED', 'COMPLETED', 'REFUND_PENDING'].includes(o.status)) {
       const row = await queryOne(`SELECT nickname, avatarUrl FROM users WHERE id=?`, [o.customerId]);
-      if (row) customer = { nickname: row.nickname, avatarUrl: row.avatarUrl };
+      if (row) customer = { id: o.customerId, nickname: row.nickname, avatarUrl: row.avatarUrl };
+      if (o.status === 'COMPLETED') customerReview = await queryOne(`SELECT id,score,tags,content,revisionCount,createdAt,updatedAt FROM customer_reviews WHERE orderId=? AND engineerId=?`, [o.id, user.id]);
     }
     ok(res, {
       ...orderView(o, {}),
@@ -97,6 +100,7 @@ function register(router) {
       myQuote: myQuote || null,
       iAmSelected,
       customer,
+      customerReview: customerReviewView(customerReview),
     });
   });
 }

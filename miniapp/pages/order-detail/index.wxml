@@ -327,6 +327,10 @@ module.exports = {
       <text class="review-action-desc">{{invoiceRequest ? ('客户申请：' + invoiceRequest.statusText) : '客户暂未申请发票'}}</text>
       <button class="invoice-action-btn" wx:if="{{invoiceRequest}}" bindtap="goInvoiceRequest">前往处理</button>
     </view>
+    <view class="review-action-card" wx:if="{{order.iAmSelected && order.status === 'COMPLETED'}}">
+      <view class="review-action-copy"><text class="review-action-title">{{order.customerReview ? '已评价客户' : '评价客户'}}</text><text class="review-action-desc">需求描述、回复、验收配合、沟通和付款情况</text></view>
+      <button class="review-action-btn" bindtap="goCustomerReview" disabled="{{order.customerReview && order.customerReview.revisionCount >= 1}}">{{!order.customerReview ? '去评价' : (order.customerReview.revisionCount >= 1 ? '已完成' : '修改评价')}}</button>
+    </view>
 
     <!-- 退款确认：待处理期间工程师只能同意或拒绝 -->
     <view class="refund-decision-card" wx:if="{{refundRequest && refundRequest.status === 'PENDING'}}">
