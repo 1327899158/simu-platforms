@@ -1,5 +1,5 @@
 <view class="page-container" wx:if="{{dispute}}">
-  <view class="hero">
+  <view class="hero illustrated-panel"><image class="panel-art support-art" src="/assets/commit.png" mode="aspectFit" aria-hidden="true"/>
     <view class="hero-top">
       <text class="hero-title">⚖️ 订单纠纷</text>
       <text class="status {{dispute.statusCls}}">{{dispute.statusText}}</text>

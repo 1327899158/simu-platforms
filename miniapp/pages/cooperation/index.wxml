@@ -1,5 +1,44 @@
-<view class="community"><view class="title">常驻合作与定向需求</view><view class="notice">合作条件由双方确认后保存。修改设置不影响已有合作；如需新条款，请结束原合作后重新申请。折扣目前仅作为报价参考，由工程师在报价中体现，不自动改变支付金额。</view><view class="error" wx:if="{{error}}" bindtap="load">{{error}} · 重试</view>
-<view wx:if="{{setting}}" class="card"><view class="title">我的合作设置</view><view>开放合作 <switch checked="{{setting.enabled}}" bindchange="toggle"/></view><text>合作折扣（1—10折；10表示不打折）</text><input type="digit" data-key="discountInput" value="{{setting.discountInput}}" bindinput="input"/><text>响应承诺（小时）</text><input type="number" data-key="responseHours" value="{{setting.responseHours}}" bindinput="input"/><text>排期说明</text><textarea data-key="scheduleNote" value="{{setting.scheduleNote}}" bindinput="input" maxlength="500"/><text>免费修改次数</text><input type="number" data-key="revisionCount" value="{{setting.revisionCount}}" bindinput="input"/><text>最低项目预算（元）</text><input type="digit" data-key="minYuan" value="{{setting.minYuan}}" bindinput="input"/><button bindtap="save" disabled="{{busy}}" loading="{{busy}}">保存设置</button></view>
-<view wx:if="{{target}}" class="card"><view class="title">{{target.engineer.nickname}}的合作条件</view><view wx:if="{{target.settings.enabled}}"><view>参考折扣：{{target.settings.discountText}}</view><view>响应：{{target.settings.responseHours}}小时内</view><view>修改：{{target.settings.revisionCount}}次 / 最低预算：¥{{target.settings.minText}}</view><view class="body">排期：{{target.settings.scheduleNote||'双方协商'}}</view><textarea placeholder="合作意向说明（选填）" value="{{message}}" bindinput="message" maxlength="1000"/><checkbox-group bindchange="check"><label><checkbox value="yes" checked="{{confirmed}}"/>已阅读并确认当前合作条件</label></checkbox-group><button bindtap="invite" disabled="{{busy||!confirmed||user.role!=='CUSTOMER'}}">发起长期合作意向</button></view><view wx:else>暂未开放常驻合作</view></view>
-<view class="title">我的合作关系</view><view class="card" wx:for="{{relations}}" wx:key="id"><view>{{item.customerName}} ↔ {{item.engineerName}}</view><view>{{item.statusText}}</view><view class="muted">确认条件：{{item.terms.discountText}} · {{item.terms.responseHours}}小时响应 · {{item.terms.revisionCount}}次修改 · 最低¥{{item.terms.minText}}</view><view class="body">{{item.terms.scheduleNote}}</view><view class="muted">{{item.message}}</view><view class="row" wx:if="{{item.status==='PENDING'}}"><button wx:if="{{user.id===item.engineerId}}" data-id="{{item.id}}" data-action="ACCEPT" bindtap="act" disabled="{{busy}}">同意合作</button><button wx:if="{{user.id===item.engineerId}}" data-id="{{item.id}}" data-action="REJECT" bindtap="act" disabled="{{busy}}">拒绝</button><button wx:else data-id="{{item.id}}" data-action="CANCEL" bindtap="act" disabled="{{busy}}">撤销申请</button></view><view class="row" wx:if="{{item.status==='ACTIVE'}}"><button wx:if="{{user.id===item.customerId}}" data-id="{{item.engineerId}}" bindtap="publish">向TA定向下单</button><button data-id="{{item.id}}" data-action="END" bindtap="act" disabled="{{busy}}">结束合作</button></view></view><button wx:if="{{hasMore}}" bindtap="moreRelations">更多合作</button>
-<view class="title">定向需求进度</view><view class="card" wx:for="{{directs}}" wx:key="id" data-id="{{item.id}}" bindtap="order"><view>{{item.projectName}}</view><view class="muted">指定：{{item.engineerName}} · {{item.status==='QUOTING'?'等待报价或客户选择':item.status}} · 查看详情 ›</view></view><view wx:if="{{!directs.length}}" class="muted">暂无定向需求。合作中的客户可通过上方入口创建。</view><button wx:if="{{directMore}}" bindtap="moreDirects">更多定向需求</button></view>
+
+<view class="community">
+ <view class="hero between"><view class="grow"><view class="eyebrow">BETTER TOGETHER</view><view class="title">{{setting?'常驻合作设置':'长期合作'}}</view><view class="muted">让默契延续，让专业合作更轻松</view></view><view class="hero-icon">🤝</view></view>
+ <view class="error" wx:if="{{error}}" bindtap="load">{{error}} · 重试</view>
+ <view class="notice">合作条件经双方确认后保存。折扣仅作为报价参考，不自动改变支付金额；修改设置不会改变已有合作条款。</view>
+ <block wx:if="{{setting}}">
+  <view class="card between"><view class="grow"><view class="title">开启常驻合作</view><view class="caption">客户可在您的主页了解条件并发起合作意向</view></view><switch color="#91b66c" checked="{{setting.enabled}}" bindchange="toggle"/></view>
+  <view class="section-title">01 · 合作折扣<text class="caption">工程师自主设置</text></view>
+  <view class="card"><view class="field-label">客户支付折扣</view><view class="between"><input type="digit" data-key="discountInput" value="{{setting.discountInput}}" bindinput="input"/><text>折</text></view><view class="caption">可设置1—10折，10折为不打折。此条件由客户确认后作为报价参考。</view></view>
+  <view class="section-title">02 · 合作条件<text class="caption">客户可见</text></view>
+  <view class="card">
+   <view class="field-label">⚡ 响应时效承诺</view><view class="between"><input type="number" data-key="responseHours" value="{{setting.responseHours}}" bindinput="input"/><text>小时</text></view>
+   <view class="field-label">▦ 排期说明</view><textarea data-key="scheduleNote" value="{{setting.scheduleNote}}" bindinput="input" maxlength="500" placeholder="说明您当前的排期及合作安排"/><view class="count">{{setting.scheduleNote.length}} / 500</view>
+   <view class="field-label">↻ 免费修改次数</view><view class="between"><input type="number" data-key="revisionCount" value="{{setting.revisionCount}}" bindinput="input"/><text>次</text></view>
+   <view class="field-label">¥ 最低项目预算</view><view class="between"><input type="digit" data-key="minYuan" value="{{setting.minYuan}}" bindinput="input"/><text>元</text></view>
+  </view>
+  <button class="primary" bindtap="save" disabled="{{busy}}" loading="{{busy}}">保存合作设置</button>
+ </block>
+ <view wx:if="{{target}}" class="card">
+  <view class="between"><view class="avatar">工</view><view class="grow"><view class="title">{{target.engineer.nickname}}</view><view class="badge">长期合作意向</view></view></view>
+  <block wx:if="{{target.settings.enabled}}">
+   <view class="stat-grid"><view class="stat"><view class="number">{{target.settings.discountText}}</view><view class="caption">参考折扣</view></view><view class="stat"><view class="number">{{target.settings.responseHours}}</view><view class="caption">小时响应</view></view></view>
+   <view class="list-row between"><text>免费修改</text><text>{{target.settings.revisionCount}} 次</text></view><view class="list-row between"><text>最低预算</text><text>¥{{target.settings.minText}}</text></view>
+   <view class="field-label">排期安排</view><view class="body">{{target.settings.scheduleNote||'双方协商'}}</view>
+   <view class="field-label">您的合作意向</view><textarea placeholder="说说您的项目方向及合作计划（选填）" value="{{message}}" bindinput="message" maxlength="1000"/>
+   <checkbox-group bindchange="check"><label class="muted"><checkbox color="#789952" value="yes" checked="{{confirmed}}"/>已阅读并确认当前合作条件</label></checkbox-group>
+   <button class="primary" bindtap="invite" disabled="{{busy||!confirmed||user.role!=='CUSTOMER'}}" loading="{{busy}}">发起长期合作意向</button>
+  </block><view wx:else class="empty muted">这位工程师暂未开放常驻合作</view>
+ </view>
+ <view class="section-title">我的合作关系<text class="caption">双方确认 · 条件留存</text></view>
+ <view class="card" wx:for="{{relations}}" wx:key="id">
+  <view class="between"><view class="grow"><view class="title">{{item.customerName}} ↔ {{item.engineerName}}</view></view><view class="badge">{{item.statusText}}</view></view>
+  <view class="notice">确认条款：{{item.terms.discountText}} · {{item.terms.responseHours}}小时响应 · {{item.terms.revisionCount}}次修改 · 最低¥{{item.terms.minText}}</view>
+  <view class="body">{{item.terms.scheduleNote}}</view><view class="muted">{{item.message}}</view>
+  <view class="row" wx:if="{{item.status==='PENDING'}}"><button class="primary" wx:if="{{user.id===item.engineerId}}" data-id="{{item.id}}" data-action="ACCEPT" bindtap="act" disabled="{{busy}}">同意合作</button><button wx:if="{{user.id===item.engineerId}}" data-id="{{item.id}}" data-action="REJECT" bindtap="act" disabled="{{busy}}">拒绝</button><button wx:else data-id="{{item.id}}" data-action="CANCEL" bindtap="act" disabled="{{busy}}">撤销申请</button></view>
+  <view class="row" wx:if="{{item.status==='ACTIVE'}}"><button class="primary" wx:if="{{user.id===item.customerId}}" data-id="{{item.engineerId}}" bindtap="publish">向TA定向下单</button><button class="link" data-id="{{item.id}}" data-action="END" bindtap="act" disabled="{{busy}}">结束合作</button></view>
+ </view>
+ <view wx:if="{{!relations.length&&!error}}" class="card empty"><view class="empty-icon">🤝</view><view class="title">还没有合作关系</view><view class="muted">客户可从工程师主页发起意向，双方确认后开启合作</view></view>
+ <button wx:if="{{hasMore}}" bindtap="moreRelations">更多合作</button>
+ <view class="section-title">定向需求进度<text class="caption">仅指定工程师可见</text></view>
+ <view class="card between" wx:for="{{directs}}" wx:key="id" data-id="{{item.id}}" bindtap="order"><view class="grow"><view class="title">{{item.projectName}}</view><view class="muted">指定工程师：{{item.engineerName}}</view><view class="badge">{{item.status==='QUOTING'?'等待报价或客户选择':item.status}}</view></view><text>›</text></view>
+ <view wx:if="{{!directs.length}}" class="card empty"><view class="empty-icon">▤</view><view class="muted">暂无定向需求，合作中的客户可通过上方入口创建</view></view>
+ <button wx:if="{{directMore}}" bindtap="moreDirects">更多定向需求</button>
+</view>

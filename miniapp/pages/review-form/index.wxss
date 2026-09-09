@@ -27,3 +27,5 @@
 .card { border-radius: 32rpx; }
 .star.active { color: #F5A623; }
 .submit { border-radius: 999rpx; background: #5BC0EB; color: #FFFFFF; }
+
+@import "../../theme.wxss";

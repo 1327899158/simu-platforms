@@ -373,3 +373,17 @@
 .page-header { background: linear-gradient(160deg, #BEE3F0 0%, #DDEBD9 100%); border-radius: 32rpx; border-bottom: none; position: relative; }
 .header-illust { position: absolute; right: 20rpx; top: 10rpx; width: 150rpx; height: 150rpx; }
 .stats-card { border-radius: 32rpx; }
+
+@import "../../theme.wxss";
+
+/* 全部入口移至标题右侧，专业方向等宽排列。 */
+.page-container .filter-bar{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14rpx}
+.page-container .filter-item,.page-container .sort-item,.page-container .filter-reset{box-sizing:border-box;background:#f5f7f7;border:2rpx solid #d4dddd;color:#53666a;box-shadow:none;border-radius:18rpx;min-width:0;margin:0}
+.page-container .filter-item{min-height:82rpx;width:100%;padding:12rpx 8rpx;font-size:23rpx}
+.page-container .filter-item.active,.page-container .sort-item.active,.page-container .filter-reset.active{background:#edf3f4;border-color:#87b5c1;color:#315e6c;box-shadow:none}
+.page-container .filter-reset{padding:12rpx 18rpx;font-size:22rpx;line-height:1.5;flex-shrink:0}
+.page-container .filter-reset::after{border:none}
+.page-container .sort-bar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14rpx}
+.page-container .sort-item{width:100%;min-height:82rpx;padding:14rpx}
+.page-container .filter-name{word-break:break-all}.page-container .filter-check{flex-shrink:0}
+@import "../../illustrations.wxss";

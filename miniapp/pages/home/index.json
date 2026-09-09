@@ -1,1 +1,1 @@
-{ "enablePullDownRefresh": true }
+{ "enablePullDownRefresh": true, "navigationBarBackgroundColor": "#e6f1ef", "backgroundColor": "#e6f1ef", "backgroundColorTop": "#e6f1ef", "backgroundColorBottom": "#dcebe8" }

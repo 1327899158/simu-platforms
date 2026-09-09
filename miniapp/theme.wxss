@@ -1,0 +1,70 @@
+/* 全模块视觉层：在页面样式末尾引入，不改变布局、显隐、层级或业务状态。 */
+page {
+  --bg-base: #e6f1ef;
+  --bg-deep: #dae9e7;
+  --bg-card: rgba(255,255,255,.78);
+  --bg-elev: rgba(255,255,255,.84);
+  --color-primary: #70b9cf;
+  --color-primary-dark: #35788d;
+  --color-primary-light: #e0eef2;
+  --neon-violet: #70b9cf;
+  --neon-violet-2: #35788d;
+  --neon-cyan: #70b9cf;
+  --neon-blue: #70b9cf;
+  --grad-neon: linear-gradient(110deg,#70b9cf,#87c4d4);
+  --grad-violet-pink: linear-gradient(110deg,#70b9cf,#87c4d4);
+  --grad-cyan-blue: linear-gradient(110deg,#d7eaf0,#b7dce5);
+  --grad-hero-sunny: linear-gradient(135deg,#ecebd6,#dceee8);
+  --grad-hero-sky: linear-gradient(135deg,#dcecf1,#e3efec);
+  --c-text: #233739;
+  --c-text-2: #526c70;
+  --c-text-3: #697d7e;
+  --c-text-4: #819394;
+  --c-border: #d6e3e2;
+  --c-divider: #e0eae8;
+  --c-border-strong: #70aab9;
+  --shadow-card: 0 8rpx 28rpx rgba(49,78,80,.045);
+  --shadow-sm: 0 4rpx 16rpx rgba(49,78,80,.035);
+  --glow-primary: 0 6rpx 20rpx rgba(49,78,80,.06);
+  min-height:100%;
+  color:var(--c-text);
+  background:#e6f1ef;
+  background-image:radial-gradient(ellipse at 0% 0%,rgba(246,241,209,.52),transparent 48%),linear-gradient(155deg,#e6f1ef 0%,#dceef0 36%,#e5f0e9 72%,#dcebe8 100%);
+}
+/* 顶层容器统一承载连续渐变；聊天保留自己的 flex 高度和滚动容器。 */
+.page-container,.page,.wrap,.community,.admin-page,.case-page,.blacklist-page,.qualification-page,.chat-container,.container {
+  min-height:100vh;box-sizing:border-box;color:#233739;
+  background:radial-gradient(ellipse at 0% 0%,rgba(246,241,209,.52),transparent 48%),linear-gradient(155deg,#e6f1ef 0%,#dceef0 36%,#e5f0e9 72%,#dcebe8 100%);
+}
+.hero,.community .hero,.admin-hero,.case-hero,.qualification-hero,.profile-hero,.market-hero,.hero-card,.page-header,.user-card {
+  background:transparent;box-shadow:none;border-color:transparent;color:#233739;
+}
+.hero .hero-title,.hero-title,.qualification-hero .title,.profile-title,.market-hero .hero-title,.admin-hero-title {color:#233739}
+.hero .hero-sub,.hero .hero-desc,.hero-sub,.hero-desc,.hero-copy,.hero-subtitle,.profile-desc,.hero-badge,.hero-proof,.visitor-chip,.admin-hero-desc {color:#526c70}
+.hero-title-accent{color:#35788d}.hero-glow,.hero-orb,.bg-glow{opacity:.16}
+.card,.community .card,.admin-card,.case-card,.form-card,.list-card,.req-card,.order-card,.conv-item,.menu-card,.login-card,.person,.section {
+  background:rgba(255,255,255,.78);border-color:rgba(255,255,255,.74);border-radius:26rpx;box-shadow:0 8rpx 28rpx rgba(49,78,80,.045);
+}
+/* 输入与工具栏不使用透明文字；浮层底色接近不透明，避免正文透叠。 */
+.input,.admin-input,.comment-input,.desc-text,.info-box,.community input,.community textarea {
+  background:rgba(232,240,240,.72);border-color:#d6e3e2;color:#233739;
+}
+.chat-header,.filter-wrap,.filter-sort-container,.admin-filter-bar,.admin-filter-panel,.community .dock,.guest-tabbar {
+  background:rgba(239,246,244,.96);border-color:#d6e3e2;box-shadow:none;
+}
+.dialog,.modal-content,.modal-panel,.sheet-panel,.bottom-sheet,.login-sheet {
+  background:#f2f7f5;color:#233739;border-color:#d6e3e2;
+}
+.btn-primary,.submit,.submit-btn,.login-button,.dialog-submit,.community .primary,.case-page .primary,.admin-btn-primary {
+  background:linear-gradient(110deg,#70b9cf,#87c4d4);color:#163b48;box-shadow:0 4rpx 16rpx rgba(49,78,80,.05);
+}
+.community .active{background:#d3e8e6;color:#315b61}
+.community .notice,.intro{background:rgba(224,237,232,.8);color:#526c70}
+.community .warning,.private-tip,.privacy{background:rgba(246,240,217,.9);color:#806a30}
+.community .danger{background:#fbefeb;color:#a34339}
+.community .error{background:#fff0e9;color:#a34434}
+.community .muted,.community .caption,.admin-muted,.admin-small{color:#697d7e}
+.community .avatar{background:#dfedeb;color:#527d79}
+.community .badge{background:#dfebe7;color:#42685f}
+.community .number{color:#315b61}
+/* 不覆盖 mask、error、success、warning、等级及订单状态的语义色。 */

@@ -1,6 +1,6 @@
 <view class="page-container">
 
-  <view class="page-header">
+  <view class="page-header illustrated-panel"><image class="panel-art support-art" src="/assets/commit.png" mode="aspectFit" aria-hidden="true"/>
     <text class="page-title">⚖️ 我的纠纷</text>
   </view>
 

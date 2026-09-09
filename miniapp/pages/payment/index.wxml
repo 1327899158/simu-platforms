@@ -1,0 +1,13 @@
+<view class="community payment-page">
+ <view class="hero illustrated-panel"><image class="panel-art" src="/assets/pay.png" mode="aspectFit" aria-hidden="true"/><view class="art-copy"><view class="eyebrow">ORDER CONFIRMATION</view><view class="title">{{success?'模拟支付成功':'确认订单'}}</view><view class="muted">{{success?'订单状态已更新，可返回查看进度':'核对订单信息，安心开启合作'}}</view></view></view>
+ <view class="notice warning">模拟支付体验：不会调用微信支付，也不会扣款。确认后会真实更新本项目中的订单状态。</view>
+ <view class="error" wx:if="{{error}}">{{error}}<button bindtap="load" disabled="{{busy||loading}}">刷新支付状态</button></view>
+ <view wx:if="{{loading}}" class="muted">正在获取订单信息…</view>
+ <block wx:if="{{order}}">
+  <view class="card"><view class="between"><image wx:if="{{order.engineer.avatarUrl}}" class="avatar" src="{{order.engineer.avatarUrl}}" mode="aspectFill"/><view wx:else class="avatar">工</view><view class="grow"><view class="title">{{order.engineer.nickname||'已选工程师'}}</view><view class="muted">本订单合作工程师</view></view></view><view class="list-row"><view class="title">{{order.projectName}}</view><view class="caption">交付要求以订单及已选报价约定为准</view></view></view>
+  <view class="section-title">费用明细</view><view class="card"><view class="between list-row"><text>订单应付金额</text><text>¥{{amountText}}</text></view><view class="between list-row"><text>额外服务费</text><text>本次不另收取</text></view><view class="between list-row"><text>优惠券 / 仿真币</text><text class="caption">暂未开放抵扣</text></view><view class="caption">合作折扣不重复扣减，应付金额以服务端支付单为准。</view><view class="between list-row"><text>应付总额</text><text class="payment-amount">¥{{amountText}}</text></view></view>
+  <view class="section-title">支付方式</view><view class="card between"><text>模拟支付</text><view class="badge">测试模式 ✓</view></view>
+  <view class="caption">不会产生真实资金托管、转账或退款。请勿将模拟支付结果作为实际付款凭证。</view>
+  <view class="dock"><button wx:if="{{!success}}" class="primary" bindtap="confirmPay" loading="{{busy}}" disabled="{{busy||loading||error}}">确认模拟支付 ¥{{amountText}}</button><button wx:else class="primary" bindtap="back">返回订单 · 查看进度</button></view>
+ </block>
+</view>

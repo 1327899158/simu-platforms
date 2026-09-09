@@ -8,6 +8,8 @@
   box-sizing: border-box;
 }
 
+@import "../../theme.wxss";
+
 /* ===== 用户卡片 ===== */
 .user-card {
   display: flex;
@@ -232,3 +234,20 @@
   width: 100%;
   box-sizing: border-box;
 }
+
+/* 顶部身份信息、编辑操作与成长入口分层，避免标签挤在同一行。 */
+.page-container .me-hero{display:flex;flex-wrap:wrap;gap:18rpx;padding:28rpx 12rpx}
+.page-container .me-info{min-width:0;flex:1}
+.page-container .me-name{font-size:34rpx;line-height:1.5;word-break:break-all}
+.me-badges{display:flex;flex-wrap:wrap;gap:12rpx}
+.page-container .me-edit{margin:0 0 0 auto;padding:14rpx 20rpx;border:1rpx solid #bfd8df;background:#f1f8f9;color:#447b8b;border-radius:24rpx;font-size:23rpx;line-height:1.5;flex-shrink:0}
+.page-container .me-edit::after{border:none}
+.page-container .badge-y{background:#f4edcd;color:#7a6b3d;font-size:23rpx}
+.page-container .card-sky{display:flex;align-items:center;gap:20rpx;background:linear-gradient(115deg,#e4f3f8,#f0f8f7);border:1rpx solid #d4e6eb;color:#315c69;box-shadow:0 4rpx 18rpx rgba(70,110,125,.035);border-radius:26rpx}
+.page-container .level-entry{background:linear-gradient(115deg,#f3efdb,#eef6ea);border-color:#e2e6d3}
+.page-container .sky-copy{flex:1;min-width:0}.page-container .sky-title{font-size:29rpx;line-height:1.5;color:#375d65;word-break:break-all}
+.page-container .sky-desc{font-size:23rpx;line-height:1.6;color:#71858a}
+.entry-icon{font-size:42rpx;flex-shrink:0}.entry-arrow{font-size:34rpx;color:#809990;flex-shrink:0}
+.page-container .btn-y{background:#fff5bf;color:#776728;border:1rpx solid #ece4bd;padding:12rpx 26rpx;font-size:24rpx;flex-shrink:0}
+.page-container .data-card-y{background:rgba(255,255,255,.72);border:1rpx solid rgba(255,255,255,.8)}
+.page-container .verify-hint{color:#6c8184;line-height:1.7;margin:0 12rpx 24rpx}

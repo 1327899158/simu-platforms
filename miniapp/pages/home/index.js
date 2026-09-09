@@ -15,6 +15,7 @@ Page({
     unreadOrderCount: 0,
     // 工程师
     hall: [],
+    hallStats: { allCount: null, todayCount: null },
     campaigns: [], notices: [], engineers: [], categories: [],
   },
   async onShow() {
@@ -108,6 +109,7 @@ Page({
     try { data = await request('GET', '/market/orders', params); }
     catch (e) { wx.showToast({ title: e.message || '抢单大厅加载失败', icon: 'none' }); return; }
     this.setData({
+      hallStats: data.stats || { allCount: null, todayCount: null },
       hall: data.items.map((o) => ({
         ...o, budgetY: fenToYuan(o.budgetFen), time: timeShort(o.createdAt),
       })),

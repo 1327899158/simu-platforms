@@ -1,4 +1,4 @@
-<view class="admin-page">
+<view class="admin-page illustrated-panel"><image class="panel-art support-art" src="/assets/commit.png" mode="aspectFit" aria-hidden="true"/>
   <view class="admin-hero">
     <text class="admin-hero-title">纠纷管理</text>
     <text class="admin-hero-desc">共 {{total}} 条纠纷 · 处理订单履约争议</text>

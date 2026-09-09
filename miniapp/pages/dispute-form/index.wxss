@@ -157,3 +157,6 @@
 /* ===== design 1:1 ===== */
 .card { border-radius: 32rpx; }
 .upload-button, .submit, button.primary { border-radius: 999rpx; }
+
+@import "../../theme.wxss";
+@import "../../illustrations.wxss";

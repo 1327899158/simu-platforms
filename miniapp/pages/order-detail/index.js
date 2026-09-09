@@ -227,23 +227,7 @@ Page({
       const p = await request('POST', `/orders/${this.data.id}/pay`, {}, { silent: true });
 
       if (p.mode === 'mock') {
-        const confirmed = await new Promise((resolve) => {
-          wx.showModal({
-            title: '模拟支付',
-            content: `模拟支付金额：¥${fenToYuan(p.amountFen || 0)}\n不会调用微信支付接口。`,
-            confirmText: '确认支付',
-            cancelText: '取消',
-            success: resolve,
-            fail: () => resolve({ confirm: false }),
-          });
-        });
-        if (!confirmed.confirm) {
-          this.setData({ paying: false });
-          return;
-        }
-        await request('POST', `/orders/${this.data.id}/pay/mock-confirm`, {}, { silent: true });
-        wx.showToast({ title: '支付成功（模拟）', icon: 'success' });
-        this.load();
+        await new Promise((resolve,reject)=>wx.navigateTo({url:'/pages/payment/index?id='+encodeURIComponent(this.data.id),success:resolve,fail:reject}));
         this.setData({ paying: false });
       } else if (p.timeStamp) {
         // 真实微信支付（云托管代签名返回的五参数）

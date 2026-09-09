@@ -235,3 +235,5 @@
 .quote-card { background: #FFFFFF; border-radius: 32rpx; box-shadow: 0 2rpx 12rpx rgba(70,110,60,.06); border: none; }
 .quote-value.price { color: #E85A4F; font-weight: 800; font-size: 34rpx; }
 .btn-action { border-radius: 999rpx; }
+
+@import "../../theme.wxss";

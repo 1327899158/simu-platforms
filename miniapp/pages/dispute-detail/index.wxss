@@ -35,3 +35,6 @@
 /* ===== design 1:1 ===== */
 .hero { background: linear-gradient(160deg, #FBF3CD, #DDEBD9); }
 .card { border-radius: 32rpx; }
+
+@import "../../theme.wxss";
+@import "../../illustrations.wxss";

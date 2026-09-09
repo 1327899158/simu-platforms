@@ -13,6 +13,7 @@
     "pages/publish/index",
     "pages/orders/index",
     "pages/order-detail/index",
+    "pages/payment/index",
     "pages/quote-form/index",
     "pages/my-quotes/index",
     "pages/my-reviews/index",
@@ -65,17 +66,19 @@
     }
   ],
   "window": {
-    "navigationBarBackgroundColor": "#FFFFFF",
+    "navigationBarBackgroundColor": "#e6f1ef",
     "navigationBarTextStyle": "black",
     "navigationBarTitleText": "仿真服务平台",
-    "backgroundColor": "#DDEBD9",
+    "backgroundColor": "#e6f1ef",
+    "backgroundColorTop": "#e6f1ef",
+    "backgroundColorBottom": "#dcebe8",
     "backgroundTextStyle": "dark"
   },
   "tabBar": {
     "custom": true,
     "color": "#767676",
-    "selectedColor": "#5BC0EB",
-    "backgroundColor": "#FFFFFF",
+    "selectedColor": "#35788d",
+    "backgroundColor": "#eff6f4",
     "borderStyle": "white",
     "list": [
       { "pagePath": "pages/home/index", "text": "首页" },

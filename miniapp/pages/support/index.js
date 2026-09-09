@@ -1,6 +1,7 @@
 const {request}=require('../../utils/request');const {ensureLogin,getUser}=require('../../utils/auth');
 const labels={SUBMITTED:'已提交',ACCEPTED:'已受理',INVESTIGATING:'调查中',RESOLVED:'已处理',REJECTED:'不予受理'};
 Page({
+ selectReason(e){this.setData({category:e.detail.value});},
  data:{targetId:'',kind:'FEEDBACK',content:'',category:'骚扰或不当言论',reasons:['骚扰或不当言论','诱导私下交易','虚假资质或案例','冒用身份','其他'],evidence:[],items:[],detail:null,offset:0,hasMore:false,busy:false,uploading:false,error:''},
  onLoad(q){if(q.targetId)this.setData({targetId:q.targetId,kind:'REPORT'});if(q.id)this._detailId=q.id;},
  onShow(){if(ensureLogin()){this.load();if(this._detailId)this.open({currentTarget:{dataset:{id:this._detailId}}});}},

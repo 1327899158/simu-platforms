@@ -1,1 +1,4 @@
 @import "../../../community.wxss";
+
+@import "../../../theme.wxss";
+@import "../../../illustrations.wxss";

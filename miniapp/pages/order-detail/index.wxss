@@ -629,3 +629,6 @@
 .pay-amount { color: #E85A4F; font-weight: 800; font-size: 40rpx; }
 .quote-item { border-radius: 24rpx; border: 1rpx solid #E1EBDD; }
 .quote-item.selected { border-color: #F5D33F; background: #FFFBEA; }
+
+@import "../../theme.wxss";
+@import "../../illustrations.wxss";

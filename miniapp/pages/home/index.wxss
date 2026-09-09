@@ -1,8 +1,71 @@
-/* home · 设计稿 1:1 还原 */
-.page-container {
-  min-height: 100vh;
-  padding: 20rpx 20rpx calc(140rpx + env(safe-area-inset-bottom));
-  box-sizing: border-box;
-}
-.hero-illust { width: 300rpx; height: 300rpx; }
-.campaign-swiper{height:280rpx;margin:24rpx 0}.campaign-banner{margin:0 4rpx;height:220rpx;padding:26rpx 30rpx;background:linear-gradient(120deg,#ffdf6e,#fff0b3);border-radius:28rpx;box-sizing:border-box;display:flex;flex-direction:column;gap:12rpx;color:#42351d}.campaign-kicker{font-size:22rpx}.campaign-title{display:block;font-size:29rpx;font-weight:700}.home-notice{background:#fff0d9;border-left:8rpx solid #e6ac39;padding:22rpx;border-radius:16rpx;margin:14rpx 0;font-size:27rpx;color:#664917}.notice-project{display:block;font-size:23rpx;margin-top:8rpx}.estimate-entry{padding:30rpx;border-radius:28rpx;background:#e0eef6;display:flex;flex-direction:column;gap:18rpx;margin:26rpx 0}.estimate-cta{color:#285f77;font-weight:700}.category-grid{display:flex;flex-wrap:wrap;gap:14rpx;margin:20rpx 0}.category-chip{background:white;padding:18rpx 24rpx;border-radius:16rpx;font-size:25rpx}.recommended-card{display:flex;align-items:center;gap:20rpx;padding:24rpx;background:white;border-radius:24rpx;margin:18rpx 0}.recommended-card image{width:82rpx;height:82rpx;border-radius:50%;flex-shrink:0}.engineer-copy{flex:1;min-width:0;font-size:23rpx;line-height:1.8}.recommended-card button{font-size:22rpx;background:#f8df83;padding:0 16rpx;flex-shrink:0}
+
+/* 渐变由整页承载，头部与内容区透明，长列表底部也保持统一底色。 */
+page{background:#e6f1ef}
+.home-page{min-height:100vh;box-sizing:border-box;background:radial-gradient(ellipse at 0% 0%,rgba(246,241,209,.52),transparent 48%),linear-gradient(155deg,#e6f1ef 0%,#dceef0 36%,#e5f0e9 72%,#dcebe8 100%);color:#233739;padding-bottom:calc(150rpx + env(safe-area-inset-bottom))}
+.home-page.engineer-home{background:radial-gradient(ellipse at 100% 0%,rgba(183,220,233,.35),transparent 48%),linear-gradient(155deg,#e6f1ef 0%,#dcecf1 36%,#e3efec 72%,#dae9e7 100%)}
+.home-hero{position:relative;padding:24rpx 34rpx 70rpx;overflow:hidden;background:transparent}
+.hero-top{position:relative;display:flex;align-items:center;justify-content:space-between;z-index:1;gap:16rpx}
+.brand-caption{font-size:23rpx;color:#516463;letter-spacing:2rpx}.home-page .bell{margin:0;padding:14rpx 20rpx;background:rgba(255,255,255,.5);border-radius:40rpx;font-size:22rpx;color:#344a4c;line-height:1.4;flex-shrink:0}
+.home-page button::after{border:0}.home-mascot{position:absolute;right:12rpx;top:62rpx;width:320rpx;height:320rpx;pointer-events:none}
+.hero-copy{position:relative;z-index:1;padding:64rpx 230rpx 40rpx 0;min-height:174rpx}
+.home-greeting{font-size:49rpx;font-weight:800;line-height:1.4;word-break:break-all;letter-spacing:-1rpx}
+.marker{background:linear-gradient(transparent 66%,#e8dfab 66%,#e8dfab 94%,transparent 94%);padding:0 5rpx}
+.hero-subtitle{font-size:24rpx;color:#435650;margin-top:16rpx;line-height:1.6}
+.search-entry{display:flex;align-items:center;gap:16rpx;position:relative;z-index:1;background:rgba(255,255,255,.9);border:1rpx solid rgba(255,255,255,.95);border-radius:40rpx;padding:22rpx 26rpx;color:#808d8b;font-size:25rpx}
+.search-symbol{font-size:36rpx;line-height:1}.search-action{color:#329abf;font-size:24rpx;flex-shrink:0}.grow{flex:1;min-width:0}
+.home-body{position:relative;margin-top:-36rpx;padding:0 28rpx;background:transparent}.surface{background:rgba(255,255,255,.76);border:1rpx solid rgba(255,255,255,.72);border-radius:26rpx;box-sizing:border-box;box-shadow:0 8rpx 28rpx rgba(49,78,80,.045)}
+.shortcuts{display:flex;padding:28rpx 10rpx;margin-bottom:24rpx}.shortcut{width:25%;display:flex;align-items:center;flex-direction:column;gap:14rpx;font-size:25rpx;font-weight:600}
+.shortcut-icon{width:88rpx;height:84rpx;display:flex;align-items:center;justify-content:center;border-radius:24rpx;font-size:42rpx;position:relative}
+.yellow{background:#fff7c8}.blue{background:#e0f5fc}.mint{background:#e8f6e9}.pink{background:#f7edf0}
+.unread{position:absolute;top:-8rpx;right:-6rpx;border-radius:24rpx;min-width:30rpx;padding:3rpx 6rpx;text-align:center;background:#f07162;color:white;font-size:20rpx}
+.home-campaigns{height:292rpx;margin:0 0 8rpx}.campaign{position:relative;display:flex;align-items:center;min-height:248rpx;padding:26rpx 30rpx;background:linear-gradient(120deg,#fff7bd,#fff0a5);overflow:hidden}
+.campaign-1{background:linear-gradient(120deg,#cdeffd,#e9f7fc)}.campaign-2{background:linear-gradient(120deg,#e5f5d7,#c9f0e3)}
+.campaign-copy{flex:1;min-width:0;z-index:1}.eyebrow{font-size:20rpx;color:#787249}.campaign-heading{font-size:32rpx;font-weight:750;line-height:1.5;margin:10rpx 0}.campaign-art{font-size:76rpx;margin-left:16rpx}.campaign-link{display:inline-block;font-size:22rpx;padding:9rpx 20rpx;border-radius:24rpx;background:rgba(255,255,255,.65);margin-top:16rpx}
+.small{font-size:23rpx;color:#87908f;line-height:1.65}.notification{display:flex;align-items:center;gap:18rpx;padding:26rpx;border-radius:24rpx;margin:20rpx 0;background:#fff8d9;font-size:26rpx;line-height:1.6;border:1rpx solid #f5edc7}
+.notice-icon{font-size:44rpx;color:#efc435}.notification .small{color:#938567}.estimate-banner{display:flex;align-items:center;gap:20rpx;padding:28rpx 24rpx;background:linear-gradient(110deg,#dff4fb,#edf6fa);border-radius:26rpx;margin:24rpx 0}
+.estimate-icon{font-size:48rpx}.arrow{font-size:36rpx;color:#4cabcb}.card-title{font-size:29rpx;font-weight:700;line-height:1.5}
+.section-head{display:flex;align-items:center;justify-content:space-between;gap:16rpx;margin:34rpx 0 22rpx}.section-heading{font-size:34rpx;font-weight:750}.more{font-size:23rpx;color:#86a3ad;flex-shrink:0}
+.engineer-scroll{width:100%;white-space:nowrap}.engineer-strip{display:flex;gap:20rpx;padding:0 0 8rpx}.engineer-card{flex-shrink:0;width:320rpx;padding:26rpx;white-space:normal;display:flex;flex-direction:column}
+.engineer-top{display:flex;align-items:center;justify-content:space-between;gap:12rpx}.portrait{width:88rpx;height:88rpx;border-radius:50%;flex-shrink:0;background:#e6f3f5}.placeholder{display:flex;align-items:center;justify-content:center;color:#7caaa9;font-size:34rpx}
+.recommend-label{font-size:20rpx;padding:5rpx 14rpx;background:#fff7ce;border-radius:10rpx;color:#a58b40}.engineer-name{margin-top:16rpx;word-break:break-all}
+.level-label{font-size:21rpx;margin:10rpx 0;color:#7e7656;line-height:1.5}.review-line{color:#d28655}.specialties{min-height:66rpx;margin:10rpx 0;flex:1}
+.skill{display:inline-block;margin:8rpx 10rpx 0 0;background:#e1f5fc;border-radius:9rpx;color:#438eaa;font-size:23rpx;padding:6rpx 13rpx}
+.home-page .blue-button{background:linear-gradient(110deg,#5bc0e7,#6dcdee);color:#153741;border-radius:44rpx;font-size:27rpx;font-weight:600;line-height:1.4;padding:19rpx 28rpx;margin:0}
+.home-page .contact{width:100%;font-size:25rpx;margin-top:12rpx}.service-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18rpx}
+.service-cell{padding:26rpx 8rpx;text-align:center;font-size:24rpx;line-height:1.5;word-break:break-all}.service-icon{font-size:44rpx;margin-bottom:12rpx}
+.order-stats{display:flex;padding:28rpx 8rpx;margin-bottom:22rpx}.order-stats>view{flex:1;display:flex;flex-direction:column;align-items:center;gap:10rpx;font-size:23rpx;color:#828685}
+.stat-number{font-size:44rpx;font-weight:650;color:#171c1b;line-height:1.4}.demand-card{padding:28rpx;margin-bottom:22rpx}.card-top,.card-bottom{display:flex;align-items:center;justify-content:space-between;gap:18rpx}
+.status-pill{font-size:24rpx;background:#ffe858;padding:7rpx 18rpx;border-radius:12rpx;line-height:1.5;color:#1d2524}
+.home-page .st-blue{background:#b9eaff}.home-page .st-green{background:#c3e8b6}.home-page .st-gray,.muted-pill{background:#e9e9e9;color:#777}
+.demand-title{font-size:35rpx;font-weight:750;line-height:1.5;margin:20rpx 0;word-break:break-all}.amount{font-size:43rpx;font-weight:650;color:#dc6148;flex-shrink:0}
+.home-empty{display:flex;flex-direction:column;align-items:center;gap:18rpx;padding:54rpx 24rpx;text-align:center;color:#869594;font-size:27rpx;margin:22rpx 0}.home-empty>view{font-size:58rpx}
+.engineer-hero{background:transparent}.wrench{right:0;top:75rpx;width:280rpx;height:280rpx;transform:rotate(-12deg)}
+.hall-stats{display:flex;padding:26rpx;margin:24rpx 0}.hall-stats>view{width:50%;display:flex;flex-direction:column;align-items:center;gap:8rpx}.hall-stats>view+view{border-left:1rpx solid #e9edef}
+.demand-info{background:#f3f3f3;border-radius:18rpx;padding:22rpx 24rpx;font-size:27rpx;line-height:1.8;margin:22rpx 0}.home-page .quote-button{border-radius:14rpx;padding:17rpx 28rpx;font-size:26rpx}
+.home-page .hall-button{margin:26rpx 0}.pressed{opacity:.8}
+/* 收敛局部色块：活动、提示与表单底纹仍可区分，但不截断整页背景。 */
+.home-page .campaign{background:linear-gradient(120deg,rgba(247,240,210,.9),rgba(244,243,226,.75))}
+.home-page .campaign-1{background:linear-gradient(120deg,rgba(214,234,242,.9),rgba(235,243,243,.75))}
+.home-page .campaign-2{background:linear-gradient(120deg,rgba(221,237,221,.9),rgba(232,243,235,.75))}
+.home-page .notification{background:rgba(246,240,217,.78);border-color:rgba(224,215,180,.55)}
+.home-page .notice-icon{color:#b4a164}
+.home-page .estimate-banner{background:linear-gradient(110deg,rgba(212,233,240,.78),rgba(237,246,245,.65));border:1rpx solid rgba(255,255,255,.6)}
+.home-page .demand-info{background:rgba(220,233,234,.4)}
+.home-page .blue-button{background:linear-gradient(110deg,#70b9cf,#87c4d4);color:#163b48}
+.home-page .status-pill{background:#ece3b1}.home-page .muted-pill{background:#e4e9e8;color:#6d7a7b}
+.home-page .small{color:#697d7e}.home-page .more{color:#527d89}
+
+/* 工程师关键行动提亮，其他语义状态不变。 */
+.engineer-home .status-pill:not(.muted-pill){background:#fff08a;color:#66531b}
+.engineer-home .quote-button,.engineer-home .hall-button{background:linear-gradient(110deg,#69cbea,#93def0);color:#174b60;box-shadow:0 5rpx 15rpx rgba(73,171,201,.14)}
+
+/* 客户插画随文案区底部定位，搜索框遮住底座下缘；长昵称不会打断叠层。 */
+.customer-home .hero-copy{padding-right:246rpx;min-height:190rpx}
+.customer-home .customer-mascot{width:300rpx;height:300rpx;top:auto;right:-14rpx;bottom:-60rpx;z-index:0;pointer-events:none}
+.customer-home .home-greeting,.customer-home .hero-subtitle{position:relative;z-index:1}
+.customer-home .search-entry{z-index:3;background:rgba(252,254,253,.97);border-color:#fff;box-shadow:0 -3rpx 12rpx rgba(70,105,112,.04),0 8rpx 24rpx rgba(70,105,112,.08)}
+.customer-home .customer-mascot{width:340rpx;height:340rpx;right:-28rpx;bottom:-72rpx}
+.customer-home .hero-copy{padding-right:266rpx;min-height:214rpx}
+.engineer-home .engineer-mascot{top:auto;right:-24rpx;bottom:-64rpx;width:320rpx;height:320rpx;pointer-events:none;z-index:0}
+.engineer-home .hero-copy{min-height:210rpx;padding-right:260rpx}
+.engineer-home .search-entry{z-index:3;background:rgba(252,254,253,.97)}

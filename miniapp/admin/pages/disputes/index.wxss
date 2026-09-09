@@ -6,6 +6,8 @@
   font-weight: 650;
   color: #1A1A2E;
 }
+
+@import "../../../theme.wxss";
 .dispute-order {
   display: block;
   margin-top: 4rpx;
@@ -23,3 +25,4 @@
   font-size: 22rpx;
   color: #767676;
 }
+@import "../../../illustrations.wxss";

@@ -1,1 +1,32 @@
-<view class="community"><block wx:if="{{detail}}"><button bindtap="back">返回列表</button><view class="card"><view class="title">{{detail.category}} · {{detail.statusText}}</view><view class="body">{{detail.content}}</view><button wx:for="{{detail.evidence}}" wx:key="id" data-id="{{item.id}}" bindtap="preview">查看证据截图 {{index+1}}</button><view wx:for="{{detail.events}}" wx:key="createdAt" class="card"><view>{{item.statusText}} · {{item.createdAt}}</view><view class="body">{{item.note}}</view></view></view></block><block wx:else><view class="title">{{kind==='REPORT'?'举报用户':'意见反馈'}}</view><view class="notice">举报将由管理员受理、调查并反馈结果，不自动拉黑或处罚对方。请如实描述，勿提交无关个人信息。截图最多5张，压缩后每张400KB。</view><view wx:if="{{kind==='REPORT'}}" class="card"><text>举报对象：{{targetId}}</text><picker range="{{reasons}}" bindchange="reason"><button>{{category}} ›</button></picker></view><textarea maxlength="3000" placeholder="请填写10字以上的具体说明" value="{{content}}" bindinput="input"/><view class="row"><view wx:for="{{evidence}}" wx:key="id"><button size="mini" data-id="{{item.id}}" bindtap="preview">截图 {{index+1}}</button><button size="mini" data-index="{{index}}" bindtap="removeEvidence">移除</button></view></view><button disabled="{{busy||uploading||evidence.length>=5}}" bindtap="addEvidence" loading="{{uploading}}">上传证据截图</button><button disabled="{{busy||uploading}}" loading="{{busy}}" bindtap="submit">提交</button><view class="title">我的反馈与举报</view><view wx:if="{{error}}" class="error" bindtap="retry">{{error}}</view><view wx:for="{{items}}" wx:key="id" class="card" data-id="{{item.id}}" bindtap="open"><view>{{item.category}} · {{item.statusText}}</view><view class="muted">{{item.createdAt}}</view></view><view wx:if="{{!items.length}}" class="muted">暂无记录</view><button wx:if="{{hasMore}}" bindtap="more">加载更多</button></block></view>
+
+<view class="community illustrated-panel"><image class="panel-art support-art" src="/assets/commit.png" mode="aspectFit" aria-hidden="true"/>
+ <block wx:if="{{detail}}">
+  <button class="link" bindtap="back">‹ 返回我的记录</button>
+  <view class="hero"><view class="eyebrow">PROCESS TRACKING</view><view class="title">{{detail.statusText}}</view><view class="muted">{{detail.category}} · 处理进度可在此查看</view></view>
+  <view class="section-title">提交内容</view><view class="card"><view class="body">{{detail.content}}</view><view class="evidence-grid"><view class="evidence-tile" wx:for="{{detail.evidence}}" wx:key="id" data-id="{{item.id}}" bindtap="preview"><view class="evidence-symbol">▧</view><view class="caption">查看证据 {{index+1}}</view></view></view></view>
+  <view class="section-title">处理进度</view><view class="card"><view class="timeline"><view wx:for="{{detail.events}}" wx:key="createdAt" class="timeline-item"><view class="badge">{{item.statusText}}</view><view class="caption">{{item.createdAt}}</view><view class="body">{{item.note}}</view></view></view></view>
+ </block>
+ <block wx:else>
+  <view class="hero between"><view class="grow"><view class="eyebrow">{{kind==='REPORT'?'TRUST &amp; SAFETY':'YOUR VOICE MATTERS'}}</view><view class="title">{{kind==='REPORT'?'举报用户':'意见反馈'}}</view><view class="muted">{{kind==='REPORT'?'让每一次专业合作更安心':'每一条建议，都让平台更好一点'}}</view></view><view class="hero-icon">{{kind==='REPORT'?'⚑':'✉'}}</view></view>
+  <view class="notice">{{kind==='REPORT'?'举报由管理员核实处理，与拉黑独立，不会自动处罚对方。请如实描述，并保护无关人员的个人信息。':'欢迎反馈产品建议与使用体验。提交后可在下方查看受理情况及处理结果。'}}</view>
+  <block wx:if="{{kind==='REPORT'}}">
+   <view class="card between"><view class="avatar">工</view><view class="grow"><view class="badge">举报对象</view><view class="muted">{{targetId}}</view></view></view>
+   <view class="section-title">01 · 选择举报原因</view>
+   <radio-group bindchange="selectReason"><label wx:for="{{reasons}}" wx:key="*this" class="card between"><text class="grow">{{item}}</text><radio value="{{item}}" checked="{{category===item}}" color="#789952"/></label></radio-group>
+  </block>
+  <view class="section-title">{{kind==='REPORT'?'02 · 详细说明':'01 · 说说您的想法'}}</view>
+  <view class="card"><textarea maxlength="3000" placeholder="请填写至少10字，描述具体情况、发生经过或您的建议…" value="{{content}}" bindinput="input"/><view class="count">{{content.length}} / 3000</view></view>
+  <view class="section-title">{{kind==='REPORT'?'03 · 上传证据':'02 · 添加截图'}}<text class="caption">选填 · 最多5张</text></view>
+  <view class="evidence-grid">
+   <view class="evidence-tile" wx:for="{{evidence}}" wx:key="id"><view class="evidence-symbol" data-id="{{item.id}}" bindtap="preview">▧</view><button data-id="{{item.id}}" bindtap="preview">查看截图 {{index+1}}</button><button class="danger" data-index="{{index}}" bindtap="removeEvidence" disabled="{{busy}}">移除</button></view>
+   <button class="evidence-tile" wx:if="{{evidence.length<5}}" disabled="{{busy||uploading}}" bindtap="addEvidence" loading="{{uploading}}"><view class="evidence-symbol">＋</view><view class="caption">添加截图</view></button>
+  </view>
+  <view class="caption">截图会加密保存，压缩后每张不超过400KB。</view>
+  <view class="dock"><button class="primary" disabled="{{busy||uploading}}" loading="{{busy}}" bindtap="submit">{{kind==='REPORT'?'提交举报':'提交反馈'}}</button></view>
+  <view class="section-title">我的反馈与举报<text class="caption">进度记录</text></view>
+  <view wx:if="{{error}}" class="error" bindtap="retry">{{error}} · 重试</view>
+  <view wx:for="{{items}}" wx:key="id" class="card between" data-id="{{item.id}}" bindtap="open"><view class="grow"><view class="title">{{item.category}}</view><view class="caption">{{item.createdAt}}</view></view><view class="badge">{{item.statusText}} ›</view></view>
+  <view wx:if="{{!items.length&&!error}}" class="card empty"><view class="empty-icon">✉</view><view class="muted">暂无提交记录，期待您的建议</view></view>
+  <button wx:if="{{hasMore}}" bindtap="more">加载更多记录</button>
+ </block>
+</view>

@@ -1,6 +1,6 @@
 <view class="page-container">
 
-  <view class="hero">
+  <view class="hero illustrated-panel"><image class="panel-art support-art" src="/assets/commit.png" mode="aspectFit" aria-hidden="true"/>
     <text class="hero-title">⚠️ 发起纠纷</text>
     <text class="hero-desc">纠纷发起后订单将暂停处理，等待双方举证与平台仲裁</text>
   </view>

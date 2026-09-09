@@ -5,3 +5,5 @@
 .login-card { background: #FFFFFF; border-radius: 32rpx; }
 .login-button { border-radius: 999rpx; background: #5BC0EB; }
 .menu-card { border-radius: 32rpx; }
+
+@import "../../theme.wxss";

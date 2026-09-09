@@ -1,1 +1,22 @@
-<view class="community"><view class="title">我的收藏</view><view class="row"><button wx:for="{{tabs}}" wx:key="key" class="{{kind===item.key?'active':''}}" data-key="{{item.key}}" bindtap="tab">{{item.label}}</button></view><view class="notice">已删除、停止公开或结束报价的内容将自动隐藏。</view><view wx:if="{{error}}" class="error" bindtap="retry">{{error}} · 点击重试</view><checkbox-group bindchange="choose"><view wx:for="{{items}}" wx:key="id" class="card"><checkbox value="{{item.id}}" checked="{{item.checked}}"/><text data-id="{{item.id}}" bindtap="open">{{item.title}}</text><view class="row"><button size="mini" data-id="{{item.id}}" bindtap="open">查看</button><button size="mini" data-id="{{item.id}}" bindtap="remove" disabled="{{busy}}">取消收藏</button></view></view></checkbox-group><view wx:if="{{!items.length&&!busy}}" class="muted">暂无有效收藏</view><button disabled="{{busy||!selected.length}}" bindtap="remove">批量移除（{{selected.length}}）</button><button wx:if="{{nextOffset!==null}}" bindtap="more" loading="{{busy}}">加载更多</button></view>
+
+<view class="community">
+ <view class="between"><view class="title">我的收藏</view><button class="link" bindtap="toggleManage">{{managing?'完成':'管理'}}</button></view>
+ <view class="muted">把心仪的专业服务，留在这里</view>
+ <view class="tabs"><button wx:for="{{tabs}}" wx:key="key" class="{{kind===item.key?'active':''}}" data-key="{{item.key}}" bindtap="tab">{{item.label}}</button></view>
+ <view class="notice">🤝 收藏工程师后，可进入主页了解常驻合作条件；合作折扣以双方确认与实际报价为准。</view>
+ <view wx:if="{{error}}" class="error" bindtap="retry">{{error}} · 点击重试</view>
+ <checkbox-group bindchange="choose">
+  <view wx:for="{{items}}" wx:key="id" class="card between">
+   <checkbox wx:if="{{managing}}" value="{{item.id}}" checked="{{item.checked}}" color="#789952"/>
+   <image wx:if="{{kind==='ENGINEER'&&item.avatarUrl}}" class="avatar" src="{{item.avatarUrl}}" mode="aspectFill" data-id="{{item.id}}" bindtap="open"/>
+   <view wx:else class="avatar" data-id="{{item.id}}" bindtap="open">{{kind==='ENGINEER'?'工':kind==='CASE'?'▧':'▤'}}</view>
+   <view class="grow" data-id="{{item.id}}" bindtap="open"><view class="title">{{item.title}}</view><view class="caption">{{kind==='ENGINEER'?'工程师主页 · 查看专业与案例':kind==='CASE'?'案例展示 · 查看详情':'公开需求 · 查看详情'}} ›</view></view>
+   <button class="link danger" data-id="{{item.id}}" bindtap="remove" disabled="{{busy}}">♥</button>
+  </view>
+ </checkbox-group>
+ <view wx:if="{{!items.length&&!busy&&!error}}" class="card empty"><view class="empty-icon">♡</view><view class="title">还没有有效收藏</view><view class="muted">遇到喜欢的工程师、案例或需求，点击收藏，下次更容易找到</view></view>
+ <view wx:if="{{busy}}" class="muted empty">正在加载收藏…</view>
+ <button wx:if="{{nextOffset!==null}}" bindtap="more" loading="{{busy}}">加载更多</button>
+ <view class="caption">已删除、停止公开或结束报价的内容会自动隐藏。</view>
+ <view class="dock" wx:if="{{managing}}"><button class="danger" disabled="{{busy||!selected.length}}" bindtap="remove">移除已选收藏（{{selected.length}}）</button></view>
+</view>

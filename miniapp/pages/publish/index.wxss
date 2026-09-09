@@ -531,3 +531,5 @@
 .progress-steps .step { background: #D8E2D4; }
 .progress-steps .step.active { background: #5BC0EB; }
 .step-line.active { background: #5BC0EB; }
+
+@import "../../theme.wxss";

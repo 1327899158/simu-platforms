@@ -126,3 +126,6 @@
 }
 .admin-button[disabled] { opacity: 0.5; }
 .small-empty { padding: 30rpx 20rpx; }
+
+@import "../../../theme.wxss";
+@import "../../../illustrations.wxss";

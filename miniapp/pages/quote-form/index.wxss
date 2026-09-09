@@ -127,3 +127,6 @@
 .form-section { background: #FFFFFF; border-radius: 32rpx; box-shadow: 0 2rpx 12rpx rgba(70,110,60,.06); }
 .form-input, .form-textarea { background: #FBFDF9; border: 1rpx solid #E1EBDD; border-radius: 16rpx; }
 .btn-primary-block { border-radius: 999rpx; }
+
+@import "../../theme.wxss";
+@import "../../illustrations.wxss";

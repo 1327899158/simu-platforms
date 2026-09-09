@@ -23,7 +23,7 @@ module.exports = {
   <button size="mini" wx:if="{{order.status==='QUOTING'&&!directDemand}}" bindtap="favoriteDemand">收藏需求</button>
   <button size="mini" wx:if="{{order.customer.id||order.engineer.id}}" bindtap="reportOrderPeer">举报对方</button>
   <!-- 状态卡片 -->
-  <view class="status-card">
+  <view class="status-card illustrated-panel"><image class="panel-art order-art" src="/assets/order.png" mode="aspectFit" aria-hidden="true"/>
     <text class="status-icon">{{u.statusIcon(order.status)}}</text>
     <view class="status-info">
       <text class="status-label">{{order.statusText}}</text>

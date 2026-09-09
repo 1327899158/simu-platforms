@@ -1,5 +1,5 @@
 <view class="qualification-page">
-  <view class="qualification-hero"><text class="qualification-title">身份认证</text><text class="qualification-desc">认证通过后可发布需求或参与接单。本人信息仅用于审核并加密保存。</text></view>
+  <view class="qualification-hero illustrated-panel"><image class="panel-art" src="/assets/identity.png" mode="aspectFit" aria-hidden="true"/><text class="qualification-title">身份认证</text><text class="qualification-desc">认证通过后可发布需求或参与接单。本人信息仅用于审核并加密保存。</text></view>
   <view class="status-card {{verifyStatus === 'APPROVED' ? 'approved' : verifyStatus === 'REJECTED' ? 'rejected' : 'pending'}}">
     <view><text class="status-label">认证状态</text><text class="status-value">{{verifyText}}</text></view>
     <text class="status-reason" wx:if="{{reviewReason}}">审核说明：{{reviewReason}}</text>

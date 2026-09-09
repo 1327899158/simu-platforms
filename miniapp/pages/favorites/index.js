@@ -1,6 +1,7 @@
 const {request}=require('../../utils/request');
 const {ensureLogin}=require('../../utils/auth');
 Page({
+ toggleManage(){this.setData({managing:!this.data.managing});},
  data:{kind:'ENGINEER',tabs:[{key:'ENGINEER',label:'工程师'},{key:'CASE',label:'案例'},{key:'DEMAND',label:'需求'}],items:[],selected:[],nextOffset:null,busy:false,error:''},
  onShow(){if(ensureLogin())this.load(false);},onPullDownRefresh(){this.load(false).finally(()=>wx.stopPullDownRefresh());},
  async load(more=false){if(this.data.busy)return;const offset=more?this.data.nextOffset:0;if(offset===null)return;this.setData({busy:true,error:''});try{const r=await request('GET','/favorites',{kind:this.data.kind,offset});this.setData({items:more?this.data.items.concat(r.items):r.items,nextOffset:r.nextOffset,selected:[]});}catch(e){this.setData({error:e.message});}finally{this.setData({busy:false});}},

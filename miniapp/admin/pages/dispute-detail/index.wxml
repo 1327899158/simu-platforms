@@ -1,4 +1,4 @@
-<view class="admin-page" wx:if="{{dispute}}">
+<view class="admin-page illustrated-panel" wx:if="{{dispute}}"><image class="panel-art support-art" src="/assets/commit.png" mode="aspectFit" aria-hidden="true"/>
   <view class="admin-hero">
     <view class="admin-between">
       <view class="admin-grow">

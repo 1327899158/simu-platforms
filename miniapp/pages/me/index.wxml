@@ -6,13 +6,12 @@
     <view wx:else class="me-avatar me-avatar-fb">{{user.nickname ? user.nickname[0] : '👤'}}</view>
     <view class="me-info">
       <text class="me-name">Hi，{{user.nickname || '用户'}}</text>
-      <text class="badge-y">{{roleBadgeText}}</text>
-      <text wx:if="{{user.role === 'ENGINEER' && engineerLevel}}" class="engineer-level-tag level-{{engineerLevel.key}}" catchtap="goLevel">{{engineerLevel.icon}} {{engineerLevel.name}} ›</text>
+      <view class="me-badges"><text class="badge-y">{{roleBadgeText}}</text></view>
     </view>
-    <view class="me-edit" bindtap="goEdit">编辑</view>
+    <button class="me-edit" bindtap="goEdit">编辑资料 ›</button>
   </view>
 
-  <view class="card-sky spread" wx:if="{{user.role === 'ENGINEER'}}" bindtap="goLevel">{{engineerLevel.icon || '🏅'}} {{engineerLevel.name || '工程师等级'}} · 查看晋级条件 ›</view>
+  <view class="card-sky spread level-entry" wx:if="{{user.role === 'ENGINEER'}}" bindtap="goLevel"><view class="entry-icon">{{engineerLevel.icon || '🏅'}}</view><view class="sky-copy"><text class="sky-title">{{engineerLevel.name || '工程师等级'}}</text><text class="sky-desc">查看晋级条件，了解成长进度</text></view><text class="entry-arrow">›</text></view>
   <view class="data-card-y" wx:if="{{user}}">
     <view class="stat"><b>{{user.completedCount || 0}}</b><span>完成订单</span></view>
     <view class="stat"><b>{{user.averageScore || '—'}}</b><span>好评评分</span></view>

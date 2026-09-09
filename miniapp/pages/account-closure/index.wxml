@@ -1,1 +1,25 @@
-<view class="community"><view class="title">注销账号</view><view class="notice">15天冷静期内可以撤销。期间可查看已有资料，暂停新增业务；再次使用前可先撤销。期满后账号停用，头像、联系方式和实名字段去标识化。交易、聊天、票据、证据和审计记录不随账号级联删除。</view><view wx:if="{{error}}" class="error" bindtap="load">{{error}} · 重试</view><view wx:if="{{info}}" class="card"><view class="title">前置检查</view><view wx:for="{{info.blockers}}" wx:key="label" class="muted">{{item.label}}：{{item.count}}</view><view wx:if="{{!info.blockers.length}}">目前没有未完成事务阻挡注销。</view><view wx:if="{{info.request.status==='PENDING'}}"><view class="muted">预计执行时间：{{info.request.executeAfter}}</view><view wx:if="{{info.request.lastError}}" class="error">执行暂缓：{{info.request.lastError}}。可撤销后处理。</view><button data-cancel="{{true}}" bindtap="act" loading="{{busy}}">撤销注销申请</button></view><button wx:else class="danger" disabled="{{busy||info.blockers.length>0}}" bindtap="act">申请注销</button></view></view>
+
+<view class="community">
+ <view wx:if="{{error}}" class="error" bindtap="load">{{error}} · 重试</view>
+ <block wx:if="{{info}}">
+  <block wx:if="{{info.request.status==='PENDING'}}">
+   <view class="result"><view class="result-icon">⏳</view><view class="title">注销申请已提交</view><view class="muted">账号已进入15天冷静期</view><view class="caption">预计执行时间：{{info.request.executeAfter}}</view></view>
+   <view class="notice"><view class="title">如何取消注销？</view>冷静期内可登录本账号，在本页点击“撤销注销申请”恢复正常使用。登录本身不会自动撤销。</view>
+   <view class="error" wx:if="{{info.request.lastError}}">执行暂缓：{{info.request.lastError}}。您可以撤销申请后处理。</view>
+   <view class="section-title">冷静期内账号状态</view><view class="card body">• 可查看已有资料，暂停新增业务。&#10;• 到期执行前，会再次检查未完成事务。&#10;• 注销完成后，账号停用并处理个人档案。</view>
+  </block>
+  <block wx:else>
+   <view class="hero between"><view class="grow"><view class="eyebrow">ACCOUNT &amp; PRIVACY</view><view class="title">注销账号</view><view class="muted">离开之前，请认真阅读以下说明</view></view><view class="hero-icon">☘</view></view>
+   <view class="notice warning">提交后进入15天冷静期，期间可以主动撤销。到期检查通过后执行注销，请谨慎操作。</view>
+  </block>
+  <view class="section-title">注销前置检查<text class="badge">{{info.blockers.length?'待处理':'检查通过'}}</text></view>
+  <view class="card">
+   <view wx:for="{{info.blockers}}" wx:key="label" class="list-row between"><view class="grow">{{item.label}}</view><text class="badge">{{item.count}} 项</text></view>
+   <view wx:if="{{!info.blockers.length}}" class="between"><view class="avatar">✓</view><view class="grow"><view class="title">暂无阻挡注销的事务</view><view class="caption">订单、退款、纠纷等检查以服务端结果为准</view></view></view>
+  </view>
+  <view class="section-title">注销将会发生什么</view>
+  <view class="card body">• 账号停用，头像、联系方式及实名字段去标识化。&#10;• 交易、聊天、票据、证据及审计记录不随账号删除。&#10;• 预留奖励不可提现，注销不兑换现金。&#10;• 执行完成后，无法通过撤销申请恢复账号。</view>
+  <view class="caption">提交前会再次弹窗确认，请确保您已理解注销的影响。</view>
+  <view class="dock"><button wx:if="{{info.request.status==='PENDING'}}" class="primary" data-cancel="{{true}}" bindtap="act" loading="{{busy}}" disabled="{{busy}}">撤销注销申请</button><button wx:else class="danger" disabled="{{busy||info.blockers.length>0}}" loading="{{busy}}" bindtap="act">提交注销申请</button></view>
+ </block>
+</view>

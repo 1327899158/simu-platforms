@@ -1,6 +1,12 @@
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const root=path.resolve(__dirname,'../..');const read=p=>fs.readFileSync(path.join(root,p),'utf8');
+test('原型布局交互只更新本地展示状态，不发起额外业务请求',()=>{
+  function page(name){let definition;vm.runInNewContext(read('miniapp/pages/'+name+'/index.js'),{require:()=>({}),Page:x=>definition=x});definition.data={...definition.data};definition.setData=function(patch){Object.assign(this.data,patch);};return definition;}
+  const favorites=page('favorites');favorites.toggleManage();assert.equal(favorites.data.managing,true);favorites.toggleManage();assert.equal(favorites.data.managing,false);
+  const help=page('help');help.filter({currentTarget:{dataset:{kind:'FAQ'}}});assert.equal(help.data.filter,'FAQ');help.expand({currentTarget:{dataset:{id:'faq1'}}});assert.equal(help.data.expanded,'faq1');help.expand({currentTarget:{dataset:{id:'faq1'}}});assert.equal(help.data.expanded,'');
+  const support=page('support');support.selectReason({detail:{value:'诱导私下交易'}});assert.equal(support.data.category,'诱导私下交易');
+});
 test('新增页面已注册、依赖样式存在、所有事件处理器可调用',()=>{
   const app=JSON.parse(read('miniapp/app.json'));
   const pages=[...app.pages,...app.subPackages.flatMap(s=>s.pages.map(p=>s.root+'/'+p))];assert.equal(new Set(pages).size,pages.length);

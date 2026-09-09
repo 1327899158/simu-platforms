@@ -6,3 +6,5 @@
 .user-card.user-pressed { transform: scale(.988); opacity: .88; }
 .review-inline-link { flex-shrink: 0; min-height: 88rpx; padding: 0 12rpx; display: flex; align-items: center; color: #2FA8DE; font-size: 22rpx; font-weight: 600; }
 .review-inline-link:active { opacity: .72; }
+
+@import "../../../theme.wxss";

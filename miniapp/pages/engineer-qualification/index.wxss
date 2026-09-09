@@ -16,3 +16,6 @@
 /* ===== design 1:1 ===== */
 .card, .section { background: #FFFFFF; border-radius: 32rpx; }
 .submit, button.primary { border-radius: 999rpx; background: #5BC0EB; color: #FFFFFF; }
+
+@import "../../theme.wxss";
+@import "../../illustrations.wxss";

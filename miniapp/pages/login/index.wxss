@@ -9,6 +9,8 @@
   color: var(--c-text);
 }
 
+@import "../../theme.wxss";
+
 /* ===== 背景图案 ===== */
 .bg-glow,
 .bg-grid {

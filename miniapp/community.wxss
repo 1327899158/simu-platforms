@@ -1,1 +1,34 @@
-.community{padding:28rpx;background:#f4f8f7;min-height:100vh;box-sizing:border-box;padding-bottom:calc(50rpx + env(safe-area-inset-bottom));color:#213c32}.community .card{background:white;border-radius:22rpx;padding:26rpx;margin:20rpx 0;border:1rpx solid #e1eae5}.community .title{font-size:34rpx;font-weight:700;margin-bottom:16rpx}.community .muted{font-size:25rpx;color:#60766a;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere}.community .notice{background:#e6f3ec;padding:24rpx;border-radius:18rpx;font-size:25rpx;line-height:1.7}.community input,.community textarea{background:#f5f7f6;box-sizing:border-box;padding:18rpx;margin:16rpx 0;border:1rpx solid #dbe5df;border-radius:12rpx;width:100%;font-size:28rpx}.community input{height:82rpx}.community textarea{height:230rpx}.community button{margin:18rpx 0;border-radius:16rpx;font-size:27rpx;background:#edf5f0;color:#235c42}.community .row{display:flex;gap:16rpx;align-items:center;flex-wrap:wrap}.community .row button{flex:1;min-width:120rpx}.community .active{background:#28634c;color:white}.community .error{color:#a34434;padding:24rpx}.community .avatar{width:68rpx;height:68rpx;border-radius:50%}.community .danger{color:#b7473c}.community .evidence{width:130rpx;height:130rpx;margin:10rpx}.community .body{white-space:pre-wrap;line-height:1.8;font-size:28rpx;overflow-wrap:anywhere}
+
+/* 社区页面：原型布局与现有马卡龙蓝绿主题 */
+.community{padding:30rpx 28rpx calc(64rpx + env(safe-area-inset-bottom));background:linear-gradient(165deg,#e6f3ee,#f5f8f2 450rpx);min-height:100vh;box-sizing:border-box;color:#263e36;font-size:28rpx}
+.community .card{background:#fff;border-radius:28rpx;padding:28rpx;margin:22rpx 0;border:1rpx solid #e3ece3;box-shadow:0 8rpx 26rpx rgba(49,79,58,.035)}
+.community .title{font-size:34rpx;font-weight:700;margin:0 0 16rpx;line-height:1.45}
+.community .section-title{font-size:30rpx;font-weight:700;margin:34rpx 0 18rpx;display:flex;justify-content:space-between;align-items:center}
+.community .muted,.community .caption{font-size:24rpx;color:#77877b;line-height:1.7;white-space:pre-wrap;word-break:break-all}.community .caption{font-size:22rpx}
+.community .notice{background:#e8f2e3;padding:24rpx;border-radius:22rpx;font-size:24rpx;line-height:1.8;color:#526b52;margin:20rpx 0}.community .warning{background:#fff4d9;color:#896c31}
+.community input,.community textarea{background:#f5f8f3;box-sizing:border-box;padding:22rpx;margin:16rpx 0;border:1rpx solid #e1e9dd;border-radius:18rpx;width:100%;font-size:28rpx;color:#263e36}
+.community input{height:90rpx}.community textarea{height:260rpx;line-height:1.7}
+.community button{margin:16rpx 0;border-radius:20rpx;font-size:26rpx;background:#eaf3e5;color:#466342;line-height:1.5;padding:22rpx 24rpx;font-weight:600}
+.community button::after{border:0}.community button[disabled]{opacity:.48}.community .primary{background:#cce48e;color:#30492b;box-shadow:0 6rpx 16rpx rgba(121,151,69,.12)}
+.community .row{display:flex;gap:16rpx;align-items:center;flex-wrap:wrap}.community .row button{flex:1;min-width:120rpx}
+.community .between{display:flex;align-items:center;justify-content:space-between;gap:20rpx}.community .grow{flex:1;min-width:0}
+.community .active{background:#cce48e;color:#30492b}.community .error{color:#a34434;padding:24rpx;border-radius:18rpx;background:#fff0e9;margin:18rpx 0;word-break:break-all}
+.community .avatar{width:88rpx;height:88rpx;border-radius:26rpx;background:#e3f1ed;display:flex;align-items:center;justify-content:center;font-size:36rpx;flex-shrink:0;color:#608973}
+.community .danger{color:#b5544a;background:#fbefeb}.community .body{white-space:pre-wrap;line-height:1.85;font-size:27rpx;word-break:break-all}
+.community .hero{padding:34rpx;border-radius:32rpx;background:linear-gradient(125deg,#d8edc5,#d2e9ed);margin-bottom:26rpx;position:relative;overflow:hidden}
+.community .hero .title{font-size:40rpx}.community .eyebrow{font-size:20rpx;letter-spacing:3rpx;color:#637e67;margin-bottom:14rpx}.community .hero-icon{font-size:58rpx;flex-shrink:0}
+.community .tabs{display:flex;gap:12rpx;margin:24rpx 0}.community .tabs button{flex:1;padding:20rpx 8rpx;margin:0;font-size:24rpx;min-width:0}
+.community .empty{padding:62rpx 28rpx;text-align:center}.community .empty-icon{font-size:64rpx;margin-bottom:20rpx}.community .empty .title{font-size:29rpx}
+.community .link{background:transparent;color:#658750;padding:12rpx;font-size:24rpx;margin:0;flex-shrink:0}
+.community .badge{font-size:21rpx;padding:8rpx 16rpx;border-radius:12rpx;background:#e9f3e4;color:#618253;display:inline-block;line-height:1.4}
+.community .field-label{display:block;font-size:27rpx;font-weight:600;margin-top:28rpx}
+.community .list-row{padding:24rpx 0;border-bottom:1rpx solid #edf1e9}.community .list-row:last-child{border-bottom:0}
+.community .dock{position:sticky;bottom:0;background:#f5f8f2;padding:18rpx 0 calc(14rpx + env(safe-area-inset-bottom));z-index:2}.community .dock button{margin:0}
+.community .stat-grid{display:flex;margin-top:28rpx;padding-top:24rpx;border-top:1rpx solid rgba(83,112,81,.14)}.community .stat{flex:1;text-align:center;min-width:0}.community .number{font-size:42rpx;font-weight:800;color:#426247;line-height:1.4}
+.community .timeline{border-left:3rpx solid #d9e8ce;margin:26rpx 10rpx;padding-left:26rpx}.community .timeline-item{padding:0 0 30rpx}.community .timeline-item:last-child{padding-bottom:0}
+.community .evidence-grid{display:flex;gap:18rpx;flex-wrap:wrap;margin:20rpx 0}.community .evidence-tile{width:166rpx;box-sizing:border-box;text-align:center;background:#f2f6ee;border:2rpx dashed #d2dfc8;border-radius:22rpx;padding:20rpx 10rpx}
+.community .evidence-tile button{padding:10rpx 4rpx;font-size:22rpx;margin:4rpx 0}.community .evidence-symbol{font-size:36rpx}
+.community .result{padding:52rpx 24rpx 30rpx;text-align:center}.community .result-icon{width:132rpx;height:132rpx;line-height:132rpx;border-radius:50%;background:#fff0c9;font-size:60rpx;margin:0 auto 28rpx}
+.community .rank{width:54rpx;font-size:30rpx;font-weight:800;color:#769666;text-align:center;flex-shrink:0}
+.community .task-grid{display:flex;flex-wrap:wrap;gap:18rpx}.community .task{width:calc(50% - 9rpx);box-sizing:border-box;margin:0;padding:24rpx}.community .task .title{font-size:27rpx}.community .task button{font-size:23rpx;padding:18rpx 8rpx}
+.community .progress{margin:20rpx 0}.community .count{text-align:right;font-size:22rpx;color:#8a9588}

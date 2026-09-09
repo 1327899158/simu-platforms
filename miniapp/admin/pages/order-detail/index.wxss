@@ -7,3 +7,6 @@
 .file-name { display: block; font-size: 25rpx; line-height: 38rpx; word-break: break-all; }
 .risk-card { border-color: #F3C8C3; }
 .risk-card .admin-button { margin-top: 20rpx; }
+
+@import "../../../theme.wxss";
+@import "../../../illustrations.wxss";

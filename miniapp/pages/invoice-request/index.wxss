@@ -6,3 +6,5 @@
 .card { border-radius: 32rpx; }
 .input, .textarea { background: #FBFDF9; border: 1rpx solid #E1EBDD; border-radius: 16rpx; }
 .primary, button.primary { border-radius: 999rpx; background: #5BC0EB; }
+
+@import "../../theme.wxss";

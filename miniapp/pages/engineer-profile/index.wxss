@@ -20,3 +20,5 @@
 .card { border-radius: 32rpx; }
 .review-card { background: #FFFFFF; border-radius: 32rpx; }
 .rating-card{color:#594f29}.case-card{background:#fff;border-radius:28rpx;padding:28rpx;margin:20rpx 0;box-shadow:var(--shadow-card)}.case-top{display:flex;gap:18rpx;align-items:flex-start}.case-symbol{display:flex;align-items:center;justify-content:center;flex-shrink:0;width:64rpx;height:64rpx;background:#e5f0e1;color:#355e4a;border-radius:18rpx;font-size:36rpx}.case-month,.case-note{display:block;color:#758174;font-size:23rpx;line-height:1.7;margin-top:10rpx}.case-summary{display:block;font-size:26rpx;color:#3b5143;line-height:1.8;white-space:pre-wrap;margin-top:22rpx;overflow-wrap:anywhere}.case-top .section-title{overflow-wrap:anywhere}.contact-button{background:#355e4a;color:white;border-radius:22rpx;margin:24rpx 0;font-size:28rpx}
+
+@import "../../theme.wxss";

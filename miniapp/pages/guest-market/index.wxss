@@ -26,3 +26,5 @@
 
 /* ===== design 1:1 ===== */
 .req-card, .card { border-radius: 32rpx; }
+
+@import "../../theme.wxss";

@@ -10,3 +10,5 @@
 .upload-dialog { border-radius: 32rpx; }
 .invoice-tip{margin:20rpx 0;padding:22rpx;border-radius:18rpx;background:#FFF8E8;color:#72591B;font-size:23rpx;line-height:1.55}.invoice-tabs{display:flex;gap:12rpx;margin:20rpx 0;overflow-x:auto}.invoice-tab{padding:14rpx 24rpx;border-radius:999rpx;background:#F1F3F8;color:#6A7180;font-size:24rpx;white-space:nowrap}.invoice-tab.active{background:#E3F4FC;color:#188CBF;font-weight:600}
 .batch-order { display: flex; align-items: center; padding: 14rpx 0; font-size: 24rpx; }
+
+@import "../../theme.wxss";

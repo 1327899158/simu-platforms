@@ -1,6 +1,6 @@
 <view class="page-container">
   <view class="page-header">
-    <image class="header-illust" src="/assets/hero-wrench.png" mode="aspectFit" />
+
     <view>
       <text class="page-title">🔍 浏览需求</text>
       <text class="page-subtitle">寻找适合你的仿真项目</text>
@@ -8,7 +8,7 @@
     <text class="hint-text">了解市场行情</text>
   </view>
 
-  <view class="stats-card">
+  <view class="stats-card illustrated-panel"><image class="panel-art hall-art" src="/assets/eng_hall.png" mode="aspectFit" aria-hidden="true"/>
     <view class="stat-item primary">
       <text class="stat-number">{{stats.allCount || 0}}</text>
       <view class="stat-info">
@@ -30,14 +30,9 @@
     <view class="filter-section">
       <view class="section-header">
         <text class="section-title">📂 分类筛选</text>
-        <text class="section-hint">{{category || '全部分类'}}</text>
+        <button class="filter-reset {{category === '' ? 'active' : ''}}" data-value="" bindtap="pickCategory">全部分类 {{category === '' ? '✓' : ''}}</button>
       </view>
       <view class="filter-bar">
-        <button class="filter-item {{category === '' ? 'active' : ''}}"
-          data-value="" bindtap="pickCategory">
-          <text class="filter-name">全部</text>
-          <text class="filter-check" wx:if="{{category === ''}}">✓</text>
-        </button>
         <button class="filter-item {{category === item ? 'active' : ''}}"
           wx:for="{{directions}}" wx:key="*this"
           data-value="{{item}}" bindtap="pickCategory">

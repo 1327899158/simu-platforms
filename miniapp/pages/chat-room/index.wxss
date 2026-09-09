@@ -230,3 +230,5 @@
 .sys-msg { background: #F7F3C9; border: 1rpx solid #F1E3A6; color: #6B5D10; border-radius: 24rpx; }
 
 .chat-header .header-title{flex:1;min-width:0}.chat-header button{margin:0 0 0 20rpx;flex-shrink:0;color:#8c4141;font-size:24rpx}
+
+@import "../../theme.wxss";

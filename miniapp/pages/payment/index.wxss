@@ -1,0 +1,5 @@
+@import "../../community.wxss";
+@import "../../theme.wxss";
+@import "../../illustrations.wxss";
+.payment-amount{font-size:40rpx;font-weight:700;color:#b9654c}
+.payment-page .hero{min-height:180rpx;padding-right:150rpx}
