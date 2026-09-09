@@ -15,7 +15,7 @@ function register(router) {
     const cursor = q_.get('cursor');
     const sort = q_.get('sort') || 'latest';
     if (!['latest', 'hot'].includes(sort)) throw err.bad('不支持的排序方式');
-    const cond = [`o.status = 'QUOTING'`, `o.deletedAt IS NULL`, `o.customerId <> ?`];
+    const cond = [`o.status = 'QUOTING'`, `o.deletedAt IS NULL`, `o.customerId <> ?`, `NOT EXISTS(SELECT 1 FROM direct_demands dd WHERE dd.orderId=o.id)`];
     const args = [user.id];
     if (q_.get('budgetMinFen')) { cond.push('o.budgetFen >= ?'); args.push(v.int(q_.get('budgetMinFen'), 'budgetMinFen', { min: 0, max: 1000000000 })); }
     if (q_.get('budgetMaxFen')) { cond.push('o.budgetFen <= ?'); args.push(v.int(q_.get('budgetMaxFen'), 'budgetMaxFen', { min: 0, max: 1000000000 })); }
@@ -55,7 +55,7 @@ function register(router) {
                 WHEN createdAt >= DATE_SUB(DATE(DATE_ADD(UTC_TIMESTAMP(3), INTERVAL 8 HOUR)), INTERVAL 8 HOUR)
                 THEN 1 ELSE 0 END), 0) AS todayCount
          FROM orders
-        WHERE status = 'QUOTING' AND deletedAt IS NULL AND customerId <> ?`,
+        WHERE status = 'QUOTING' AND deletedAt IS NULL AND customerId <> ? AND NOT EXISTS(SELECT 1 FROM direct_demands dd WHERE dd.orderId=orders.id)`,
       [user.id]);
     ok(res, {
       items,
@@ -72,6 +72,7 @@ function register(router) {
     const user = await requireEngineer(req);
     let o = await queryOne(`SELECT * FROM orders WHERE id=? AND deletedAt IS NULL`, [params.id]);
     if (!o) throw err.notFound('订单不存在');
+    await require('../services/cooperation-svc').assertScope(o.id,user.id);
     if (o.customerId === user.id) throw err.forbidden('不能承接自己发布的需求');
     const myQuote = await queryOne(
       `SELECT id, amountFen, days, solution, status FROM quotes WHERE orderId=? AND engineerId=?`,

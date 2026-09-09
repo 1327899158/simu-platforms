@@ -1,0 +1,13 @@
+<view class="blacklist-page">
+  <view class="intro"><view class="title">黑名单管理</view><text>双方不能发起咨询或发送聊天消息。已有订单、交付、售后和平台通知保留。在聊天页可添加拉黑用户。</text></view>
+  <view wx:if="{{error}}" class="empty" bindtap="retry">{{error}} · 点击重试</view>
+  <view wx:if="{{!loading && !error && !items.length}}" class="empty">暂未拉黑任何用户</view>
+  <view wx:for="{{items}}" wx:key="id" class="person">
+    <image wx:if="{{item.avatarUrl}}" class="avatar" src="{{item.avatarUrl}}" mode="aspectFill"/>
+    <view wx:else class="avatar placeholder">人</view>
+    <view class="info"><view class="name">{{item.nickname || '已注销用户'}}</view><text>{{item.role === 'ENGINEER' ? '工程师' : '客户'}}</text></view>
+    <button size="mini" disabled="{{busy || loading}}" data-id="{{item.id}}" bindtap="remove">解除拉黑</button>
+  </view>
+  <view wx:if="{{loading}}" class="empty">加载中…</view>
+  <button wx:if="{{nextOffset !== null}}" disabled="{{loading || busy}}" bindtap="more">加载更多</button>
+</view>

@@ -64,7 +64,7 @@
     <view class="sec-title">服务分类</view>
     <view class="category-grid"><view class="category-chip" bindtap="goEngineers">全部方向 ›</view><view class="category-chip" wx:for="{{categories}}" wx:key="*this" data-direction="{{item}}" bindtap="goEngineers">{{item}}</view></view>
     <view class="lc-head"><text class="sec-title">推荐工程师</text><text bindtap="goEngineers">查看全部 ›</text></view>
-    <view class="recommended-card" wx:for="{{engineers}}" wx:key="id"><image wx:if="{{item.avatarUrl}}" src="{{item.avatarUrl}}" mode="aspectFill"/><view class="engineer-copy"><text class="campaign-title">{{item.nickname || '工程师'}}</text><text>{{item.level.icon}} {{item.level.name}} · 好评率 {{item.positiveText}}</text><view><text wx:for="{{item.specialties}}" wx:for-item="tag" wx:key="*this" class="tag">{{tag}}</text></view></view><button size="mini" data-id="{{item.id}}" bindtap="contactEngineer">发起沟通</button></view>
+    <view class="recommended-card" wx:for="{{engineers}}" wx:key="id" data-id="{{item.id}}" bindtap="openEngineer"><image wx:if="{{item.avatarUrl}}" src="{{item.avatarUrl}}" mode="aspectFill"/><view class="engineer-copy"><text class="campaign-title">{{item.nickname || '工程师'}}</text><text class="engineer-level-tag level-{{item.level.key}}">{{item.level.icon}} {{item.level.name}}</text><text>好评率 {{item.positiveText}}</text><view><text wx:for="{{item.specialties}}" wx:for-item="tag" wx:key="*this" class="tag">{{tag}}</text></view></view><button size="mini" data-id="{{item.id}}" catchtap="contactEngineer">发起沟通</button></view>
     <view wx:if="{{!engineers.length}}" class="empty-state">暂无已认证工程师</view>
     <view class="sec-title">我的需求</view>
     <view class="list-card req-card" wx:for="{{recent}}" wx:key="id" data-id="{{item.id}}"

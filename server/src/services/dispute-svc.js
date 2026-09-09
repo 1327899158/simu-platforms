@@ -189,7 +189,7 @@ async function cancelDispute(user, disputeId) {
   });
   const { systemMessageForOrder } = require('./chat-svc');
   systemMessageForOrder(d.orderId, '纠纷已由发起人取消，订单恢复处理。').catch(() => {});
-  return { cancelled: true };
+  return { cancelled: true, orderId: d.orderId };
 }
 
 /** 发送纠纷线程消息（当事人或管理员） */
@@ -263,7 +263,7 @@ async function resolveDispute(admin, disputeId, { verdict, orderAction, note, re
   }[orderAction] || '订单已恢复原状态';
   systemMessageForOrder(d.orderId, `平台已完成纠纷仲裁（${actionText}）。${note ? '说明：' + note : ''}`)
     .catch(() => {});
-  return { resolved: true, orderStatus: targetStatus };
+  return { resolved: true, orderId: d.orderId, orderStatus: targetStatus };
 }
 
 /** 更新退款登记状态（PENDING -> PROCESSED / FAILED，预留真实退款接入点） */

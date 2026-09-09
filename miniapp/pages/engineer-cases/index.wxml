@@ -1,0 +1,24 @@
+<view class="case-page">
+  <view class="case-hero"><text class="case-title">把已完成的项目，变成你的作品</text><text class="case-muted">已添加 {{items.length}} / {{maxCases}} 个案例。客户可在你的个人资料中查看。</text><button class="primary" bindtap="add" disabled="{{loading || saving}}">＋ 从已完成订单添加</button><text class="preview" bindtap="preview">预览客户看到的个人资料 ›</text></view>
+  <view class="privacy">仅公开你填写的标题、介绍、项目方向、软件及完成月份。不要填写客户姓名、联系方式或保密细节；订单原文、金额、成果文件不会随案例公开。</view>
+  <view wx:if="{{error}}" class="empty" bindtap="load">{{error}} · 点击重试</view>
+  <view wx:elif="{{loading}}" class="empty">正在加载案例…</view>
+  <view wx:elif="{{!items.length}}" class="empty">还没有展示案例，先添加一个已完成项目吧。</view>
+  <view class="case-card" wx:for="{{items}}" wx:key="id">
+    <view class="case-head"><text class="case-heading">{{item.title}}</text><text class="status {{item.visible ? 'active' : ''}}">{{item.visible ? '展示中' : '已暂停展示'}}</text></view>
+    <text class="case-summary">{{item.summary}}</text><text class="case-muted">关联订单（仅本人可见）：{{item.projectName}}</text>
+    <text wx:if="{{!item.visible}}" class="case-muted">订单不再处于已完成状态或认证失效，恢复符合条件后自动展示。</text>
+    <view class="case-actions"><button size="mini" data-id="{{item.id}}" bindtap="edit" disabled="{{!item.visible}}">编辑案例</button><button size="mini" data-id="{{item.id}}" bindtap="remove" disabled="{{!!removing}}">移除展示</button></view>
+  </view>
+  <view class="mask" wx:if="{{picker}}" catchtouchmove="noop"><view class="dialog"><text class="case-heading">选择本人已完成的订单</text><scroll-view scroll-y class="picker-list" bindscrolltolower="moreCandidates">
+    <view class="candidate {{item.caseId ? 'disabled' : ''}}" wx:for="{{candidates}}" wx:key="id" data-id="{{item.id}}" bindtap="choose"><text>{{item.projectName}}</text><text class="case-muted">{{item.caseId ? '已添加为案例' : '已完成 · 点击选择'}}</text></view>
+    <text class="empty" wx:if="{{!picking && !candidates.length}}">暂无已完成的承接订单</text>
+    <button wx:if="{{nextOffset !== null}}" bindtap="moreCandidates" loading="{{picking}}">加载更多</button>
+    <text class="case-muted" wx:if="{{picking}}">加载中…</text>
+  </scroll-view><button bindtap="close">返回</button></view></view>
+  <view class="mask" wx:if="{{editor}}" catchtouchmove="noop"><view class="dialog"><text class="case-heading">{{caseId ? '编辑展示案例' : '添加展示案例'}}</text><scroll-view scroll-y class="editor-list"><text class="case-muted">关联订单（不公开）：{{orderName}}</text>
+    <text class="field-label">公开标题</text><input maxlength="80" value="{{title}}" data-key="title" bindinput="field" placeholder="例如：轻量化支架结构强度分析"/>
+    <text class="field-label">案例介绍</text><textarea maxlength="1500" value="{{summary}}" data-key="summary" bindinput="field" placeholder="介绍项目目标、采用的方法与交付成果，避免客户机密（10–1500字）"/>
+    <checkbox-group bindchange="confirm"><label class="consent"><checkbox value="public" checked="{{confirmed}}"/><text>我确认公开内容不含客户机密，并已获得必要的展示授权。</text></label></checkbox-group>
+  </scroll-view><view class="case-actions"><button bindtap="close" disabled="{{saving}}">取消</button><button class="primary" bindtap="save" loading="{{saving}}" disabled="{{saving || !confirmed}}">保存并展示</button></view></view></view>
+</view>

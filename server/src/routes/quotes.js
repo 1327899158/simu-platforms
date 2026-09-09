@@ -32,6 +32,7 @@ function register(router) {
         `SELECT id, status, customerId, budgetFen, budgetFlexible FROM orders WHERE id=? AND deletedAt IS NULL FOR UPDATE`,
         [params.id]);
       if (!o) throw err.notFound('订单不存在');
+      await require('../services/cooperation-svc').assertScope(o.id,user.id);
       if (o.status !== 'QUOTING') throw err.conflict('该需求已停止报价');
       if (o.customerId === user.id) throw err.forbidden('不能给自己的需求报价');
       let amountFen;
@@ -155,6 +156,7 @@ function register(router) {
     const user = await requireUser(req);
     const o = await queryOne(`SELECT * FROM orders WHERE id=? AND deletedAt IS NULL`, [params.id]);
     if (!o) throw err.notFound('订单不存在');
+    await require('../services/cooperation-svc').assertScope(o.id,user.id);
     if (user.role === 'CUSTOMER') {
       if (o.customerId !== user.id) throw err.forbidden('仅订单发布者可查看该需求报价');
     } else if (user.role === 'ENGINEER') {

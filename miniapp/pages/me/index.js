@@ -49,13 +49,16 @@ function verifyView(user) {
 }
 
 Page({
+  communityPage(e) { wx.navigateTo({url:'/pages/'+e.currentTarget.dataset.page+'/index'}); },
+  goBlacklist() { wx.navigateTo({url:"/pages/blacklist/index"}); },
+  goCases() { wx.navigateTo({ url: '/pages/engineer-cases/index' }); },
   goLevel() { wx.navigateTo({url:'/pages/engineer-level/index'}); },
-  data: { user: null, roleText: '', roleBadgeText: '客户', qualificationHint: '', verifyStatus: 'UNAPPLIED', verifyText: '未申请', showSelfVerify: true, selfVerifyLoading: false },
+  data: { user: null, engineerLevel: null, roleText: '', roleBadgeText: '客户', qualificationHint: '', verifyStatus: 'UNAPPLIED', verifyText: '未申请', showSelfVerify: true, selfVerifyLoading: false },
   async onShow() {
     // 先用缓存快速渲染（缓存里已是绝对路径，可直接显示）
     const cached = ensureLogin();
     if (!cached) return;
-    this.setData({ user: cached, roleText: cached.role === 'ENGINEER' ? '工程师' : '客户', ...verifyView(cached) });
+    this.setData({ user: cached, engineerLevel: null, roleText: cached.role === 'ENGINEER' ? '工程师' : '客户', ...verifyView(cached) });
     let tabBar = this.getTabBar && this.getTabBar();
     if (tabBar && tabBar.syncTabBar) tabBar.syncTabBar(cached.role, '/pages/me/index');
     // 后台刷新最新数据
@@ -63,7 +66,16 @@ Page({
       const fresh = await request('GET', '/me');
       if(fresh.role==='ENGINEER') {
         request('GET','/engineers/level',null,{silent:true})
-          .then(level => this.setData({engineerLevel:level.current}))
+          .then(level => {
+            const key = 'engineerLevel:' + fresh.id;
+            const previous = wx.getStorageSync(key);
+            const keys = ['UNQUALIFIED'].concat(level.levels.map(item => item.key));
+            if (previous && keys.indexOf(level.current.key) > keys.indexOf(previous)) {
+              wx.showToast({ title: '已晋升为' + level.current.name, icon: 'none' });
+            }
+            wx.setStorageSync(key, level.current.key);
+            this.setData({ engineerLevel: level.current });
+          })
           .catch(() => this.setData({engineerLevel:null}));
       }
       const resolved = resolveAvatar(fresh);

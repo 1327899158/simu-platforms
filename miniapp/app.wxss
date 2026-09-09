@@ -457,3 +457,11 @@ page {
 .empty-icon { font-size: 64rpx; }
 .empty-text { font-size: 28rpx; color: #7C877B; }
 .empty-desc { font-size: 23rpx; color: #9AA59A; }
+/* 工程师等级统一标签：资料页、我的、首页与工程师目录共用。 */
+.engineer-level-tag{display:inline-block;align-self:flex-start;max-width:100%;box-sizing:border-box;padding:7rpx 16rpx;margin:10rpx 8rpx 8rpx 0;border-radius:999rpx;font-size:22rpx;line-height:1.5;font-weight:600;background:#e4eee2;color:#315945;white-space:normal}
+.engineer-level-tag.level-ROOKIE{background:#e4f3ea;color:#28734b}
+.engineer-level-tag.level-GROWING{background:#e1eef8;color:#2b6696}
+.engineer-level-tag.level-SENIOR{background:#eae5fa;color:#655292}
+.engineer-level-tag.level-GOLD{background:#fff0b7;color:#815916}
+.engineer-level-tag.level-CHIEF{background:#394f4b;color:#ffe596;border:1rpx solid #c3a362}
+.engineer-level-tag.level-UNQUALIFIED{background:#eceeea;color:#747c74}

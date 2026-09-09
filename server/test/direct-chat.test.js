@@ -10,7 +10,7 @@ mock('../src/db', {
     conv = { id: args[0], orderId: null, customerId: args[1], engineerId: args[2], directKey: args[5] };
     return { affectedRows: 1 };
   },
-  queryOne: async sql => sql.includes('identity_verifications') ? (available ? { id: 'e' } : null) : conv,
+  queryOne: async sql => sql.includes('user_blocks') ? null : sql.includes('identity_verifications') ? (available ? { id: 'e' } : null) : conv,
 });
 mock('../src/lib/auth-mw', { requireUser: async req => req.user });
 mock('../src/services/chat-svc', { publishConversationDoc: () => published++ });

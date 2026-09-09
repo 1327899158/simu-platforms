@@ -6,6 +6,8 @@ const { query, queryOne, tx, parseJson } = require('../db');
 const { requireCustomer, requireUser, requireEngineer } = require('../lib/auth-mw');
 const { requireAdmin } = require('../lib/admin-mw');
 
+const { getLevel, refreshLevelSafe } = require('../services/engineer-level');
+const { publicCases } = require('../services/engineer-case-svc');
 const { saveReview } = require('../services/customer-review-svc');
 
 function score(value, label) {
@@ -97,6 +99,7 @@ function register(router) {
       const [[row]] = await conn.execute(`SELECT * FROM engineer_reviews WHERE id=?`, [id]);
       return row;
     });
+    await refreshLevelSafe(saved.engineerId);
     ok(res, reviewView(saved));
   });
 
@@ -182,6 +185,8 @@ function register(router) {
         WHERE r.engineerId=? ORDER BY r.updatedAt DESC LIMIT 30`, [engineer.id]);
     const reviewCount = Number(summary?.reviewCount || 0);
     ok(res, {
+      level: await getLevel(engineer.id),
+      cases: await publicCases(engineer.id),
       id: engineer.id,
       nickname: engineer.nickname || '工程师',
       avatarUrl: engineer.avatarUrl || '',

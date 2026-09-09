@@ -25,6 +25,7 @@ module.exports = {
   }
 };
 </wxs>
+<view wx:if="{{directEngineerId}}" style="padding:24rpx;background:#e6f3ec;color:#24563e;">定向需求：仅指定合作工程师可见，不进入公开大厅。最终支付金额以工程师报价为准。</view>
 <view class="page-container">
 
   <!-- 顶部导航 -->

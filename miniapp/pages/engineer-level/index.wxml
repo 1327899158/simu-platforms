@@ -1,1 +1,37 @@
-<view class="wrap"><text class="title">我的工程师等级</text><view class="card result" wx:if="{{current}}"><text class="heading">{{current.icon}} {{current.name}}</text><text>累计完成 {{current.completed}} 单 · 好评率 {{positiveText}}</text><text>纠纷率 {{disputeText}} · {{current.reviews}} 条有效评价</text></view><view class="card" wx:for="{{levels}}" wx:key="key"><text class="heading">{{item.icon}} {{item.name}} <text wx:if="{{item.rate}}">{{item.rate}}%</text><text wx:if="{{current.key===item.key}}"> · 当前等级</text></text><text>{{item.rule}}</text></view><view class="card"><text class="heading">计算口径</text><text class="rules">完成单量：已完成过交付验收的累计订单。\n好评率：综合评分≥4分的评价数 ÷ 总评价数；无评价不视作100%。\n纠纷率：已付款承接订单中发生纠纷的去重订单数 ÷ 已付款承接订单数。\n满足实名认证与基础资质资料后，按达到的最高等级认定；高单量未达到好评率要求时保留符合条件的较低等级。\n费率为规则预留，本期不影响支付结算。</text></view></view>
+<view class="wrap">
+  <text class="title">我的工程师等级</text>
+  <view class="muted" wx:if="{{error}}" bindtap="load">{{error}} · 点击重试</view>
+  <view class="muted" wx:if="{{loading}}">正在核对等级数据…</view>
+  <view class="card result" wx:if="{{current}}">
+    <text class="engineer-level-tag level-{{current.key}}">{{current.icon}} {{current.name}}</text>
+    <text class="metric">累计完成 {{current.completed}} 单 · 好评率 {{positiveText}}</text>
+    <text class="metric">纠纷率 {{disputeText}} · {{current.reviews}} 条有效评价</text>
+    <text class="muted">达到条件自动更新头衔，无需提交晋级申请。验收、评价及审核后刷新，查看资料时再次核对。</text>
+  </view>
+  <view class="card" wx:if="{{advancement && advancement.next}}">
+    <text class="heading">下一头衔：{{advancement.next.icon}} {{advancement.next.name}}</text>
+    <text class="muted">单量目标完成度 {{advancement.orderProgressPct}}%（还需同时满足其他条件）</text>
+    <progress percent="{{advancement.orderProgressPct}}" activeColor="#355e4a" backgroundColor="#edf2e9" stroke-width="6"/>
+    <view class="requirement" wx:for="{{advancement.requirements}}" wx:key="key">
+      <view class="requirement-head"><text>{{item.label}}</text><text class="{{item.met ? 'met' : 'unmet'}}">{{item.met ? '✓ 已满足' : '待达标'}}</text></view>
+      <text class="muted">当前：{{item.currentText}} · 要求：{{item.targetText}}</text>
+      <text class="requirement-hint" wx:if="{{item.hint}}">{{item.hint}}</text>
+    </view>
+    <button wx:if="{{current.key === 'UNQUALIFIED'}}" bindtap="goQualification">完善认证与资质材料</button>
+  </view>
+  <view class="card" wx:elif="{{advancement}}"><text class="heading">👑 已达到最高头衔</text><text class="muted">持续保持高质量交付与良好沟通，维持当前等级。</text></view>
+  <text class="heading">等级与晋升条件</text>
+  <view class="card" wx:for="{{levels}}" wx:key="key">
+    <text class="engineer-level-tag level-{{item.key}}">{{item.icon}} {{item.name}}</text>
+    <text wx:if="{{current.key === item.key}}" class="met">当前等级</text>
+    <text class="metric">{{item.rule}}</text>
+    <text wx:if="{{item.rate}}" class="muted">预留费率 {{item.rate}}% · 本期不影响支付结算</text>
+  </view>
+  <view class="card"><text class="heading">计算口径</text>
+    <text class="metric">完成单量：已完成过交付验收的累计订单。</text>
+    <text class="metric">好评率：综合评分≥4分的评价数 ÷ 总评价数；无评价不视作100%。</text>
+    <text class="metric">纠纷率：已付款承接订单中发生纠纷的去重订单数 ÷ 已付款承接订单数（包含已取消的历史纠纷）。</text>
+    <text class="metric">所有头衔均要求实名认证通过并提交基础资质材料；按当前达到的最高等级认定。指标下降后也会重新评定，单量高但好评率未达标时显示仍符合条件的较低头衔。</text>
+    <text class="metric">百分比展示会四舍五入，实际判定使用未舍入的数值；严格小于的门槛不包含等于。</text>
+  </view>
+</view>

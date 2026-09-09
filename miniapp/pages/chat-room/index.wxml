@@ -3,6 +3,8 @@
   <!-- 顶部导航 -->
   <view class="chat-header">
     <text class="header-title">💬 {{peer.nickname || '聊天'}}</text>
+    <button size="mini" wx:if="{{peer.id}}" bindtap="reportPeer">举报</button>
+    <button size="mini" wx:if="{{peer.id && (role === 'CUSTOMER' || role === 'ENGINEER')}}" bindtap="blockPeer">拉黑</button>
   </view>
 
   <!-- 消息列表 -->

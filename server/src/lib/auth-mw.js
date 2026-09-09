@@ -127,7 +127,7 @@ async function requireUser(req, roleHint) {
         if (exp < new Date()) throw err.unauth('会话已过期，请重新登录');
       }
       if (user.status !== 'ACTIVE') throw err.forbidden('账号不可用');
-      return user;
+      return require('../services/account-closure-svc').guard(req,user);
     }
     // An explicitly supplied session token must not silently fall back to a
     // different CloudBase openid identity on the same request.
@@ -141,7 +141,7 @@ async function requireUser(req, roleHint) {
       : await queryOne(`SELECT * FROM users WHERE openid = ? AND deletedAt IS NULL`, [openid]);
     if (!user) throw err.unauth('用户不存在，请重新登录');
     if (user.status !== 'ACTIVE') throw err.forbidden('账号不可用');
-    return user;
+    return require('../services/account-closure-svc').guard(req,user);
   }
   throw err.unauth('未获取到用户身份（请通过小程序调用或重新登录）');
 }

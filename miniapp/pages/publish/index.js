@@ -86,6 +86,9 @@ Page({
     let user = ensureLogin();
     if (!user) return;
     this._userId = user.id;
+    this._directEngineerId = options.directEngineerId || '';
+    this._draftScope = user.id + (this._directEngineerId ? '_direct_' + this._directEngineerId : '');
+    this.setData({directEngineerId:this._directEngineerId});
     if (user.role !== 'CUSTOMER') {
       wx.showToast({ title: '仅客户可以发布需求', icon: 'none' });
       setTimeout(() => wx.navigateBack({ fail: () => wx.switchTab({ url: '/pages/home/index' }) }), 500);
@@ -99,7 +102,7 @@ Page({
       promptIdentity('发布需求', true);
       return;
     }
-    const draft = wx.getStorageSync(draftKey(user.id));
+    const draft = wx.getStorageSync(draftKey(this._draftScope));
     if (draft) {
       this.setData({
         ...draft,
@@ -131,7 +134,7 @@ Page({
     if (!this._userId) return;
     const { projectName, description, budgetYuan, budgetFlexible, softwareTags,
       directionTags, otherSoftware, otherDirection, deliveryKey, customDays, specialNote, files } = this.data;
-    wx.setStorageSync(draftKey(this._userId), {
+    wx.setStorageSync(draftKey(this._draftScope), {
       projectName, description, budgetYuan, budgetFlexible, softwareTags,
       directionTags, otherSoftware, otherDirection, deliveryKey, customDays, specialNote, files,
     });
@@ -314,6 +317,7 @@ Page({
     this.setData({ submitting: true });
     try {
       const body = {
+        directEngineerId: this._directEngineerId || undefined,
         projectName: d.projectName.trim(),
         description: d.description.trim(),
         softwareTags,

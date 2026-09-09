@@ -14,6 +14,8 @@ const { query, queryOne, tx } = require('../db');
 const { requireUser, requireCustomer } = require('../lib/auth-mw');
 const { contentCheck, publishConversationDoc, publishMessageDoc } = require('../services/chat-svc');
 
+const blacklist = require('../services/blacklist-svc');
+
 async function myConversation(user, convId) {
   const c = await queryOne(`SELECT * FROM conversations WHERE id = ?`, [convId]);
   if (!c) throw err.notFound('会话不存在');
@@ -22,6 +24,7 @@ async function myConversation(user, convId) {
 }
 
 async function conversationSendAccess(c) {
+  if (await blacklist.blocked(c.customerId,c.engineerId)) return { canSend:false, reason:'黑名单限制：无法发送消息，历史记录和订单操作仍保留' };
   if (!c.orderId && c.directKey) {
     const active = await queryOne("SELECT COUNT(*) AS count FROM users WHERE id IN (?,?) AND status='ACTIVE' AND deletedAt IS NULL", [c.customerId,c.engineerId]);
     return { canSend: Number(active.count)===2, reason: Number(active.count)===2?'':'对方账号不可用' };
@@ -54,6 +57,7 @@ function register(router) {
     if(user.role!=='CUSTOMER'||user.id===params.id) throw err.forbidden('仅客户可发起工程师咨询');
     const target=await queryOne("SELECT u.id FROM users u JOIN identity_verifications iv ON iv.userId=u.id WHERE u.id=? AND u.role='ENGINEER' AND u.status='ACTIVE' AND u.deletedAt IS NULL AND iv.verifyStatus='APPROVED'",[params.id]);
     if(!target) throw err.notFound('工程师不可用');
+    await blacklist.assertContact(user.id,target.id);
     const key=`${user.id}:${target.id}`,now=nowIso();
     const inserted = await query('INSERT IGNORE INTO conversations(id,orderId,customerId,engineerId,lastMsgAt,createdAt,directKey) VALUES(?,NULL,?,?,?,?,?)',[newId(),user.id,target.id,now,now,key]);
     const c=await queryOne('SELECT * FROM conversations WHERE directKey=?',[key]);
@@ -112,6 +116,7 @@ function register(router) {
         [params.quoteId, order.id]
       );
       if (!quote) throw err.conflict('该报价已失效，无法发起沟通');
+      await blacklist.assertContact(customer.id,quote.engineerId);
 
       const [[existing]] = await conn.execute(
         `SELECT * FROM conversations WHERE orderId = ? AND engineerId = ?`,
@@ -230,6 +235,7 @@ function register(router) {
       content = f.name;
     }
 
+    await blacklist.assertContact(c.customerId,c.engineerId);
     // 1) MySQL 主写（同步，快）
     const now = nowIso();
     const msgId = await tx(async (conn) => {

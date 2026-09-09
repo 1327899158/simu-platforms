@@ -15,6 +15,8 @@ function fileSizeText(sizeBytes) {
 }
 
 Page({
+  favoriteDemand(){require('../../utils/community').favorite('DEMAND',this.data.id);},
+  reportOrderPeer(){const o=this.data.order;if(o)require('../../utils/community').report(this.data.role==='ENGINEER'?o.customer?.id:o.engineer?.id);},
   data: {
     id: '', mode: 'customer', role: '',
     order: null, quotes: [], peerQuotes: [], files: [],
@@ -52,6 +54,7 @@ Page({
     order.time = timeShort(order.createdAt);
     order.cls = STATUS_CLASS[order.status] || 'st-gray';
     this.setData({ order });
+    request('GET','/direct-demands/'+id,null,{silent:true}).then(d=>this.setData({directDemand:d})).catch(()=>this.setData({directDemand:null}));
 
     // 查询待处理退款申请。工程师进入被选中的订单时，以弹窗完成同意/拒绝。
     let refundRequest = null;

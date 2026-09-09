@@ -95,7 +95,10 @@ async function orderFileAccess(user, order) {
   const profile = await queryOne(
     `SELECT verifyStatus FROM identity_verifications WHERE userId = ?`, [user.id]);
   if (!profile || profile.verifyStatus !== 'APPROVED') return null;
-  if (order.status === 'QUOTING') return 'REQUIREMENT';
+  if (order.status === 'QUOTING') {
+    await require('../services/cooperation-svc').assertScope(order.id,user.id);
+    return 'REQUIREMENT';
+  }
   const selected = order.selectedQuoteId
     ? await queryOne(`SELECT engineerId FROM quotes WHERE id = ?`, [order.selectedQuoteId])
     : null;

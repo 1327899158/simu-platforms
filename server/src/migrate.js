@@ -5,6 +5,8 @@
 const { init } = require('./db');
 
 init()
+  .then(() => require('./services/home-migration')(require('./db').query))
+  .then(() => require('./services/community-migration').migrate(require('./db').query))
   .then(() => process.exit(0))
   .catch((error) => {
     console.error('[migrate] failed:', error.message);

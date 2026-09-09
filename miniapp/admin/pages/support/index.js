@@ -1,0 +1,9 @@
+const {request}=require('../../../utils/request');const {loadAdmin,hasPermission,denyAndExit}=require('../../utils/admin');
+const labels={SUBMITTED:'已提交',ACCEPTED:'已受理',INVESTIGATING:'调查中',RESOLVED:'已处理',REJECTED:'不予受理'};
+Page({data:{kind:'REPORT',items:[],detail:null,note:'',busy:false,offset:0,hasMore:false,error:''},async onLoad(){try{const a=await loadAdmin();if(!hasPermission(a,'SUPPORT_MANAGE'))throw Error('没有处理权限');this.load();}catch(e){denyAndExit(e.message);}},onPullDownRefresh(){this.load().finally(()=>wx.stopPullDownRefresh());},
+ async load(more=false){try{const offset=more?this.data.offset:0;const r=await request('GET','/admin/support',{kind:this.data.kind,offset});const items=r.items.map(x=>({...x,statusText:labels[x.status]}));this.setData({items:more?this.data.items.concat(items):items,offset:offset+20,hasMore:r.hasMore,error:''});}catch(e){this.setData({error:e.message});}},
+ tab(e){this.setData({kind:e.currentTarget.dataset.kind,items:[],detail:null});this.load();},more(){this.load(true);},retry(){this.load();},
+ async open(e){try{const d=await request('GET','/admin/support/'+e.currentTarget.dataset.id);this.setData({detail:{...d,statusText:labels[d.status],events:d.events.map(x=>({...x,statusText:labels[x.status]}))},note:''});}catch(e){wx.showToast({title:e.message,icon:'none'});}},back(){this.setData({detail:null});},input(e){this.setData({note:e.detail.value});},
+ preview(e){require('../../../utils/community').previewEvidence(e.currentTarget.dataset.id,true);},
+ async act(e){if(this.data.busy)return;this.setData({busy:true});try{await request('POST','/admin/support/'+this.data.detail.id,{status:e.currentTarget.dataset.status,note:this.data.note});await this.open({currentTarget:{dataset:{id:this.data.detail.id}}});await this.load();}catch(e){wx.showToast({title:e.message,icon:'none'});}finally{this.setData({busy:false});}}
+});

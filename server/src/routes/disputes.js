@@ -16,6 +16,7 @@
  *   POST /api/admin/disputes/:id/resolve   仲裁结案（改状态 + 退款登记）
  *   POST /api/admin/disputes/:id/refund    退款登记状态更新
  */
+const { refreshForOrder } = require('../services/engineer-level');
 const { readJson, ok, err } = require('../lib/http');
 const { v, maskPhone, nowIso, parseDbDate } = require('../lib/util');
 const { query, queryOne, tx } = require('../db');
@@ -174,6 +175,7 @@ function register(router) {
     if (new Set(fileIds).size !== fileIds.length) throw err.bad('证据文件列表包含重复文件');
 
     const dispute = await createDispute(user, { orderId: params.id, reasonType, description, fileIds });
+    await refreshForOrder(params.id);
     ok(res, disputeView(dispute));
   });
 
@@ -292,7 +294,9 @@ function register(router) {
   // POST /api/disputes/:id/cancel —— 发起人取消
   router.post('/api/disputes/:id/cancel', async (req, res, params) => {
     const user = await requireUser(req);
-    ok(res, await cancelDispute(user, params.id));
+    const result = await cancelDispute(user, params.id);
+    await refreshForOrder(result.orderId);
+    ok(res, result);
   });
 
   // ================= 管理员接口 =================
@@ -359,6 +363,7 @@ function register(router) {
     if (evidenceWindow(d).evidenceOpen) throw err.conflict('举证期尚未结束，请在48小时举证期结束后再仲裁');
 
     const result = await resolveDispute(admin, params.id, { verdict, orderAction, note, refundAmountFen });
+    await refreshForOrder(result.orderId);
 
     await writeAdminAudit(req, admin, 'DISPUTE_RESOLVE', 'DISPUTE', params.id, {
       orderId: d.orderId,

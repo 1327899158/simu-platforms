@@ -1,1 +1,4 @@
-{"navigationBarTitleText":"工程师等级"}
+{
+  "navigationBarTitleText": "工程师等级",
+  "enablePullDownRefresh": true
+}

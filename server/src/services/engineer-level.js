@@ -21,6 +21,27 @@ function calculate(stats) {
   }
   return { ...level, completed: stats.completed, reviews: stats.reviews, positiveRate, disputeRate, accepted: stats.accepted, disputed: stats.disputed };
 }
+// 晋级条件只由服务端计算；前端不能提交等级或修改统计值。
+function advancement(current) {
+  const index = LEVELS.findIndex(level => level.key === current.key);
+  const next = LEVELS[index + 1] || null;
+  if (!next) return { next: null, requirements: [], orderProgressPct: 100 };
+  const qualified = current.key !== 'UNQUALIFIED';
+  const orderGap = Math.max(0, next.min - current.completed);
+  const ratingMet = next.positive === 0 || (current.positiveRate !== null && current.positiveRate >= next.positive);
+  const disputeMet = next.dispute === null || current.disputeRate < next.dispute;
+  const requirements = [
+    { key: 'qualification', label: '身份认证与基础资质', met: qualified, currentText: qualified ? '已满足' : '未满足', targetText: '实名认证通过并提交基础资质材料' },
+    { key: 'orders', label: '累计完成订单', met: orderGap === 0, currentText: current.completed + ' 单', targetText: '至少 ' + next.min + ' 单', hint: orderGap ? '还差 ' + orderGap + ' 单' : '已达标' },
+  ];
+  if (next.positive > 0) requirements.push({ key: 'rating', label: '好评率', met: ratingMet,
+    currentText: current.positiveRate === null ? '暂无评价' : current.positiveRate.toFixed(2) + '%',
+    targetText: '≥ ' + next.positive + '%', hint: ratingMet ? '已达标' : '需提升客户有效好评比例；无评价不能晋级' });
+  if (next.dispute !== null) requirements.push({ key: 'dispute', label: '纠纷率', met: disputeMet,
+    currentText: current.disputeRate.toFixed(2) + '%', targetText: '< ' + next.dispute + '%',
+    hint: disputeMet ? '已达标' : '尚未达到严格小于门槛的要求' });
+  return { next, requirements, orderProgressPct: next.min ? Math.min(100, Math.floor(current.completed / next.min * 100)) : (qualified ? 100 : 0) };
+}
 async function getLevel(id) {
   const row = await queryOne(`SELECT
     (SELECT COUNT(*) FROM orders o JOIN quotes q ON q.id=o.selectedQuoteId WHERE q.engineerId=? AND o.completedAt IS NOT NULL) AS completed,
@@ -33,6 +54,19 @@ async function getLevel(id) {
   const level = calculate(stats);
   await query(`UPDATE engineer_profiles SET levelKey=?, completedOrderCount=?, positiveReviewRate=?, disputeRate=?, levelUpdatedAt=UTC_TIMESTAMP(3) WHERE userId=?`,
     [level.key, level.completed, level.positiveRate, level.disputeRate, id]);
-  return level;
+  return { ...level, advancement: advancement(level) };
 }
-module.exports = { LEVELS, calculate, getLevel };
+// 业务提交后刷新，不让缓存更新失败回滚已经成功的验收/评价。资料读取会再次计算兜底。
+async function refreshLevelSafe(id) {
+  if (!id) return;
+  try { return await getLevel(id); }
+  catch (e) { console.error('[engineer-level/refresh]', id, e.message); }
+}
+async function refreshForOrder(orderId) {
+  if (!orderId) return;
+  try {
+    const row = await queryOne('SELECT q.engineerId FROM orders o JOIN quotes q ON q.id=o.selectedQuoteId WHERE o.id=?', [orderId]);
+    if (row) await refreshLevelSafe(row.engineerId);
+  } catch (e) { console.error('[engineer-level/order]', orderId, e.message); }
+}
+module.exports = { LEVELS, calculate, getLevel, advancement, refreshLevelSafe, refreshForOrder };

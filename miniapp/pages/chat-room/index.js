@@ -24,6 +24,16 @@ function withTimeout(promise, ms) {
 }
 
 Page({
+  reportPeer(){if(this.data.peer)require('../../utils/community').report(this.data.peer.id);},
+  async blockPeer() {
+    if (this._blocking || !this.data.peer) return;
+    this._blocking = true;
+    try {
+      if (await require('../../utils/blacklist').blockUser(this.data.peer.id)) {
+        this.setData({canSend:false,sendDisabledReason:'黑名单限制：无法发送消息，可在“我的→黑名单”解除'});
+      }
+    } finally { this._blocking = false; }
+  },
   data: {
     convId: '', myId: '', myOpenid: '', myAvatar: '', role: '',
     msgs: [], text: '', lastId: 0,

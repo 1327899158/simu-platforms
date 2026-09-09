@@ -84,7 +84,10 @@ model User {
   updatedAt DateTime   @updatedAt
   deletedAt DateTime?
 
+  blocks UserBlock[] @relation("BlockOwner")
+  blockedBy UserBlock[] @relation("BlockedUser")
   engineer EngineerProfile?
+  showcasedCases EngineerCase[]
   orders   Order[]          @relation("CustomerOrders")
   quotes   Quote[]
   uploadedAttachments OrderAttachment[]
@@ -99,6 +102,32 @@ model User {
   customerReviewsGiven CustomerReview[] @relation("CustomerReviewsGiven")
   customerReviewsReceived CustomerReview[] @relation("CustomerReviewsReceived")
   uploadedInvoiceRequestFiles InvoiceRequestFile[]
+}
+
+model UserBlock {
+  ownerId String
+  blockedUserId String
+  createdAt DateTime @default(now()) @db.DateTime(3)
+  owner User @relation("BlockOwner", fields: [ownerId], references: [id])
+  blockedUser User @relation("BlockedUser", fields: [blockedUserId], references: [id])
+  @@id([ownerId, blockedUserId])
+  @@index([blockedUserId])
+  @@map("user_blocks")
+}
+
+model EngineerCase {
+  id String @id @default(cuid()) @db.VarChar(32)
+  engineerId String
+  orderId String
+  title String @db.VarChar(80)
+  summary String @db.VarChar(1500)
+  createdAt DateTime @default(now()) @db.DateTime(3)
+  updatedAt DateTime @updatedAt @db.DateTime(3)
+  engineer User @relation(fields: [engineerId], references: [id])
+  order Order @relation(fields: [orderId], references: [id])
+  @@unique([engineerId, orderId])
+  @@index([engineerId, createdAt])
+  @@map("engineer_cases")
 }
 
 model EngineerProfile {
@@ -117,6 +146,7 @@ model EngineerProfile {
 }
 
 model Order {
+  showcasedCases EngineerCase[]
   id              String      @id @default(cuid())
   orderNo         String      @unique // SIM202607260001
   customerId      String
@@ -486,4 +516,121 @@ model DisputeMessage {
 
   @@index([disputeId, id])
   @@map("dispute_messages")
+}
+
+
+model UserFavorite {
+  userId String @db.VarChar(32)
+  kind String @db.VarChar(16)
+  targetId String @db.VarChar(32)
+  createdAt DateTime @db.DateTime(3)
+  @@id([userId, kind, targetId])
+  @@map("user_favorites")
+}
+model HelpArticle {
+  id String @id @db.VarChar(32)
+  kind String @db.VarChar(16)
+  title String @db.VarChar(120)
+  content String @db.Text
+  enabled Int @default(1) @db.TinyInt
+  sortOrder Int @default(0)
+  updatedAt DateTime @db.DateTime(3)
+  @@map("help_articles")
+}
+model SupportSubmission {
+  id String @id @db.VarChar(32)
+  userId String @db.VarChar(32)
+  kind String @db.VarChar(16)
+  targetId String? @db.VarChar(32)
+  category String @db.VarChar(60)
+  content String @db.Text
+  evidence Json
+  status String @default("SUBMITTED") @db.VarChar(20)
+  result String? @db.Text
+  createdAt DateTime @db.DateTime(3)
+  updatedAt DateTime @db.DateTime(3)
+  @@index([userId, createdAt])
+  @@index([kind, status])
+  @@map("support_submissions")
+}
+model SupportEvent {
+  id String @id @db.VarChar(32)
+  submissionId String @db.VarChar(32)
+  status String @db.VarChar(20)
+  note String @db.Text
+  adminId String? @db.VarChar(32)
+  createdAt DateTime @db.DateTime(3)
+  @@index([submissionId, createdAt])
+  @@map("support_events")
+}
+model SupportEvidenceBlob {
+  id String @id @db.VarChar(32)
+  userId String @db.VarChar(32)
+  mime String @db.VarChar(32)
+  payload String @db.MediumText
+  createdAt DateTime @db.DateTime(3)
+  @@index([userId, createdAt])
+  @@map("support_evidence_blobs")
+}
+model AccountClosure {
+  userId String @id @db.VarChar(32)
+  status String @db.VarChar(20)
+  requestedAt DateTime @db.DateTime(3)
+  executeAfter DateTime @db.DateTime(3)
+  completedAt DateTime? @db.DateTime(3)
+  lastError String? @db.VarChar(500)
+  updatedAt DateTime @db.DateTime(3)
+  @@index([status, executeAfter])
+  @@map("account_closures")
+}
+model AccountClosureEvent {
+  id String @id @db.VarChar(32)
+  userId String @db.VarChar(32)
+  action String @db.VarChar(24)
+  createdAt DateTime @db.DateTime(3)
+  @@map("account_closure_events")
+}
+model CooperationSetting {
+  engineerId String @id @db.VarChar(32)
+  enabled Int @default(0) @db.TinyInt
+  discountBps Int @default(10000)
+  responseHours Int @default(24)
+  scheduleNote String @default("") @db.VarChar(500)
+  revisionCount Int @default(2)
+  minAmountFen BigInt @default(100)
+  updatedAt DateTime @db.DateTime(3)
+  @@map("cooperation_settings")
+}
+model CooperationRelation {
+  id String @id @db.VarChar(32)
+  customerId String @db.VarChar(32)
+  engineerId String @db.VarChar(32)
+  status String @db.VarChar(20)
+  terms Json
+  message String? @db.VarChar(1000)
+  createdAt DateTime @db.DateTime(3)
+  updatedAt DateTime @db.DateTime(3)
+  @@unique([customerId, engineerId])
+  @@map("cooperation_relations")
+}
+model DirectDemand {
+  orderId String @id @db.VarChar(32)
+  customerId String @db.VarChar(32)
+  engineerId String @db.VarChar(32)
+  relationId String @db.VarChar(32)
+  terms Json
+  createdAt DateTime @db.DateTime(3)
+  @@index([engineerId, createdAt])
+  @@map("direct_demands")
+}
+model IncentiveReward {
+  id String @id @db.VarChar(32)
+  userId String @db.VarChar(32)
+  taskKey String @db.VarChar(32)
+  periodKey String @db.VarChar(16)
+  amount Int
+  status String @default("RESERVED") @db.VarChar(16)
+  createdAt DateTime @db.DateTime(3)
+  @@unique([userId, taskKey, periodKey])
+  @@map("incentive_rewards")
 }

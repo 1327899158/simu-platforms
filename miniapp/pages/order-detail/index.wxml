@@ -19,6 +19,9 @@ module.exports = {
 </wxs>
 <view class="page-container" wx:if="{{order}}">
 
+  <view wx:if="{{directDemand}}" style="padding:24rpx;background:#e6f3ec;">定向需求 · 仅指定工程师可查看和报价。合作折扣由最终报价体现，不额外自动扣减。</view>
+  <button size="mini" wx:if="{{order.status==='QUOTING'&&!directDemand}}" bindtap="favoriteDemand">收藏需求</button>
+  <button size="mini" wx:if="{{order.customer.id||order.engineer.id}}" bindtap="reportOrderPeer">举报对方</button>
   <!-- 状态卡片 -->
   <view class="status-card">
     <text class="status-icon">{{u.statusIcon(order.status)}}</text>
@@ -120,6 +123,7 @@ module.exports = {
             <view wx:else class="quote-avatar quote-avatar-fallback">{{item.engineer.nickname[0]}}</view>
             <view class="quote-engineer-info">
               <text class="quote-engineer-name">👨‍💼 {{item.engineer.nickname}}</text>
+              <text wx:if="{{item.engineer.level}}" class="engineer-level-tag level-{{item.engineer.level.key}}">{{item.engineer.level.icon}} {{item.engineer.level.name}}</text>
               <text class="quote-sub">已完成 {{item.engineer.completedCount}} 单 · {{item.engineer.reviewCount ? ('★ ' + item.engineer.averageScore + '（' + item.engineer.reviewCount + '条）') : '暂无评价'}}</text>
             </view>
           </view>
@@ -130,7 +134,7 @@ module.exports = {
           <text class="quote-days">📅 承诺 {{item.days}} 天</text>
         </view>
         <text class="quote-desc" wx:if="{{item.solution}}">{{item.solution}}</text>
-        <view class="quote-profile-link" bindtap="goEngineerProfile" data-id="{{item.engineer.id}}">查看工程师资料与评价 ›</view>
+        <view class="quote-profile-link" bindtap="goEngineerProfile" data-id="{{item.engineer.id}}">查看工程师资料、案例与评价 ›</view>
         <view class="quote-actions" wx:if="{{order.status === 'QUOTING' && item.status === 'PENDING'}}">
           <view class="btn-quote-chat" bindtap="goQuoteChat" data-id="{{item.id}}">
             {{chatOpeningQuoteId === item.id ? '进入中…' : '💬 先聊一聊'}}
@@ -318,7 +322,7 @@ module.exports = {
           <text class="quote-days">📅 承诺 {{item.days}} 天</text>
         </view>
         <text class="quote-desc" wx:if="{{item.solution}}">{{item.solution}}</text>
-        <view class="quote-profile-link" bindtap="goEngineerProfile" data-id="{{item.engineer.id}}">查看工程师资料与评价 ›</view>
+        <view class="quote-profile-link" bindtap="goEngineerProfile" data-id="{{item.engineer.id}}">查看工程师资料、案例与评价 ›</view>
       </view>
     </view>
 

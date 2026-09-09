@@ -30,6 +30,9 @@ require('./routes/orders').register(router);
 require('./routes/market').register(router);
 require('./routes/quotes').register(router);
 require('./routes/reviews').register(router);
+require('./routes/engineer-cases').register(router);
+require('./routes/blacklist').register(router);
+require('./routes/community').register(router);
 require('./routes/payments').register(router);
 require('./routes/invoices').register(router);
 require('./routes/disputes').register(router);
@@ -74,6 +77,8 @@ async function bootstrap() {
   // 初始化数据库（建表）
   await dbInit();
   await require('./services/home-migration')(require('./db').query);
+  await require('./services/community-migration').migrate(require('./db').query);
+  require('./services/account-closure-svc').start();
   server.listen(config.port, '0.0.0.0', () => {
     console.log(JSON.stringify({
       t: new Date().toISOString(), evt: 'listening', port: config.port,

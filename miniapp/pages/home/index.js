@@ -57,6 +57,7 @@ Page({
   openCampaign(e) { wx.navigateTo({url:'/pages/activity/index?id='+e.currentTarget.dataset.id}); },
   goEstimate() { wx.navigateTo({url:'/pages/estimate/index'}); },
   goEngineers(e) { wx.navigateTo({url:'/pages/engineer-directory/index?direction='+encodeURIComponent(e.currentTarget.dataset.direction||'')}); },
+  openEngineer(e) { wx.navigateTo({ url: '/pages/engineer-profile/index?id=' + encodeURIComponent(e.currentTarget.dataset.id) }); },
   async contactEngineer(e) {
     try { const c=await request('POST',`/engineers/${e.currentTarget.dataset.id}/conversation`,{}); wx.navigateTo({url:'/pages/chat-room/index?id='+c.id}); } catch (_) {}
   },

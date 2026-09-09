@@ -7,6 +7,7 @@
     <view class="me-info">
       <text class="me-name">Hi，{{user.nickname || '用户'}}</text>
       <text class="badge-y">{{roleBadgeText}}</text>
+      <text wx:if="{{user.role === 'ENGINEER' && engineerLevel}}" class="engineer-level-tag level-{{engineerLevel.key}}" catchtap="goLevel">{{engineerLevel.icon}} {{engineerLevel.name}} ›</text>
     </view>
     <view class="me-edit" bindtap="goEdit">编辑</view>
   </view>
@@ -55,11 +56,19 @@
       <text class="m-title">我的报价</text>
       <text class="m-arrow">›</text>
     </view>
+    <view class="menu-row" wx:if="{{user.role === 'ENGINEER'}}" bindtap="goCases"><text class="m-icon">📚</text><text class="m-title">案例展示</text><text class="m-arrow">›</text></view>
     <view class="menu-row" wx:if="{{user.role === 'ENGINEER'}}" bindtap="goMyReviews">
       <text class="m-icon">⭐</text>
       <text class="m-title">我的评价</text>
       <text class="m-arrow">›</text>
     </view>
+    <view class="menu-row" wx:if="{{user.role === 'CUSTOMER' || user.role === 'ENGINEER'}}" bindtap="goBlacklist"><text class="m-icon">🚫</text><text class="m-title">黑名单</text><text class="m-arrow">›</text></view>
+    <view class="menu-row" bindtap="communityPage" data-page="favorites"><text class="m-icon">♥</text><text class="m-title">我的收藏</text><text class="m-arrow">›</text></view>
+    <view class="menu-row" bindtap="communityPage" data-page="help"><text class="m-icon">?</text><text class="m-title">帮助、FAQ与关于我们</text><text class="m-arrow">›</text></view>
+    <view class="menu-row" bindtap="communityPage" data-page="support"><text class="m-icon">✉</text><text class="m-title">意见反馈 / 我的举报</text><text class="m-arrow">›</text></view>
+    <view class="menu-row" bindtap="communityPage" data-page="cooperation"><text class="m-icon">🤝</text><text class="m-title">常驻合作 / 定向需求</text><text class="m-arrow">›</text></view>
+    <view class="menu-row" wx:if="{{user.role==='ENGINEER'}}" bindtap="communityPage" data-page="incentives"><text class="m-icon">🏅</text><text class="m-title">激励中心</text><text class="m-arrow">›</text></view>
+    <view class="menu-row" bindtap="communityPage" data-page="account-closure"><text class="m-icon">⚙</text><text class="m-title">注销账号</text><text class="m-arrow">›</text></view>
     <view class="menu-row" bindtap="goMyDisputes">
       <text class="m-icon">⚖️</text>
       <text class="m-title">我的纠纷</text>

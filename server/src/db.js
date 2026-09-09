@@ -267,6 +267,29 @@ async function init() {
       FOREIGN KEY(customerId) REFERENCES users(id), FOREIGN KEY(engineerId) REFERENCES users(id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
 
+    `CREATE TABLE IF NOT EXISTS engineer_cases (
+      id VARCHAR(32) PRIMARY KEY,
+      engineerId VARCHAR(32) NOT NULL,
+      orderId VARCHAR(32) NOT NULL,
+      title VARCHAR(80) NOT NULL,
+      summary VARCHAR(1500) NOT NULL,
+      createdAt DATETIME(3) NOT NULL,
+      updatedAt DATETIME(3) NOT NULL,
+      UNIQUE KEY uq_engineer_case_order(engineerId, orderId),
+      INDEX idx_engineer_case_created(engineerId, createdAt),
+      FOREIGN KEY(engineerId) REFERENCES users(id),
+      FOREIGN KEY(orderId) REFERENCES orders(id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+
+    `CREATE TABLE IF NOT EXISTS user_blocks (
+      ownerId VARCHAR(32) NOT NULL,
+      blockedUserId VARCHAR(32) NOT NULL,
+      createdAt DATETIME(3) NOT NULL,
+      PRIMARY KEY(ownerId, blockedUserId),
+      INDEX idx_blocks_target(blockedUserId),
+      FOREIGN KEY(ownerId) REFERENCES users(id),
+      FOREIGN KEY(blockedUserId) REFERENCES users(id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
     `CREATE TABLE IF NOT EXISTS conversations (
       id          VARCHAR(32) PRIMARY KEY,
       orderId     VARCHAR(32) NOT NULL,

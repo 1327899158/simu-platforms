@@ -1,12 +1,16 @@
-<view class="page" wx:if="{{profile}}">
+<view wx:if="{{error}}" class="empty" bindtap="load">{{error}} · 点击重试</view>
+<view wx:if="{{loading}}" class="empty">加载资料中…</view>
+<view class="page" wx:if="{{profile && !error}}">
   <view class="profile-card">
     <image wx:if="{{profile.avatarUrl}}" class="avatar" src="{{profile.avatarUrl}}" mode="aspectFill" />
     <view wx:else class="avatar avatar-fallback">{{profile.nickname[0] || '工'}}</view>
     <view class="profile-copy">
       <text class="name">{{profile.nickname}}</text>
+      <text wx:if="{{profile.level}}" class="engineer-level-tag level-{{profile.level.key}}" bindtap="showLevel">{{profile.level.icon}} {{profile.level.name}}</text>
       <text class="intro">{{profile.intro || '该工程师暂未填写个人简介'}}</text>
     </view>
   </view>
+  <view><button size="mini" bindtap="favoriteEngineer">收藏工程师</button><button wx:if="{{canContact}}" size="mini" bindtap="reportEngineer">举报用户</button><button wx:if="{{canContact}}" size="mini" bindtap="cooperation">常驻合作 / 定向下单</button></view>
   <view class="rating-card">
     <text class="rating-number">{{profile.averageScore === null ? '--' : profile.averageScore}}</text>
     <view><text class="rating-title">综合评分 / 5.0</text><text class="rating-sub">{{profile.reviewCount}} 条客户评价</text></view>
@@ -16,6 +20,18 @@
     <view class="tag-row"><text class="label">方向</text><text class="tag" wx:for="{{profile.specialties}}" wx:key="*this">{{item}}</text></view>
     <view class="tag-row"><text class="label">软件</text><text class="tag" wx:for="{{profile.softwares}}" wx:key="*this">{{item}}</text></view>
   </view>
+  <button wx:if="{{canContact}}" class="contact-button" bindtap="contact" loading="{{contacting}}" disabled="{{contacting}}">发起沟通</button>
+  <button wx:if="{{canContact}}" size="mini" bindtap="blockEngineer">加入黑名单</button>
+  <view class="section-title reviews-title">精选案例 · {{caseTotal}}</view>
+  <text class="case-note">工程师自主选择的已完成项目；仅展示经确认的公开介绍。</text>
+  <view class="empty" wx:if="{{!cases.length}}">该工程师暂未公开展示案例</view>
+  <view class="case-card" wx:for="{{cases}}" wx:key="id">
+    <view class="case-top"><text class="case-symbol">✓</text><view><text class="section-title">{{item.title}}</text><text class="case-month">{{item.completedMonth}} 完成</text></view></view>
+    <text class="case-summary">{{item.summary}}</text>
+    <button size="mini" data-id="{{item.id}}" bindtap="favoriteCase">收藏案例</button>
+    <view class="tag-row"><text class="tag" wx:for="{{item.directions}}" wx:for-item="direction" wx:key="*this">{{direction}}</text><text class="tag" wx:for="{{item.softwares}}" wx:for-item="software" wx:key="*this">{{software}}</text></view>
+  </view>
+  <button wx:if="{{nextOffset !== null}}" bindtap="moreCases" disabled="{{loadingCases}}" loading="{{loadingCases}}">查看更多案例</button>
   <view class="section-title reviews-title">客户评价</view>
   <view class="empty" wx:if="{{!profile.reviews.length}}">该工程师暂未获得评价</view>
   <view class="review-card" wx:for="{{profile.reviews}}" wx:key="id">

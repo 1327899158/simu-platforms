@@ -3,6 +3,7 @@
 const { readJson, ok, err } = require('../lib/http');
 const { v, nowIso, maskPhone } = require('../lib/util');
 const { query, queryOne, tx, parseJson } = require('../db');
+const { refreshLevelSafe } = require('../services/engineer-level');
 const { requireAdmin, writeAdminAudit } = require('../lib/admin-mw');
 const { DICTS } = require('./dicts');
 const { requireUser } = require('../lib/auth-mw');
@@ -407,6 +408,7 @@ function register(router) {
         from: profile.verifyStatus, to: status, reason: reason || null,
       }, conn);
     });
+    await refreshLevelSafe(params.id);
     return ok(res, { userId: params.id, verifyStatus: status, verifyStatusText: VERIFY_TEXT[status] });
   });
 

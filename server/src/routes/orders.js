@@ -10,6 +10,7 @@ const { DICTS } = require('./dicts');
 const { createPayment, createJsapiOrder } = require('../services/pay-svc');
 const { config } = require('../config');
 const { systemMessageForOrder } = require('../services/chat-svc');
+const { refreshForOrder } = require('../services/engineer-level');
 const { evidenceDeadlineIso } = require('../services/dispute-svc');
 
 const REFUND_REQUESTABLE_ORDER_STATUS = ['IN_PROGRESS', 'DELIVERED'];
@@ -151,6 +152,7 @@ function register(router) {
           budgetFen ?? null, v.bool(b.budgetFlexible, true) ? 1 : 0,
           deliveryDays, specialNote ?? null, now, now]
       );
+      await require('../services/cooperation-svc').attachDirect(conn,user.id,id,b.directEngineerId,budgetFen);
       for (const file of attachmentFiles) {
         const [linked] = await conn.execute(
           `UPDATE uploaded_files SET orderId = ? WHERE id = ? AND uploaderId = ? AND orderId IS NULL`,
@@ -636,6 +638,7 @@ function register(router) {
         [nowIso(), nowIso(), params.id, user.id]);
       if (!r.affectedRows) throw err.conflict('订单不在待验收状态');
     });
+    await refreshForOrder(params.id);
     await systemMessageForOrder(params.id, '客户已确认验收，订单完成。').catch(e => console.error('[confirm/message]', e.message));
     ok(res, { completed: true });
   });

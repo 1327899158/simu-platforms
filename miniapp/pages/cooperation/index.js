@@ -1,0 +1,19 @@
+const {request}=require('../../utils/request');const {ensureLogin}=require('../../utils/auth');const {confirm}=require('../../utils/community');
+const labels={PENDING:'待工程师确认',ACTIVE:'合作中',REJECTED:'已拒绝',ENDED:'已结束',CANCELLED:'已撤销'};
+function terms(s){return {...s,discountText:(Number(s.discountBps)/1000).toFixed(2)+'折',discountInput:String(Number(s.discountBps)/1000),minYuan:(Number(s.minAmountFen)/100).toFixed(2),minText:(Number(s.minAmountFen)/100).toFixed(2)};}
+Page({
+ data:{user:null,targetId:'',target:null,setting:null,relations:[],directs:[],message:'',confirmed:false,busy:false,error:'',offset:0,hasMore:false,directOffset:0,directMore:false},
+ onLoad(q){this.setData({targetId:q.engineerId||''});},
+ onShow(){const user=ensureLogin();if(user){this.setData({user});this.load();}},onPullDownRefresh(){this.load().finally(()=>wx.stopPullDownRefresh());},
+ async load(){try{if(this.data.targetId){const target=await request('GET','/cooperation/engineers/'+this.data.targetId);target.settings=terms(target.settings);this.setData({target,confirmed:false});}else if(this.data.user.role==='ENGINEER'){this.setData({setting:terms(await request('GET','/cooperation/settings'))});}
+ await this.relations(false);await this.directs(false);this.setData({error:''});}catch(e){this.setData({error:e.message});}},
+ async relations(more){const offset=more?this.data.offset:0;const r=await request('GET','/cooperation',{offset});const items=r.items.map(x=>({...x,terms:terms(x.terms),statusText:labels[x.status]}));this.setData({relations:more?this.data.relations.concat(items):items,offset:offset+20,hasMore:r.hasMore});},
+ async directs(more){const offset=more?this.data.directOffset:0;const r=await request('GET','/direct-demands',{offset});this.setData({directs:more?this.data.directs.concat(r.items):r.items,directOffset:offset+20,directMore:r.hasMore});},
+ moreRelations(){this.relations(true).catch(e=>wx.showToast({title:e.message,icon:'none'}));},moreDirects(){this.directs(true).catch(e=>wx.showToast({title:e.message,icon:'none'}));},
+ input(e){this.setData({['setting.'+e.currentTarget.dataset.key]:e.detail.value});},toggle(e){this.setData({'setting.enabled':e.detail.value});},message(e){this.setData({message:e.detail.value});},check(e){this.setData({confirmed:e.detail.value.length>0});},
+ async save(){if(this.data.busy)return;this.setData({busy:true});try{const s=this.data.setting;if(!/^\d+(\.\d{1,2})?$/.test(String(s.discountInput))||!/^\d+(\.\d{1,2})?$/.test(String(s.minYuan)))throw Error('折扣及金额最多保留两位小数');await request('POST','/cooperation/settings',{...s,discountBps:Math.round(Number(s.discountInput)*1000),minAmountFen:Math.round(Number(s.minYuan)*100),enabled:!!s.enabled});wx.showToast({title:'已保存'});await this.load();}catch(e){wx.showToast({title:e.message,icon:'none'});}finally{this.setData({busy:false});}},
+ async invite(){if(this.data.busy||!this.data.confirmed)return;this.setData({busy:true});try{await request('POST','/cooperation/engineers/'+this.data.targetId,{message:this.data.message,confirmTerms:true,termsVersion:this.data.target.settings.updatedAt});wx.showToast({title:'已提交合作意向'});await this.load();}catch(e){wx.showToast({title:e.message,icon:'none'});}finally{this.setData({busy:false});}},
+ async act(e){if(this.data.busy)return;const action=e.currentTarget.dataset.action;if(!await confirm('确认合作操作',action==='ACCEPT'?'确认接受客户提交时的合作条款快照？折扣为报价参考，当前不会自动改变支付金额。':'确认执行？已有定向订单继续履约。'))return;this.setData({busy:true});try{await request('POST','/cooperation/'+e.currentTarget.dataset.id+'/respond',{action});await this.load();}catch(e){wx.showToast({title:e.message,icon:'none'});}finally{this.setData({busy:false});}},
+ publish(e){wx.navigateTo({url:'/pages/publish/index?directEngineerId='+encodeURIComponent(e.currentTarget.dataset.id)});},
+ order(e){wx.navigateTo({url:'/pages/order-detail/index?id='+e.currentTarget.dataset.id+'&mode='+(this.data.user.role==='ENGINEER'?'market':'customer')});}
+});

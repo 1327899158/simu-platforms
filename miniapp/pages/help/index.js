@@ -1,0 +1,2 @@
+const {request}=require('../../utils/request');const {ensureLogin}=require('../../utils/auth');
+Page({data:{items:[],error:''},onShow(){if(ensureLogin())this.load();},onPullDownRefresh(){this.load().finally(()=>wx.stopPullDownRefresh());},async load(){try{this.setData({items:await request('GET','/help'),error:''});}catch(e){this.setData({error:e.message});}},feedback(){wx.navigateTo({url:'/pages/support/index'});}});

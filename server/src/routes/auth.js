@@ -231,6 +231,8 @@ function register(router) {
     //    但对已存在用户不会改角色）
     let user = await requireUser(req, roleHint);
 
+    const closure = await queryOne("SELECT userId FROM account_closures WHERE userId=? AND status='PENDING'",[user.id]);
+    if(closure) { ok(res,{isNew:false,user:await loadUserView(user.id),accountClosurePending:true}); return; }
     // 2. 如需切换角色，由此 handler 显式完成
     if (user.role !== roleHint) {
       user = await switchUserRole(user, roleHint);
