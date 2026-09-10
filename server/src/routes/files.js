@@ -124,6 +124,11 @@ async function canReadFile(user, file) {
     if (invoiceAccess !== null) return invoiceAccess;
     const chats = await query(`SELECT c.customerId,c.engineerId FROM messages m JOIN conversations c ON c.id=m.convId WHERE m.fileId=?`,[file.id]);
     if(chats.length) return chats.some(c=>c.customerId===user.id||c.engineerId===user.id);
+    if (file.kind === 'IMAGE') {
+      const source = require('../services/favorites-svc').source('CASE');
+      const shown = await queryOne(`SELECT t.id FROM ${source.from} WHERE JSON_CONTAINS(t.imageIds, JSON_QUOTE(?)) AND ${source.where} LIMIT 1`, [file.id]);
+      if (shown) return true;
+    }
     // 仅实际作为头像使用的图片公开，未关联的普通图片仍然私有。
     if (file.kind === 'IMAGE') return !!await queryOne('SELECT id FROM users WHERE avatarUrl=? LIMIT 1', [file.fileID]);
     return false;
@@ -359,7 +364,7 @@ function register(router) {
    * GET /api/files/:id/url
    * 权限通过后返回云存储 fileID，供小程序端直接下载/预览。
    */
-  router.get('/api/files/:id/url', async (req, res, params) => {
+  router.get('/api/files/:id/url', async (req, res, params, search) => {
     const user = await requireUser(req);
     const file = await queryOne(
       `SELECT f.*, oa.purpose
@@ -370,8 +375,15 @@ function register(router) {
     );
     if (!file) throw err.notFound('文件不存在');
     if (!(await canReadFile(user, file))) throw err.forbidden('无权下载该文件');
-
+    let url;
+    if (search?.get('preview') === '1' && file.kind === 'IMAGE') {
+      // 先验证业务可见性，再由服务端签发短期预览链接，兼容云存储仅上传者可读的规则。
+      const result = await getStorage().getTempFileURL({ fileList: [{ fileID: file.fileID, maxAge: 300 }] });
+      url = result.fileList?.[0]?.tempFileURL;
+      if (!url) throw err.bad('图片预览地址暂不可用，请稍后重试');
+    }
     ok(res, {
+      ...(url ? { url } : {}),
       fileID: file.fileID,
       name: file.name,
       mime: file.mime || '',
@@ -425,6 +437,8 @@ function register(router) {
       if (!current) throw err.notFound('文件不存在');
       if (current.uploaderId !== user.id) throw err.forbidden('仅上传者可删除');
       if (current.orderId) throw err.conflict('订单附件不能直接删除');
+      const [[caseUse]] = await conn.execute('SELECT id FROM engineer_cases WHERE JSON_CONTAINS(imageIds, JSON_QUOTE(?)) LIMIT 1', [current.id]);
+      if (caseUse) throw err.conflict('图片仍用于案例，请先从案例中移除');
       const [[usage]] = await conn.execute(
         `SELECT fileId FROM identity_verification_files WHERE fileId=?
          UNION SELECT fileId FROM engineer_verification_files WHERE fileId=?

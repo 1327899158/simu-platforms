@@ -141,3 +141,13 @@ test('平台交付需管理员处理权限、真实附件并写审计日志', as
   assert.equal(audited[2], 'INVOICE_FILES_DELIVER');
   assert.ok(audited[6].execute);
 });
+test('公开案例图片可预览，停止公开后失去访问权限，私有材料优先保护', async()=>{
+  const file={id:'image',uploaderId:'owner',kind:'IMAGE',fileID:'cloud://example'};
+  query=async()=>[];
+  queryOne=async sql=>sql.includes('JSON_CONTAINS')?{id:'case'}:null;
+  assert.equal(await canReadFile({id:'viewer'},file),true);
+  queryOne=async()=>null;
+  assert.equal(await canReadFile({id:'viewer'},file),false);
+  queryOne=async sql=>sql.includes('identity_verification_files')?{fileId:'image'}:sql.includes('JSON_CONTAINS')?{id:'case'}:null;
+  assert.equal(await canReadFile({id:'viewer'},file),false);
+});

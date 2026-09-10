@@ -632,3 +632,4 @@
 
 @import "../../theme.wxss";
 @import "../../illustrations.wxss";
+.detail-view-badge{display:flex;justify-content:flex-end;align-items:center;gap:8rpx;font-size:23rpx;color:#617b88;margin:12rpx 28rpx}.detail-view-badge image{width:30rpx;height:30rpx}

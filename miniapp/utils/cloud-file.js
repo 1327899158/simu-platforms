@@ -225,4 +225,4 @@ function deleteCloudFile(fileID) {
   });
 }
 
-module.exports = { downloadAndOpen, deleteCloudFile, formatDownloadError };
+module.exports = { getTempFileUrl, downloadAndOpen, deleteCloudFile, formatDownloadError };

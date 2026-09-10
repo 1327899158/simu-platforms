@@ -13,23 +13,26 @@ function metrics(rows,start,today=new Date(Date.now()+8*3600000).toISOString().s
   while(dates.has(d.toISOString().slice(0,10))){streak++;d.setUTCDate(d.getUTCDate()-1);}
   return {total:rows.length,weekly:rows.filter(x=>String(x.day)>=start).length,streak};
 }
-async function state(id,exec=query) {
+async function state(id,exec=query,role='ENGINEER') {
   const period=week();
-  const rows=await exec("SELECT o.id,DATE_FORMAT(DATE_ADD(o.completedAt,INTERVAL 8 HOUR),'%Y-%m-%d') day FROM orders o JOIN quotes q ON q.id=o.selectedQuoteId WHERE q.engineerId=? AND o.status='COMPLETED' AND o.deletedAt IS NULL AND o.completedAt IS NOT NULL AND o.completedAt<=UTC_TIMESTAMP(3)",[id]);
+  const sql=role==='CUSTOMER'
+    ? "SELECT o.id,DATE_FORMAT(DATE_ADD(o.completedAt,INTERVAL 8 HOUR),'%Y-%m-%d') day FROM orders o WHERE o.customerId=? AND o.status='COMPLETED' AND o.deletedAt IS NULL AND o.completedAt IS NOT NULL AND o.completedAt<=UTC_TIMESTAMP(3)"
+    : "SELECT o.id,DATE_FORMAT(DATE_ADD(o.completedAt,INTERVAL 8 HOUR),'%Y-%m-%d') day FROM orders o JOIN quotes q ON q.id=o.selectedQuoteId WHERE q.engineerId=? AND o.status='COMPLETED' AND o.deletedAt IS NULL AND o.completedAt IS NOT NULL AND o.completedAt<=UTC_TIMESTAMP(3)";
+  const rows=await exec(sql,[id]);
   const m=metrics(rows,period);
   const rewards=await exec('SELECT taskKey,periodKey,amount,status,createdAt FROM incentive_rewards WHERE userId=? ORDER BY createdAt DESC',[id]);
   const tasks=[{key:'FIRST',title:'完成首单',value:m.total,target:1,amount:50,period:'LIFETIME'},
     {key:'TEN',title:'累计完成10单',value:m.total,target:10,amount:100,period:'LIFETIME'},
     {key:'WEEK_THREE',title:'本周完成3单',value:m.weekly,target:3,amount:100,period},
     {key:'STREAK_THREE',title:'连续3天完成订单',value:m.weekly?m.streak:0,target:3,amount:80,period}]
-    .map(t=>({...t,eligible:t.value>=t.target,claimed:rewards.some(r=>r.taskKey===t.key&&r.periodKey===t.period)}));
+    .map(t=>({...t,eligible:t.value>=t.target,earned:rewards.some(r=>r.taskKey===t.key),claimed:rewards.some(r=>r.taskKey===t.key&&r.periodKey===t.period)}));
   return {period,...m,tasks,rewards:rewards.slice(0,50),reservedCoins:rewards.reduce((n,r)=>n+Number(r.amount),0)};
 }
-async function claim(id,key) {
+async function claim(id,key,role='ENGINEER') {
   v.oneOf(key,'任务',['FIRST','TEN','WEEK_THREE','STREAK_THREE']);
   return tx(async conn=>{
     await conn.execute('SELECT id FROM users WHERE id=? FOR UPDATE',[id]);
-    const s=await state(id,(sql,p)=>conn.execute(sql,p).then(([r])=>r));const t=s.tasks.find(x=>x.key===key);
+    const s=await state(id,(sql,p)=>conn.execute(sql,p).then(([r])=>r),role);const t=s.tasks.find(x=>x.key===key);
     if(t.claimed)return {claimed:true,duplicate:true};if(!t.eligible)throw err.conflict('尚未满足任务条件');
     await conn.execute("INSERT INTO incentive_rewards(id,userId,taskKey,periodKey,amount,status,createdAt) VALUES(?,?,?,?,?,'RESERVED',UTC_TIMESTAMP(3))",[newId(),id,t.key,t.period,t.amount]);
     return {claimed:true,amount:t.amount,status:'RESERVED'};

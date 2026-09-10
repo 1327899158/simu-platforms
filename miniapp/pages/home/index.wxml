@@ -8,7 +8,7 @@
   </view>
   <view class="home-body">
    <view class="shortcuts surface">
-    <view class="shortcut" bindtap="goPublish" hover-class="pressed"><view class="shortcut-icon yellow"><ui-symbol value="📣"/></view><text>发布需求</text></view>
+    <view class="shortcut" bindtap="goIncentives" hover-class="pressed"><view class="shortcut-icon yellow"><image style="width:56rpx;height:56rpx" src="/assets/icons-contrast/calendar.svg"/></view><text>每日签到</text></view>
     <view class="shortcut" bindtap="goOrders" hover-class="pressed"><view class="shortcut-icon blue"><ui-symbol value="📋"/><text wx:if="{{unreadOrderCount}}" class="unread">{{unreadOrderCount>99?'99+':unreadOrderCount}}</text></view><text>我的需求</text></view>
     <view class="shortcut" bindtap="goEngineers" hover-class="pressed"><view class="shortcut-icon mint"><ui-symbol value="👷"/></view><text>找工程师</text></view>
     <view class="shortcut" bindtap="goMessages" hover-class="pressed"><view class="shortcut-icon pink"><ui-symbol value="💬"/></view><text>消息</text></view>
@@ -41,7 +41,7 @@
   <view class="home-hero engineer-hero">
    <view class="hero-top"><text class="brand-caption">仿真服务平台 · 工程师</text><button class="bell" bindtap="goProfile">我的资料 ›</button></view>
    <view class="hero-copy"><image class="home-mascot engineer-mascot" src="/assets/engineer_home-generated.png" mode="aspectFit" aria-hidden="true"/><view class="home-greeting">接单<text class="marker">工作台</text></view><view class="hero-subtitle">{{user.nickname||'工程师'}}，让专业被看见</view></view>
-   <view class="search-entry" bindtap="goMarketHall"><text class="search-symbol">⌕</text><text class="grow">按方向、软件与预算筛选需求</text><text class="search-action">接单大厅 ›</text></view>
+   <view class="search-entry"><image class="search-eye" src="/assets/icons-contrast/search.svg"/><input class="grow" value="{{keyword}}" bindinput="inputSearch" bindconfirm="searchDemands" confirm-type="search" maxlength="80" placeholder="搜索需求标题、内容或方向"/><button class="search-submit" bindtap="searchDemands">搜索</button></view>
   </view>
   <view class="home-body">
    <view class="shortcuts surface"><view class="shortcut" bindtap="goMarketHall"><view class="shortcut-icon blue"><ui-symbol value="⚙"/></view><text>接单大厅</text></view><view class="shortcut" bindtap="goMyQuotes"><view class="shortcut-icon yellow"><ui-symbol value="📋"/></view><text>我的报价</text></view><view class="shortcut" bindtap="goMessages"><view class="shortcut-icon mint"><ui-symbol value="💬"/></view><text>消息</text></view><view class="shortcut" bindtap="goMe"><view class="shortcut-icon pink"><ui-symbol value="👤"/></view><text>个人中心</text></view></view>
@@ -53,7 +53,7 @@
      <view class="card-top"><text class="status-pill {{item.myQuote?'muted-pill':''}}">{{item.myQuote?'已报价':'待报价'}}</text><text class="small">{{item.time}}</text></view>
      <view class="demand-title">{{item.projectName}}</view>
      <view class="skills"><text class="skill" wx:for="{{item.softwareTags}}" wx:for-item="tag" wx:key="*this">{{tag}}</text><text class="skill" wx:for="{{item.directionTags}}" wx:for-item="tag" wx:key="*this">{{tag}}</text></view>
-     <view class="demand-info"><view>预算：¥{{item.budgetY}}</view><view>工期：{{item.deliveryDays}} 天</view><view class="small">{{item.quoteCount}} 人报价 · {{item.viewCount}} 次浏览</view></view>
+     <view class="demand-info"><view>预算：¥{{item.budgetY}}</view><view>工期：{{item.deliveryDays}} 天</view><view class="small">{{item.quoteCount}} 人报价</view><view class="home-view-badge"><image src="/assets/icons-contrast/eye.svg"/><text>{{item.viewCount || 0}}</text></view></view>
      <view class="card-bottom"><text class="amount">¥{{item.budgetY}}</text><button wx:if="{{!item.myQuote}}" class="blue-button quote-button" data-id="{{item.id}}" data-flexible="{{item.budgetFlexible?1:0}}" data-fen="{{item.budgetFen}}" catchtap="quickQuote">立即报价 ↗</button><text wx:else class="small">已提交报价 ›</text></view>
     </view>
     <view wx:if="{{!hall.length}}" class="surface home-empty"><view><ui-symbol value="☘"/></view><text>暂无可接单需求</text><text class="small">下拉刷新，或前往大厅查看最新机会</text></view>
@@ -63,3 +63,4 @@
  </block>
  <view wx:if="{{!role}}" class="home-empty">正在加载首页…</view>
 </view>
+<signin-float wx:if="{{role==='ENGINEER'}}"/>

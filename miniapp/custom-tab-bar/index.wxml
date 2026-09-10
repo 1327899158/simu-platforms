@@ -1,8 +1,8 @@
 <view class="custom-tab-bar">
-  <view class="tab-item {{currentPath === item.pagePath ? 'active' : ''}}"
+  <view class="tab-item {{item.publish?'publish-tab':''}} {{currentPath === item.pagePath ? 'active' : ''}}"
     wx:for="{{tabs}}" wx:key="pagePath" data-path="{{item.pagePath}}" bindtap="switchTab">
     <text class="tab-badge" wx:if="{{item.pagePath === '/pages/chat-list/index' && unreadTotal}}">{{unreadTotal > 99 ? '99+' : unreadTotal}}</text>
-    <view class="ui-icon-copy tab-icon"><ui-symbol value="{{item.icon}}"/></view>
+    <view wx:if="{{item.publish}}" class="publish-plus"><image class="publish-plus-image" src="/assets/publish-plus.png" mode="aspectFit" /></view><view wx:else class="ui-icon-copy tab-icon"><ui-symbol value="{{item.icon}}"/></view>
     <text class="tab-text">{{item.text}}</text>
   </view>
 </view>

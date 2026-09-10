@@ -7,7 +7,7 @@ const ALL_TABS = Object.freeze([
 
 Component({
   data: {
-    tabs: [],
+    tabs: [], customer:false,
     currentPath: '',
     unreadTotal: 0,
   },
@@ -23,7 +23,8 @@ Component({
       const pages = getCurrentPages();
       const activePage = pages.length ? `/${pages[pages.length - 1].route}` : '';
       this.setData({
-        tabs: ALL_TABS.filter((tab) => !tab.engineerOnly || currentRole === 'ENGINEER'),
+        customer:currentRole==='CUSTOMER',
+        tabs: currentRole==='CUSTOMER' ? [ALL_TABS[0],{pagePath:'/pages/orders/index',text:'订单',icon:'📋',navigate:true},{pagePath:'publish',text:'发布需求',publish:true},ALL_TABS[2],ALL_TABS[3]] : ALL_TABS.filter((tab) => !tab.engineerOnly || currentRole === 'ENGINEER'),
         currentPath: currentPath || activePage,
         unreadTotal: Number((getApp().globalData || {}).unreadTotal || 0),
       });
@@ -33,6 +34,14 @@ Component({
     },
     switchTab(e) {
       const path = e.currentTarget.dataset.path;
+      if(path==='publish'){
+        const user=wx.getStorageSync('user')||{};
+        if(user.role!=='CUSTOMER')return;
+        const identity=require('../utils/identity');
+        if(!identity.isApproved(user))return identity.promptIdentity('发布需求');
+        return wx.navigateTo({url:'/pages/publish/index'});
+      }
+      if(path==='/pages/orders/index')return wx.navigateTo({url:path});
       if (!path || path === this.data.currentPath) return;
       wx.switchTab({ url: path });
     },

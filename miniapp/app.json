@@ -40,7 +40,11 @@
     "pages/invoices/index",
     "pages/dispute-form/index",
     "pages/dispute-detail/index",
-    "pages/disputes/index"
+    "pages/disputes/index",
+    "pages/earnings/index",
+    "pages/wallet/index",
+    "pages/bank-card/index",
+    "pages/benefits/index"
   ],
   "subPackages": [
     {
@@ -62,7 +66,8 @@
         "pages/data-preview/index",
         "pages/disputes/index",
         "pages/dispute-detail/index",
-        "pages/invoices/index"
+        "pages/invoices/index",
+        "pages/wallet/index"
       ]
     }
   ],
@@ -103,6 +108,8 @@
   "sitemapLocation": "sitemap.json",
   "lazyCodeLoading": "requiredComponents",
   "usingComponents": {
-    "ui-symbol": "/components/ui-symbol/index"
+    "ui-symbol": "/components/ui-symbol/index",
+    "case-gallery": "/components/case-gallery/index",
+    "signin-float": "/components/signin-float/index"
   }
 }

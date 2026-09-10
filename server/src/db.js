@@ -273,6 +273,7 @@ async function init() {
       orderId VARCHAR(32) NOT NULL,
       title VARCHAR(80) NOT NULL,
       summary VARCHAR(1500) NOT NULL,
+      imageIds JSON NULL,
       createdAt DATETIME(3) NOT NULL,
       updatedAt DATETIME(3) NOT NULL,
       UNIQUE KEY uq_engineer_case_order(engineerId, orderId),
@@ -517,6 +518,7 @@ async function init() {
   // 增量迁移：为旧表补充新字段（CREATE TABLE IF NOT EXISTS 不会改已存在的表）
   const migrations = [
     // users 表补充字段
+    { table: 'engineer_cases', sql: `ALTER TABLE engineer_cases ADD COLUMN imageIds JSON NULL`, check: "imageIds" },
     { table: 'users', sql: `ALTER TABLE users ADD COLUMN username VARCHAR(20) UNIQUE`, check: "username" },
     { table: 'users', sql: `ALTER TABLE users ADD COLUMN passwordHash VARCHAR(255)`, check: "passwordHash" },
     { table: 'users', sql: `ALTER TABLE users ADD COLUMN sessionToken VARCHAR(64)`, check: "sessionToken" },

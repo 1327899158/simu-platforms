@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS engineer_cases (
   orderId VARCHAR(32) NOT NULL,
   title VARCHAR(80) NOT NULL,
   summary VARCHAR(1500) NOT NULL,
+  imageIds JSON NULL,
   createdAt DATETIME(3) NOT NULL,
   updatedAt DATETIME(3) NOT NULL,
   UNIQUE KEY uq_engineer_case_order(engineerId, orderId),

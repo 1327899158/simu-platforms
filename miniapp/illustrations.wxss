@@ -1,9 +1,9 @@
 /* 装饰图完全退出布局与事件命中；正文始终在前景。 */
 .illustrated-panel{position:relative;isolation:isolate}
-.illustrated-panel .panel-art{position:absolute;right:0;top:0;width:240rpx;height:240rpx;opacity:.23;pointer-events:none;z-index:0}
+.illustrated-panel .panel-art{position:absolute;right:0;top:0;width:240rpx;height:240rpx;opacity:1;pointer-events:none;z-index:0}
 .illustrated-panel .art-copy{position:relative;z-index:1}
-.illustrated-panel .panel-art.hall-art{right:-14rpx;top:-24rpx;width:190rpx;height:210rpx;opacity:.3}
+.illustrated-panel .panel-art.hall-art{right:-14rpx;top:-24rpx;width:190rpx;height:210rpx;opacity:1}
 .illustrated-panel .stat-item,.illustrated-panel .status-info,.illustrated-panel .status-icon{position:relative;z-index:1}
-.illustrated-panel .panel-art.order-art{top:-22rpx;right:0;opacity:.22}
-.illustrated-panel .panel-art.support-art{width:250rpx;height:250rpx;top:8rpx;opacity:.17}
+.illustrated-panel .panel-art.order-art{top:-22rpx;right:0;opacity:1}
+.illustrated-panel .panel-art.support-art{width:250rpx;height:250rpx;top:8rpx;opacity:1}
 .illustrated-panel .hero,.illustrated-panel .card,.illustrated-panel .admin-card,.illustrated-panel .admin-hero,.illustrated-panel .page-title,.illustrated-panel .qualification-title,.illustrated-panel .qualification-desc,.illustrated-panel .hero-title,.illustrated-panel .hero-desc{position:relative;z-index:1}

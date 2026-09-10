@@ -11,7 +11,9 @@
       <text class="intro">{{profile.intro || '该工程师暂未填写个人简介'}}</text>
     </view>
   </view>
-  <view><button size="mini" bindtap="favoriteEngineer">收藏工程师</button><button wx:if="{{canContact}}" size="mini" bindtap="cooperation">常驻合作 / 定向下单</button></view>
+  <view class="profile-actions-row"><button class="collect-button" wx:if="{{canManagePeer}}" bindtap="favoriteEngineer"><image src="/assets/icons-contrast/collection-star.svg" mode="aspectFit"/>收藏工程师</button><button class="cooperate-button" wx:if="{{canContact}}" bindtap="cooperation">常驻合作 / 定向下单</button></view>
+  <view class="profile-badges" wx:if="{{profile.badges.length}}"><view wx:for="{{profile.badges}}" wx:key="key"><image src="/assets/icons-contrast/{{item.icon}}.svg" mode="aspectFit"/><text>{{item.title}}</text></view></view>
+  <view class="case-note" wx:if="{{profile.cooperation.enabled}}" bindtap="cooperation">定向下单专享 · 工程师让利 {{profile.cooperation.discountBps/1000}} 折 · 首单适用，优惠体现在工程师报价中 ›</view>
   <view class="rating-card">
     <text class="rating-number">{{profile.averageScore === null ? '--' : profile.averageScore}}</text>
     <view><text class="rating-title">综合评分 / 5.0</text><text class="rating-sub">{{profile.reviewCount}} 条客户评价</text></view>
@@ -29,7 +31,7 @@
   <view class="case-card" wx:for="{{cases}}" wx:key="id">
     <view class="case-top"><text class="case-symbol">✓</text><view><text class="section-title">{{item.title}}</text><text class="case-month">{{item.completedMonth}} 完成</text></view></view>
     <text class="case-summary">{{item.summary}}</text>
-    <button size="mini" data-id="{{item.id}}" bindtap="favoriteCase">收藏案例</button>
+    <case-gallery ids="{{item.imageIds}}"/><view class="case-collect-row"><button class="collect-button" data-id="{{item.id}}" bindtap="favoriteCase"><image src="/assets/icons-contrast/collection-star.svg" mode="aspectFit"/>收藏案例</button></view>
     <view class="tag-row"><text class="tag" wx:for="{{item.directions}}" wx:for-item="direction" wx:key="*this">{{direction}}</text><text class="tag" wx:for="{{item.softwares}}" wx:for-item="software" wx:key="*this">{{software}}</text></view>
   </view>
   <button wx:if="{{nextOffset !== null}}" bindtap="moreCases" disabled="{{loadingCases}}" loading="{{loadingCases}}">查看更多案例</button>

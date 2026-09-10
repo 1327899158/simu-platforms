@@ -23,3 +23,5 @@
 
 @import "../../theme.wxss";
 .profile-heading{display:flex;align-items:center;justify-content:space-between;margin:8rpx 0 24rpx;font-size:30rpx;font-weight:600}
+.profile-actions-row{display:flex;flex-wrap:wrap;gap:16rpx;margin:24rpx 0;align-items:center}.page .collect-button{display:inline-flex;align-items:center;justify-content:center;gap:10rpx;margin:0;padding:14rpx 22rpx;min-height:68rpx;line-height:1.4;font-size:25rpx;font-weight:600;color:#866021;background:#fff7d8;border:1rpx solid #edcf7e;border-radius:22rpx;box-sizing:border-box}.collect-button image{width:34rpx;height:34rpx}.page .collect-button::after{border:0}.page .cooperate-button{flex:1;margin:0;padding:14rpx 18rpx;font-size:25rpx;line-height:1.5;color:#34617a;background:#e9f4f7;border:1rpx solid #bad8e3;border-radius:22rpx}.case-collect-row{display:flex;justify-content:flex-end;margin:20rpx 0}
+.profile-badges{display:flex;flex-wrap:wrap;gap:14rpx;margin:24rpx 0}.profile-badges view{display:flex;align-items:center;gap:8rpx;padding:8rpx 14rpx;background:#fff5d7;border-radius:18rpx;color:#88641d;font-size:23rpx}.profile-badges image{width:42rpx;height:42rpx}

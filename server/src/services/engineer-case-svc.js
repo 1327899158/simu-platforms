@@ -7,7 +7,7 @@ const MAX_CASES = 40;
 // 公开数据使用白名单：不返回 orderId、客户、订单金额、原始需求或文件。
 function publicView(row) {
   return { id: row.id, title: row.title, summary: row.summary,
-    directions: parseJson(row.directionTags), softwares: parseJson(row.softwareTags),
+    imageIds: parseJson(row.imageIds) || [], directions: parseJson(row.directionTags), softwares: parseJson(row.softwareTags),
     completedMonth: row.completedAt ? String(row.completedAt).slice(0, 7) : '' };
 }
 const publicFrom = `FROM engineer_cases ec JOIN orders o ON o.id=ec.orderId
@@ -20,7 +20,7 @@ async function publicCases(engineerId, offset = 0, limit = 6) {
   offset = v.int(offset, 'offset', { min: 0, max: 100000 });
   limit = v.int(limit, 'limit', { min: 1, max: 20 });
   const count = await queryOne(`SELECT COUNT(*) AS total ${publicFrom}`, [engineerId]);
-  const rows = await query(`SELECT ec.id,ec.title,ec.summary,o.directionTags,o.softwareTags,o.completedAt
+  const rows = await query(`SELECT ec.id,ec.title,ec.summary,ec.imageIds,o.directionTags,o.softwareTags,o.completedAt
     ${publicFrom} ORDER BY ec.createdAt DESC,ec.id DESC LIMIT ${limit} OFFSET ${offset}`, [engineerId]);
   const total = Number(count?.total || 0);
   return { items: rows.map(publicView), total, nextOffset: offset + rows.length < total ? offset + rows.length : null };
@@ -34,7 +34,7 @@ async function ownCases(engineerId) {
     LEFT JOIN quotes q ON q.id=o.selectedQuoteId
     LEFT JOIN identity_verifications iv ON iv.userId=ec.engineerId
     WHERE ec.engineerId=? ORDER BY ec.createdAt DESC,ec.id DESC LIMIT ${MAX_CASES}`, [engineerId]);
-  return { items: rows.map(r => ({ ...r, visible: !!Number(r.visible) })), maxCases: MAX_CASES };
+  return { items: rows.map(r => ({ ...r, imageIds: parseJson(r.imageIds) || [], visible: !!Number(r.visible) })), maxCases: MAX_CASES };
 }
 
 async function candidates(engineerId, offset = 0) {
@@ -52,6 +52,8 @@ async function saveCase(engineerId, body, caseId = null) {
   const summary = v.str(body.summary, '案例介绍', { min: 10, max: 1500 });
   if (body.confirmPublic !== true) throw err.bad('请确认展示内容不含客户机密且已获得必要的展示授权');
   const orderId = v.str(body.orderId, '订单ID', { min: 1, max: 32 });
+  const imageIds = v.arr(body.imageIds || [], '案例图片', { minLen: 0, maxLen: 9 }).map(id => v.str(id, '图片ID', { min: 1, max: 32 }));
+  if (new Set(imageIds).size !== imageIds.length) throw err.bad('案例图片不能重复');
   return tx(async conn => {
     // 同一工程师串行创建，限制总量，重复添加由唯一键与锁内检查共同阻止。
     const [[profile]] = await conn.execute('SELECT userId FROM engineer_profiles WHERE userId=? FOR UPDATE', [engineerId]);
@@ -65,15 +67,26 @@ async function saveCase(engineerId, body, caseId = null) {
     const [[existing]] = await conn.execute('SELECT id,orderId FROM engineer_cases WHERE engineerId=? AND orderId=? FOR UPDATE', [engineerId, orderId]);
     if (caseId && (!existing || existing.id !== caseId)) throw err.notFound('案例不存在或不属于当前工程师');
     if (!caseId && existing) throw err.conflict('该订单已添加为案例，请直接编辑');
+    for (const fileId of imageIds) {
+      const [[file]] = await conn.execute('SELECT id,uploaderId,orderId,kind,name,sizeBytes FROM uploaded_files WHERE id=? FOR UPDATE', [fileId]);
+      if (!file || file.uploaderId !== engineerId || file.orderId || file.kind !== 'IMAGE' || Number(file.sizeBytes) > 5*1024*1024 || !/\.(png|jpe?g|webp)$/i.test(file.name)) throw err.bad('仅可展示本人单独上传的 JPG、PNG、WebP 图片');
+      const [[privateUse]] = await conn.execute(`SELECT fileId FROM identity_verification_files WHERE fileId=?
+        UNION SELECT fileId FROM engineer_verification_files WHERE fileId=?
+        UNION SELECT fileId FROM messages WHERE fileId=?
+        UNION SELECT fileId FROM dispute_evidence WHERE fileId=?
+        UNION SELECT fileId FROM refund_request_files WHERE fileId=?
+        UNION SELECT fileId FROM invoice_request_files WHERE fileId=? LIMIT 1`, Array(6).fill(fileId));
+      if (privateUse) throw err.bad('认证、聊天和售后材料不可作为公开案例图片，请单独上传已授权的展示图片');
+    }
     const id = caseId || newId(), now = nowIso();
     if (caseId) {
-      await conn.execute('UPDATE engineer_cases SET title=?,summary=?,updatedAt=? WHERE id=? AND engineerId=?', [title, summary, now, id, engineerId]);
+      await conn.execute('UPDATE engineer_cases SET title=?,summary=?,imageIds=?,updatedAt=? WHERE id=? AND engineerId=?', [title, summary, JSON.stringify(imageIds), now, id, engineerId]);
     } else {
       const [[count]] = await conn.execute('SELECT COUNT(*) AS total FROM engineer_cases WHERE engineerId=?', [engineerId]);
       if (Number(count.total) >= MAX_CASES) throw err.conflict(`最多展示 ${MAX_CASES} 个案例，请先移除旧案例`);
-      await conn.execute('INSERT INTO engineer_cases(id,engineerId,orderId,title,summary,createdAt,updatedAt) VALUES(?,?,?,?,?,?,?)', [id, engineerId, orderId, title, summary, now, now]);
+      await conn.execute('INSERT INTO engineer_cases(id,engineerId,orderId,title,summary,imageIds,createdAt,updatedAt) VALUES(?,?,?,?,?,?,?,?)', [id, engineerId, orderId, title, summary, JSON.stringify(imageIds), now, now]);
     }
-    return { id, title, summary };
+    return { id, title, summary, imageIds };
   });
 }
 async function removeCase(engineerId, caseId) {

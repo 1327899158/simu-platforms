@@ -26,6 +26,8 @@
     </view>
   </view>
 
+  <view class="market-search"><image src="/assets/icons-contrast/search.svg"/><input value="{{searchInput}}" bindinput="inputSearch" bindconfirm="search" confirm-type="search" maxlength="80" placeholder="搜索标题、内容或方向"/><button wx:if="{{searchInput}}" bindtap="clearSearch">清除</button><button bindtap="search">搜索</button></view>
+  <text class="search-summary" wx:if="{{keyword}}">“{{keyword}}”的匹配需求 · 可叠加分类与排序</text>
   <view class="filter-sort-container">
     <view class="filter-section">
       <view class="section-header">
@@ -59,7 +61,7 @@
           <text class="sort-name">最热门</text>
         </button>
       </view>
-      <text class="sort-hint" wx:if="{{sort === 'hot'}}">按有效报价数与去重浏览量之和排序</text>
+      <text class="sort-hint" wx:if="{{sort === 'hot'}}">热度 = 去重浏览量 + 有效报价数 × 3</text>
     </view>
   </view>
 
@@ -71,6 +73,7 @@
         <text class="req-status {{item.myQuote ? 'quoted' : 'quoting'}}">{{item.myQuote ? '已报价' : '待报价'}}</text>
       </view>
 
+      <view class="view-badge"><image src="/assets/icons-contrast/eye.svg" mode="aspectFit"/><text>{{item.viewCount || 0}} 次浏览</text></view>
       <text class="req-description" wx:if="{{item.description}}">{{item.description}}</text>
 
       <view class="req-tags">
@@ -86,10 +89,7 @@
           <text class="data-label">工期</text>
           <text class="data-value">{{item.deliveryDays}} 天</text>
         </view>
-        <view class="data-item">
-          <text class="data-label">浏览</text>
-          <text class="data-value">{{item.viewCount || 0}} 次</text>
-        </view>
+
       </view>
 
       <view class="req-footer">

@@ -11,6 +11,9 @@
     <button class="me-edit" bindtap="goEdit">编辑资料 ›</button>
   </view>
 
+  <view class="card-sky spread" bindtap="communityPage" data-page="benefits"><image class="entry-icon menu-vector" src="/assets/icons/award.svg" mode="aspectFit"/><view class="sky-copy"><text class="sky-title">卡券与仿真币</text><text class="sky-desc">活动卡券 · 签到奖励 · 收支明细</text></view><text>›</text></view>
+  <view wx:if="{{user.role==='ENGINEER'}}" class="card-sky spread" bindtap="communityPage" data-page="wallet"><image class="entry-icon menu-vector" src="/assets/icons/quote.svg" mode="aspectFit"/><view class="sky-copy"><text class="sky-title">钱包、提现及银行卡绑定</text><text class="sky-desc">模拟余额账本 · 提现记录 · 测试绑卡</text></view><text>›</text></view>
+  <view wx:if="{{user.role==='ENGINEER'}}" class="earnings-entry" bindtap="communityPage" data-page="earnings"><image src="/assets/icons/quote.svg" mode="aspectFit"/><view><text class="earnings-title">收益数据</text><text class="earnings-sub">完成金额 · 履约中金额 · 收益趋势</text></view><text class="earnings-arrow">›</text></view>
   <view class="card-sky spread level-entry" wx:if="{{user.role === 'ENGINEER'}}" bindtap="goLevel"><image class="entry-icon menu-vector" src="/assets/icons/award.svg" mode="aspectFit"/><view class="sky-copy"><text class="sky-title">{{engineerLevel.name || '工程师等级'}}</text><text class="sky-desc">查看晋级条件，了解成长进度</text></view><text class="entry-arrow">›</text></view>
   <view class="data-card-y" wx:if="{{user}}">
     <view class="stat"><b>{{user.completedCount || 0}}</b><span>完成订单</span></view>

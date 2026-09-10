@@ -17,6 +17,14 @@ function register(router) {
     if (!['latest', 'hot'].includes(sort)) throw err.bad('不支持的排序方式');
     const cond = [`o.status = 'QUOTING'`, `o.deletedAt IS NULL`, `o.customerId <> ?`, `NOT EXISTS(SELECT 1 FROM direct_demands dd WHERE dd.orderId=o.id)`];
     const args = [user.id];
+    const keyword = (q_.get('keyword') || '').trim();
+    if (keyword) {
+      v.str(keyword, '搜索词', { min: 1, max: 80 });
+      // Treat %, _ and the escape character as literal user input.
+      const like = '%' + keyword.replace(/[!%_]/g, c => '!' + c) + '%';
+      cond.push("(o.projectName LIKE ? ESCAPE '!' OR o.description LIKE ? ESCAPE '!' OR o.directionTags LIKE ? ESCAPE '!')");
+      args.push(like, like, like);
+    }
     if (q_.get('budgetMinFen')) { cond.push('o.budgetFen >= ?'); args.push(v.int(q_.get('budgetMinFen'), 'budgetMinFen', { min: 0, max: 1000000000 })); }
     if (q_.get('budgetMaxFen')) { cond.push('o.budgetFen <= ?'); args.push(v.int(q_.get('budgetMaxFen'), 'budgetMaxFen', { min: 0, max: 1000000000 })); }
     // MySQL JSON_SEARCH 模糊匹配（LIKE 降级兼容）
@@ -32,7 +40,7 @@ function register(router) {
     }
     if (cursor && sort === 'latest') { cond.push('o.createdAt < ?'); args.push(cursor); }
     const orderBy = sort === 'hot'
-      ? '(quoteCount + o.viewCount) DESC, o.createdAt DESC'
+      ? '(quoteCount * 3 + o.viewCount) DESC, o.createdAt DESC, o.id DESC'
       : 'o.createdAt DESC';
     const rows = await query(
       `SELECT o.*,

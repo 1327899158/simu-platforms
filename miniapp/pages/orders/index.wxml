@@ -12,8 +12,7 @@
       <button wx:for="{{tabs}}" wx:key="key"
         class="filter-item {{tab === item.key ? 'active' : ''}}"
         data-key="{{item.key}}" bindtap="pickTab">
-        <text class="status-dot {{item.dotCls}}"></text>
-        <text class="filter-label">{{item.label}}</text>
+        <view class="filter-name"><text class="status-dot {{item.dotCls}}"></text><text class="filter-label">{{item.label}}</text></view>
         <text class="filter-count">{{item.count}}</text>
       </button>
     </view>
@@ -58,7 +57,10 @@
       </view>
 
       <view class="order-footer">
-        <view class="ui-icon-copy order-time"><ui-symbol value="📆"/> {{item.time}} · {{item.orderNo}}</view>
+        <view class="order-meta">
+          <view class="ui-icon-copy order-time"><ui-symbol value="📆"/> {{item.time}}</view>
+          <text class="order-number">订单编号 {{item.orderNo}}</text>
+        </view>
         <view class="order-actions">
           <button class="btn-action detail" data-id="{{item.id}}" catchtap="open">查看详情</button>
         </view>

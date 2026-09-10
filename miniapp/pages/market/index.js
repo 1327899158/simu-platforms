@@ -5,6 +5,7 @@ const { isApproved, promptIdentity } = require('../../utils/identity');
 
 Page({
   data: {
+    keyword: '', searchInput: '',
     directions: [],
     category: '',
     sort: 'latest',
@@ -31,6 +32,7 @@ Page({
     } catch (e) {
       wx.showToast({ title: e.message || '分类加载失败', icon: 'none' });
     }
+    this.consumeSearch();
     this._ready = true;
     await this.load();
   },
@@ -39,7 +41,8 @@ Page({
     const user = wx.getStorageSync('user') || {};
     const tabBar = this.getTabBar && this.getTabBar();
     if (tabBar && tabBar.syncTabBar) tabBar.syncTabBar(user.role, '/pages/market/index');
-    if (this._ready && !this.data.loading) this.load();
+    const searched=this.consumeSearch();
+    if (this._ready && (searched || !this.data.loading)) this.load();
   },
 
   onPullDownRefresh() {
@@ -53,6 +56,7 @@ Page({
     }
     this.setData({ loading: true });
     const params = { sort: this.data.sort, limit: 50 };
+    if (this.data.keyword) params.keyword = this.data.keyword;
     if (this.data.category) params.direction = this.data.category;
     try {
       const data = await request('GET', '/market/orders', params);
@@ -62,7 +66,7 @@ Page({
           ...order,
           budgetY: fenToYuan(order.budgetFen),
           time: timeShort(order.createdAt),
-          hotValue: Number(order.quoteCount || 0) + Number(order.viewCount || 0),
+          hotValue: Number(order.quoteCount || 0) * 3 + Number(order.viewCount || 0),
         })),
       });
     } catch (e) {
@@ -76,6 +80,16 @@ Page({
     }
   },
 
+  consumeSearch() {
+    const app=getApp();
+    if(!app.globalData || !Object.prototype.hasOwnProperty.call(app.globalData,'marketSearch'))return false;
+    const keyword=String(app.globalData.marketSearch||'').slice(0,80);
+    delete app.globalData.marketSearch;
+    this.setData({keyword,searchInput:keyword,category:''});return true;
+  },
+  inputSearch(e){this.setData({searchInput:e.detail.value});},
+  search(){this.setData({keyword:this.data.searchInput.trim()});this.load();},
+  clearSearch(){this.setData({keyword:'',searchInput:''});this.load();},
   pickCategory(e) {
     const category = e.currentTarget.dataset.value || '';
     if (category === this.data.category) return;

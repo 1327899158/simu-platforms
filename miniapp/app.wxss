@@ -467,3 +467,4 @@ page {
 .engineer-level-tag.level-GOLD{background:#fff0b7;color:#815916}
 .engineer-level-tag.level-CHIEF{background:#394f4b;color:#ffe596;border:1rpx solid #c3a362}
 .engineer-level-tag.level-UNQUALIFIED{background:#eceeea;color:#747c74}
+.earnings-entry{display:flex;align-items:center;gap:20rpx;padding:26rpx;margin:22rpx 0;background:#fff7df;border:1rpx solid #ebd79a;border-radius:26rpx}.earnings-entry image{width:62rpx;height:62rpx}.earnings-title{display:block;font-size:30rpx;font-weight:700;color:#725625}.earnings-sub{display:block;font-size:23rpx;color:#8b7954;margin-top:6rpx}.earnings-arrow{margin-left:auto;color:#93743a;font-size:34rpx}

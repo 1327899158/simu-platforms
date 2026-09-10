@@ -47,3 +47,6 @@
   line-height: 23rpx;
   text-align: center;
 }
+.publish-tab .publish-plus{display:flex;align-items:center;justify-content:center;width:98rpx;height:98rpx;border-radius:50%;background:#f4fbfc;border:5rpx solid #eff6f4;box-shadow:0 5rpx 18rpx rgba(57,112,131,.18);margin-top:-42rpx;box-sizing:border-box}
+.publish-plus-image{display:block;width:82rpx;height:82rpx;flex-shrink:0}
+.publish-tab .tab-text{color:#327b97}

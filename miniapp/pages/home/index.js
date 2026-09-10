@@ -6,6 +6,7 @@ const { isApproved, promptIdentity } = require('../../utils/identity');
 
 Page({
   data: {
+    keyword: '',
     role: '',
     user: null,
     canTakeOrders: false,
@@ -97,6 +98,7 @@ Page({
     }
     wx.navigateTo({ url: '/pages/orders/index' });
   },
+  goIncentives(){wx.navigateTo({url:'/pages/incentives/index'});},
   goMessages() { wx.switchTab({ url: '/pages/chat-list/index' }); },
   goMe() { wx.switchTab({ url: '/pages/me/index' }); },
   goProfile() { wx.navigateTo({ url: '/pages/profile-edit/index' }); },
@@ -116,6 +118,13 @@ Page({
     });
   },
   goMyQuotes() { wx.navigateTo({ url: '/pages/my-quotes/index' }); },
+  inputSearch(e) { this.setData({keyword:e.detail.value}); },
+  searchDemands() {
+    if (!this.data.canTakeOrders) return promptIdentity('搜索需求');
+    getApp().globalData = getApp().globalData || {};
+    getApp().globalData.marketSearch = this.data.keyword.trim();
+    wx.switchTab({url:'/pages/market/index'});
+  },
   goMarketHall() {
     if (this.data.role !== 'ENGINEER') return wx.showToast({ title: '仅工程师可以进入接单大厅', icon: 'none' });
     if (!this.data.canTakeOrders) return promptIdentity('进入接单大厅');

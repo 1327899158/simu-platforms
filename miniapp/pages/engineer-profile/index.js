@@ -2,7 +2,7 @@ const { ensureLogin } = require('../../utils/auth');
 const { request } = require('../../utils/request');
 
 Page({
-  favoriteEngineer(){require('../../utils/community').favorite('ENGINEER',this.data.id);},
+  favoriteEngineer(){if(!this.data.canManagePeer)return;require('../../utils/community').favorite('ENGINEER',this.data.id);},
   favoriteCase(e){require('../../utils/community').favorite('CASE',e.currentTarget.dataset.id);},
   reportEngineer(){require('../../utils/community').report(this.data.id);},
   cooperation(){wx.navigateTo({url:'/pages/cooperation/index?engineerId='+this.data.id});},

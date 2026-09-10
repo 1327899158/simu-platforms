@@ -1,0 +1,3 @@
+@import "../../community.wxss";
+@import "../../theme.wxss";
+@import "../../finance.wxss";

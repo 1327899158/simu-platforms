@@ -242,3 +242,31 @@
 .btn-action { border-radius: 999rpx; }
 
 @import "../../theme.wxss";
+
+/* 九种状态固定三列；名称与数量分区，避免长标签挤压。 */
+.filter-panel { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14rpx; }
+.filter-panel .filter-item {
+  width: 100%; min-width: 0; min-height: 86rpx; box-sizing: border-box;
+  padding: 16rpx 14rpx; margin: 0; justify-content: space-between;
+  border-radius: 20rpx; border: 1rpx solid #d4e1e3;
+  background: rgba(255,255,255,.78); color: #49616b; font-size: 24rpx;
+}
+.filter-name { display: flex; align-items: center; min-width: 0; }
+.filter-label { margin-left: 8rpx; }
+.filter-panel .filter-count {
+  flex-shrink: 0; min-width: 32rpx; height: 32rpx; padding: 0 6rpx;
+  margin-left: 6rpx; background: #e5eff2; color: #4d6c79; font-size: 20rpx;
+}
+.filter-panel .filter-item.active { background: #d8f1fb; border-color: #68b9d5; color: #226d88; font-weight: 700; }
+.filter-panel .filter-item.active .filter-count { background: #338daf; color: #fff; }
+.order-footer { flex-wrap: wrap; gap: 16rpx; align-items: center; padding-top: 20rpx; }
+.order-meta { flex: 1 1 300rpx; min-width: 0; }
+.order-time { white-space: normal; line-height: 1.6; color: #71858c; }
+.order-number { display: block; margin-top: 4rpx; font-size: 20rpx; line-height: 1.5; color: #8b9aa0; word-break: break-all; }
+.order-actions { margin-left: auto; flex-shrink: 0; justify-content: flex-end; }
+.order-actions .btn-action.detail {
+  min-width: 168rpx; min-height: 68rpx; padding: 14rpx 26rpx;
+  box-sizing: border-box; border: 1rpx solid #a2d5e5; border-radius: 18rpx;
+  background: #e2f4fa; color: #287c99; font-size: 25rpx; font-weight: 600;
+}
+.empty-state .btn-sm { min-width: 260rpx; margin: 0; border-radius: 20rpx; }

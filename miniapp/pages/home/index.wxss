@@ -69,3 +69,5 @@ page{background:#e6f1ef}
 .engineer-home .engineer-mascot{top:auto;right:-24rpx;bottom:-64rpx;width:320rpx;height:320rpx;pointer-events:none;z-index:0}
 .engineer-home .hero-copy{min-height:210rpx;padding-right:260rpx}
 .engineer-home .search-entry{z-index:3;background:rgba(252,254,253,.97)}
+.search-eye{width:36rpx;height:36rpx;flex-shrink:0}.home-page .search-submit{margin:0;padding:8rpx 18rpx;font-size:25rpx;line-height:1.4;background:#dceff6;color:#276783;border-radius:24rpx}.search-entry input{font-size:25rpx;height:48rpx}
+.home-view-badge{display:flex;align-items:center;justify-content:flex-end;gap:8rpx;color:#617b88;font-size:22rpx}.home-view-badge image{width:28rpx;height:28rpx}

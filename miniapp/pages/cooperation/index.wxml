@@ -2,8 +2,9 @@
 <view class="community">
  <view class="hero between"><view class="grow"><view class="eyebrow">BETTER TOGETHER</view><view class="title">{{setting?'常驻合作设置':'长期合作'}}</view><view class="muted">让默契延续，让专业合作更轻松</view></view><view class="hero-icon"><ui-symbol value="🤝"/></view></view>
  <view class="error" wx:if="{{error}}" bindtap="load">{{error}} · 重试</view>
- <view class="notice">合作条件经双方确认后保存。折扣仅作为报价参考，不自动改变支付金额；修改设置不会改变已有合作条款。</view>
+ <view class="notice">合作条件经双方确认后保存。工程师让利应体现在首单及后续报价中，系统不重复扣减支付金额；修改设置不会改变已有合作条款。</view>
  <block wx:if="{{setting}}">
+  <view class="notice">开启常驻合作后，您的个人主页将向客户展示「定向下单专享」权益：客户发起长期合作或找TA下单即享折扣（首单生效），用让利换复购。折扣由您自行让利，平台不参与补贴、不强制开启；客户侧展示会明确标注「工程师让利」。</view>
   <view class="card between"><view class="grow"><view class="title">开启常驻合作</view><view class="caption">客户可在您的主页了解条件并发起合作意向</view></view><switch color="#91b66c" checked="{{setting.enabled}}" bindchange="toggle"/></view>
   <view class="section-title">01 · 合作折扣<text class="caption">工程师自主设置</text></view>
   <view class="card"><view class="field-label">客户支付折扣</view><view class="between"><input type="digit" data-key="discountInput" value="{{setting.discountInput}}" bindinput="input"/><text>折</text></view><view class="caption">可设置1—10折，10折为不打折。此条件由客户确认后作为报价参考。</view></view>
@@ -19,7 +20,7 @@
  <view wx:if="{{target}}" class="card">
   <view class="between"><view class="avatar">工</view><view class="grow"><view class="title">{{target.engineer.nickname}}</view><view class="badge">长期合作意向</view></view></view>
   <block wx:if="{{target.settings.enabled}}">
-   <view class="stat-grid"><view class="stat"><view class="number">{{target.settings.discountText}}</view><view class="caption">参考折扣</view></view><view class="stat"><view class="number">{{target.settings.responseHours}}</view><view class="caption">小时响应</view></view></view>
+   <view class="stat-grid"><view class="stat"><view class="number">{{target.settings.discountText}}</view><view class="caption">工程师让利 · 首单适用</view></view><view class="stat"><view class="number">{{target.settings.responseHours}}</view><view class="caption">小时响应</view></view></view>
    <view class="list-row between"><text>免费修改</text><text>{{target.settings.revisionCount}} 次</text></view><view class="list-row between"><text>最低预算</text><text>¥{{target.settings.minText}}</text></view>
    <view class="field-label">排期安排</view><view class="body">{{target.settings.scheduleNote||'双方协商'}}</view>
    <view class="field-label">您的合作意向</view><textarea placeholder="说说您的项目方向及合作计划（选填）" value="{{message}}" bindinput="message" maxlength="1000"/>

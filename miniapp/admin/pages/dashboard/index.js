@@ -11,6 +11,7 @@ Page({
       const admin = await loadAdmin();
       const stats = await request('GET', '/admin/dashboard', null, { silent: true });
       const definitions = [
+        {key:'wallet',title:'模拟钱包与提现',desc:'测试入账、冻结、审核和模拟打款',path:'/admin/pages/wallet/index',permission:'WALLET_MANAGE'},
         {key:'help',title:'帮助内容管理',desc:'FAQ、帮助与关于我们',path:'/admin/pages/help/index',permission:'HELP_MANAGE'},
         {key:'support',title:'反馈与举报处理',desc:'受理、调查、处理及审计',path:'/admin/pages/support/index',permission:'SUPPORT_MANAGE'},
         { key:'campaigns',title:'首页活动管理',desc:'编辑轮播与活动规则',path:'/admin/pages/campaigns/index',permission:'CAMPAIGN_MANAGE' },

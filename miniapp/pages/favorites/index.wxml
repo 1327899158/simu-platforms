@@ -11,7 +11,7 @@
    <image wx:if="{{kind==='ENGINEER'&&item.avatarUrl}}" class="avatar" src="{{item.avatarUrl}}" mode="aspectFill" data-id="{{item.id}}" bindtap="open"/>
    <view wx:else class="avatar" data-id="{{item.id}}" bindtap="open"><ui-symbol value="{{kind==='ENGINEER'?'工':kind==='CASE'?'▧':'▤'}}"/></view>
    <view class="grow" data-id="{{item.id}}" bindtap="open"><view class="title">{{item.title}}</view><view class="caption">{{kind==='ENGINEER'?'工程师主页 · 查看专业与案例':kind==='CASE'?'案例展示 · 查看详情':'公开需求 · 查看详情'}} ›</view></view>
-   <button class="link danger" data-id="{{item.id}}" bindtap="remove" disabled="{{busy}}"><ui-symbol value="♥"/></button>
+   <button class="collection-toggle" data-id="{{item.id}}" bindtap="remove" disabled="{{busy}}" aria-label="取消收藏"><image src="/assets/icons-contrast/collection-star.svg" mode="aspectFit"/><text>已收藏</text></button>
   </view>
  </checkbox-group>
  <view wx:if="{{!items.length&&!busy&&!error}}" class="card empty"><view class="empty-icon"><ui-symbol value="♡"/></view><view class="title">还没有有效收藏</view><view class="muted">遇到喜欢的工程师、案例或需求，点击收藏，下次更容易找到</view></view>

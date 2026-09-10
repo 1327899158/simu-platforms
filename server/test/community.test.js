@@ -112,3 +112,14 @@ test('注销：到期执行去标识化并失效会话，不删除订单票据�
   run=async()=>[{userId:'u'}];execute=async s=>s.includes('FROM users')&&!s.includes('COUNT(*)')?[{id:'u'}]:s.includes('FROM account_closures')?[{userId:'u',status:'PENDING'}]:s.includes('COUNT(*)')?[{n:0}]:[];
   await close.sweep();const update=sqls.find(([s])=>s.startsWith('UPDATE users SET'))[0];assert.match(update,/sessionToken=NULL/);assert.match(update,/phone=NULL/);assert(!sqls.some(([s])=>/DELETE FROM (orders|payments|invoice_requests|support_evidence_blobs)/.test(s)));
 });
+test('不能收藏自己，历史自收藏在列表中隐藏',async()=>{
+ await assert.rejects(fav.add('u','ENGINEER','u'),e=>e.status===400);
+ await fav.list('u','ENGINEER',0);
+ assert.match(sqls.at(-1)[0],/t.id<>f.userId/);
+});
+test('客户任务按本人完成订单统计，不读取工程师承接订单',async()=>{
+ const state=await inc.state('c',async(sql,args)=>{sqls.push([sql,args]);return [];},'CUSTOMER');
+ assert.match(sqls[0][0],/o.customerId=\?/);
+ assert.doesNotMatch(sqls[0][0],/JOIN quotes/);
+ assert.equal(state.total,0);
+});

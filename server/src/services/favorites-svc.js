@@ -11,6 +11,7 @@ function source(kind) {
 }
 async function add(userId,kind,id) {
   v.oneOf(kind,'收藏分类',types);id=v.str(id,'目标ID',{min:1,max:32});
+  if(kind==='ENGINEER'&&id===userId)throw err.bad('不能收藏自己');
   const s=source(kind);
   if(!await queryOne(`SELECT t.id FROM ${s.from} WHERE t.id=? AND ${s.where}`,[id])) throw err.notFound('内容不存在或已停止公开');
   await query('INSERT IGNORE INTO user_favorites(userId,kind,targetId,createdAt) VALUES(?,?,?,UTC_TIMESTAMP(3))',[userId,kind,id]);
@@ -18,7 +19,8 @@ async function add(userId,kind,id) {
 }
 async function list(userId,kind,offset=0) {
   v.oneOf(kind,'收藏分类',types);offset=v.int(offset,'offset',{min:0,max:1000000});const s=source(kind);
-  const rows=await query(`SELECT f.targetId AS id,f.kind,${s.title} AS title,${s.extra},f.createdAt FROM ${s.from} JOIN user_favorites f ON f.targetId=t.id WHERE f.userId=? AND f.kind=? AND ${s.where} ORDER BY f.createdAt DESC,f.targetId LIMIT 21 OFFSET ${offset}`,[userId,kind]);
+  const selfFilter=kind==='ENGINEER'?' AND t.id<>f.userId':'';
+  const rows=await query(`SELECT f.targetId AS id,f.kind,${s.title} AS title,${s.extra},f.createdAt FROM ${s.from} JOIN user_favorites f ON f.targetId=t.id WHERE f.userId=? AND f.kind=? AND ${s.where}${selfFilter} ORDER BY f.createdAt DESC,f.targetId LIMIT 21 OFFSET ${offset}`,[userId,kind]);
   return {items:rows.slice(0,20),nextOffset:rows.length>20?offset+20:null};
 }
 async function remove(userId,kind,ids) {

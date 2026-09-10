@@ -43,6 +43,7 @@ module.exports = {
     <text class="dispute-banner-link" bindtap="goDisputeDetail">查看 ›</text>
   </view>
 
+  <view class="detail-view-badge"><image src="/assets/icons-contrast/eye.svg" mode="aspectFit"/><text>{{order.viewCount || 0}} 次浏览</text></view>
   <!-- 基本信息 -->
   <view class="info-card">
     <view class="ui-icon-copy card-title"><ui-symbol value="📄"/> 基本信息</view>
