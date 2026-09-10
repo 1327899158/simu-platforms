@@ -1,7 +1,7 @@
 <view class="page-container">
 
   <view class="page-header illustrated-panel"><image class="panel-art support-art" src="/assets/commit.png" mode="aspectFit" aria-hidden="true"/>
-    <text class="page-title">⚖️ 我的纠纷</text>
+    <view class="ui-icon-copy page-title"><ui-symbol value="⚖"/> 我的纠纷</view>
   </view>
 
   <!-- 常驻状态筛选 -->
@@ -20,7 +20,7 @@
   <view class="list">
     <view wx:for="{{items}}" wx:key="id" class="dispute-card" data-id="{{item.id}}" bindtap="open" hover-class="card-hover">
       <view class="card-top">
-        <text class="reason-icon">{{item.reasonType === 'QUALITY' ? '📉' : item.reasonType === 'DELAY' ? '⏰' : item.reasonType === 'MISSING' ? '📭' : item.reasonType === 'PAYMENT' ? '💳' : item.reasonType === 'COMMUNICATION' ? '💬' : '📌'}}</text>
+        <view class="ui-icon-copy reason-icon"><ui-symbol value="{{item.reasonType === 'QUALITY' ? '📉' : item.reasonType === 'DELAY' ? '⏰' : item.reasonType === 'MISSING' ? '📭' : item.reasonType === 'PAYMENT' ? '💳' : item.reasonType === 'COMMUNICATION' ? '💬' : '📌'}}"/></view>
         <view class="card-grow">
           <view class="title-row">
             <text class="card-title">{{item.reasonText}}</text>
@@ -32,13 +32,13 @@
       </view>
       <view class="card-desc" wx:if="{{item.description}}">{{item.description}}</view>
       <view class="card-footer">
-        <text class="time">📆 {{item.time}}</text>
+        <view class="ui-icon-copy time"><ui-symbol value="📆"/> {{item.time}}</view>
         <text class="detail-link">查看详情 ›</text>
       </view>
     </view>
 
     <view class="empty" wx:if="{{!loading && !items.length}}">
-      <text class="empty-icon">⚖️</text>
+      <view class="ui-icon-copy empty-icon"><ui-symbol value="⚖"/></view>
       <text class="empty-text">暂无纠纷记录</text>
     </view>
     <view class="loading" wx:if="{{loading}}">正在加载…</view>

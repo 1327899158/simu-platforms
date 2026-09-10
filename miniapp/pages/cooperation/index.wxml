@@ -1,6 +1,6 @@
 
 <view class="community">
- <view class="hero between"><view class="grow"><view class="eyebrow">BETTER TOGETHER</view><view class="title">{{setting?'常驻合作设置':'长期合作'}}</view><view class="muted">让默契延续，让专业合作更轻松</view></view><view class="hero-icon">🤝</view></view>
+ <view class="hero between"><view class="grow"><view class="eyebrow">BETTER TOGETHER</view><view class="title">{{setting?'常驻合作设置':'长期合作'}}</view><view class="muted">让默契延续，让专业合作更轻松</view></view><view class="hero-icon"><ui-symbol value="🤝"/></view></view>
  <view class="error" wx:if="{{error}}" bindtap="load">{{error}} · 重试</view>
  <view class="notice">合作条件经双方确认后保存。折扣仅作为报价参考，不自动改变支付金额；修改设置不会改变已有合作条款。</view>
  <block wx:if="{{setting}}">
@@ -9,7 +9,7 @@
   <view class="card"><view class="field-label">客户支付折扣</view><view class="between"><input type="digit" data-key="discountInput" value="{{setting.discountInput}}" bindinput="input"/><text>折</text></view><view class="caption">可设置1—10折，10折为不打折。此条件由客户确认后作为报价参考。</view></view>
   <view class="section-title">02 · 合作条件<text class="caption">客户可见</text></view>
   <view class="card">
-   <view class="field-label">⚡ 响应时效承诺</view><view class="between"><input type="number" data-key="responseHours" value="{{setting.responseHours}}" bindinput="input"/><text>小时</text></view>
+   <view class="field-label"><ui-symbol value="⚡"/> 响应时效承诺</view><view class="between"><input type="number" data-key="responseHours" value="{{setting.responseHours}}" bindinput="input"/><text>小时</text></view>
    <view class="field-label">▦ 排期说明</view><textarea data-key="scheduleNote" value="{{setting.scheduleNote}}" bindinput="input" maxlength="500" placeholder="说明您当前的排期及合作安排"/><view class="count">{{setting.scheduleNote.length}} / 500</view>
    <view class="field-label">↻ 免费修改次数</view><view class="between"><input type="number" data-key="revisionCount" value="{{setting.revisionCount}}" bindinput="input"/><text>次</text></view>
    <view class="field-label">¥ 最低项目预算</view><view class="between"><input type="digit" data-key="minYuan" value="{{setting.minYuan}}" bindinput="input"/><text>元</text></view>
@@ -35,10 +35,10 @@
   <view class="row" wx:if="{{item.status==='PENDING'}}"><button class="primary" wx:if="{{user.id===item.engineerId}}" data-id="{{item.id}}" data-action="ACCEPT" bindtap="act" disabled="{{busy}}">同意合作</button><button wx:if="{{user.id===item.engineerId}}" data-id="{{item.id}}" data-action="REJECT" bindtap="act" disabled="{{busy}}">拒绝</button><button wx:else data-id="{{item.id}}" data-action="CANCEL" bindtap="act" disabled="{{busy}}">撤销申请</button></view>
   <view class="row" wx:if="{{item.status==='ACTIVE'}}"><button class="primary" wx:if="{{user.id===item.customerId}}" data-id="{{item.engineerId}}" bindtap="publish">向TA定向下单</button><button class="link" data-id="{{item.id}}" data-action="END" bindtap="act" disabled="{{busy}}">结束合作</button></view>
  </view>
- <view wx:if="{{!relations.length&&!error}}" class="card empty"><view class="empty-icon">🤝</view><view class="title">还没有合作关系</view><view class="muted">客户可从工程师主页发起意向，双方确认后开启合作</view></view>
+ <view wx:if="{{!relations.length&&!error}}" class="card empty"><view class="empty-icon"><ui-symbol value="🤝"/></view><view class="title">还没有合作关系</view><view class="muted">客户可从工程师主页发起意向，双方确认后开启合作</view></view>
  <button wx:if="{{hasMore}}" bindtap="moreRelations">更多合作</button>
  <view class="section-title">定向需求进度<text class="caption">仅指定工程师可见</text></view>
  <view class="card between" wx:for="{{directs}}" wx:key="id" data-id="{{item.id}}" bindtap="order"><view class="grow"><view class="title">{{item.projectName}}</view><view class="muted">指定工程师：{{item.engineerName}}</view><view class="badge">{{item.status==='QUOTING'?'等待报价或客户选择':item.status}}</view></view><text>›</text></view>
- <view wx:if="{{!directs.length}}" class="card empty"><view class="empty-icon">▤</view><view class="muted">暂无定向需求，合作中的客户可通过上方入口创建</view></view>
+ <view wx:if="{{!directs.length}}" class="card empty"><view class="empty-icon"><ui-symbol value="▤"/></view><view class="muted">暂无定向需求，合作中的客户可通过上方入口创建</view></view>
  <button wx:if="{{directMore}}" bindtap="moreDirects">更多定向需求</button>
 </view>

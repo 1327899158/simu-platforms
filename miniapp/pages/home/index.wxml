@@ -2,39 +2,39 @@
 <view class="home-page {{role==='ENGINEER'?'engineer-home':'customer-home'}}">
  <block wx:if="{{role==='CUSTOMER'}}">
   <view class="home-hero">
-   <view class="hero-top"><text class="brand-caption">仿真服务平台</text><button class="bell" bindtap="goMessages">♧ 消息</button></view>
+   <view class="hero-top"><text class="brand-caption">仿真服务平台</text><button class="bell" bindtap="goMessages"><ui-symbol value="♧"/> 消息</button></view>
    <view class="hero-copy"><image class="home-mascot customer-mascot" src="/assets/user_home.png" mode="aspectFit"/><view class="home-greeting">你好，<text class="marker">{{user.nickname||'客户'}}</text></view><view class="hero-subtitle">今天，需要什么仿真服务？</view></view>
    <view class="search-entry" bindtap="goEngineers"><text class="search-symbol">⌕</text><text class="grow">按专业方向寻找仿真工程师</text><text class="search-action">去查找</text></view>
   </view>
   <view class="home-body">
    <view class="shortcuts surface">
-    <view class="shortcut" bindtap="goPublish" hover-class="pressed"><view class="shortcut-icon yellow">📣</view><text>发布需求</text></view>
-    <view class="shortcut" bindtap="goOrders" hover-class="pressed"><view class="shortcut-icon blue">📋<text wx:if="{{unreadOrderCount}}" class="unread">{{unreadOrderCount>99?'99+':unreadOrderCount}}</text></view><text>我的需求</text></view>
-    <view class="shortcut" bindtap="goEngineers" hover-class="pressed"><view class="shortcut-icon mint">👷</view><text>找工程师</text></view>
-    <view class="shortcut" bindtap="goMessages" hover-class="pressed"><view class="shortcut-icon pink">💬</view><text>消息</text></view>
+    <view class="shortcut" bindtap="goPublish" hover-class="pressed"><view class="shortcut-icon yellow"><ui-symbol value="📣"/></view><text>发布需求</text></view>
+    <view class="shortcut" bindtap="goOrders" hover-class="pressed"><view class="shortcut-icon blue"><ui-symbol value="📋"/><text wx:if="{{unreadOrderCount}}" class="unread">{{unreadOrderCount>99?'99+':unreadOrderCount}}</text></view><text>我的需求</text></view>
+    <view class="shortcut" bindtap="goEngineers" hover-class="pressed"><view class="shortcut-icon mint"><ui-symbol value="👷"/></view><text>找工程师</text></view>
+    <view class="shortcut" bindtap="goMessages" hover-class="pressed"><view class="shortcut-icon pink"><ui-symbol value="💬"/></view><text>消息</text></view>
    </view>
    <swiper class="home-campaigns" wx:if="{{campaigns.length}}" indicator-dots indicator-color="#dbd9b9" indicator-active-color="#5bc0eb" autoplay circular>
-    <swiper-item wx:for="{{campaigns}}" wx:key="id"><view class="campaign surface campaign-{{index%3}}" data-id="{{item.id}}" bindtap="openCampaign"><view class="campaign-copy"><text class="eyebrow">专属活动 · 好礼相伴</text><view class="campaign-heading">{{item.title}}</view><view class="small">{{item.subtitle}}</view><view class="campaign-link">查看活动 ›</view></view><text class="campaign-art">🎁</text></view></swiper-item>
+    <swiper-item wx:for="{{campaigns}}" wx:key="id"><view class="campaign surface campaign-{{index%3}}" data-id="{{item.id}}" bindtap="openCampaign"><view class="campaign-copy"><text class="eyebrow">专属活动 · 好礼相伴</text><view class="campaign-heading">{{item.title}}</view><view class="small">{{item.subtitle}}</view><view class="campaign-link">查看活动 ›</view></view><view class="ui-icon-copy campaign-art"><ui-symbol value="🎁"/></view></view></swiper-item>
    </swiper>
    <view class="notification" wx:for="{{notices}}" wx:key="id" data-id="{{item.id}}" bindtap="openMine"><text class="notice-icon">★</text><view class="grow"><view>{{item.text}}</view><view class="small">{{item.projectName}}</view></view><text>›</text></view>
-   <view class="estimate-banner" bindtap="goEstimate"><view class="estimate-icon">💡</view><view class="grow"><view class="card-title">不确定预算？先快速预估</view><view class="small">10秒了解项目费用，发布需求更精准</view></view><text class="arrow">›</text></view>
+   <view class="estimate-banner" bindtap="goEstimate"><view class="estimate-icon"><ui-symbol value="💡"/></view><view class="grow"><view class="card-title">不确定预算？先快速预估</view><view class="small">10秒了解项目费用，发布需求更精准</view></view><text class="arrow">›</text></view>
    <view class="section-head"><text class="section-heading">为您推荐<text class="marker">工程师</text></text><text class="more" bindtap="goEngineers">查看全部 ›</text></view>
    <scroll-view scroll-x class="engineer-scroll" enhanced show-scrollbar="{{false}}">
     <view class="engineer-strip"><view class="engineer-card surface" wx:for="{{engineers}}" wx:key="id" data-id="{{item.id}}" bindtap="openEngineer">
      <view class="engineer-top"><image wx:if="{{item.avatarUrl}}" class="portrait" src="{{item.avatarUrl}}" mode="aspectFill"/><view wx:else class="portrait placeholder">工</view><text class="recommend-label">推荐</text></view>
-     <view class="card-title engineer-name">{{item.nickname||'工程师'}}</view><view class="engineer-level-tag level-{{item.level.key}} level-label">{{item.level.icon}} {{item.level.name}}</view>
+     <view class="card-title engineer-name">{{item.nickname||'工程师'}}</view><view class="engineer-level-tag level-{{item.level.key}} level-label"><ui-symbol value="{{item.level.icon}}"/> {{item.level.name}}</view>
      <view class="small review-line">★ 好评率 {{item.positiveText}}</view><view class="specialties"><text class="skill" wx:for="{{item.specialties}}" wx:for-item="tag" wx:key="*this">{{tag}}</text></view>
      <button class="blue-button contact" data-id="{{item.id}}" catchtap="contactEngineer">发起沟通</button>
     </view></view>
    </scroll-view>
-   <view wx:if="{{!engineers.length}}" class="surface home-empty"><view>☘</view><text>暂无已认证工程师</text></view>
+   <view wx:if="{{!engineers.length}}" class="surface home-empty"><view><ui-symbol value="☘"/></view><text>暂无已认证工程师</text></view>
    <view class="section-head"><text class="section-heading">服务分类</text><text class="more" bindtap="goEngineers">全部方向 ›</text></view>
-   <view class="service-grid"><view class="service-cell surface" wx:for="{{categories}}" wx:key="*this" data-direction="{{item}}" bindtap="goEngineers"><view class="service-icon">{{index%6===0?'🌊':index%6===1?'⚙️':index%6===2?'📡':index%6===3?'☀️':index%6===4?'🔬':'🔗'}}</view><text>{{item}}</text></view></view>
+   <view class="service-grid"><view class="service-cell surface" wx:for="{{categories}}" wx:key="*this" data-direction="{{item}}" bindtap="goEngineers"><view class="service-icon"><ui-symbol value="{{index%6===0?'🌊':index%6===1?'⚙️':index%6===2?'📡':index%6===3?'☀️':index%6===4?'🔬':'🔗'}}"/></view><text>{{item}}</text></view></view>
    <view wx:if="{{!categories.length}}" class="surface home-empty" bindtap="goEngineers">按专业方向浏览工程师 ›</view>
    <view class="section-head"><text class="section-heading">我的订单</text><text class="more" bindtap="goOrders">查看全部 ›</text></view>
    <view class="surface order-stats"><view bindtap="goOrders"><text class="stat-number">{{counts.UNQUOTED}}</text><text>未报价</text></view><view bindtap="goOrders"><text class="stat-number">{{counts.AWAITING_CONFIRMATION}}</text><text>待确认</text></view><view bindtap="goOrders"><text class="stat-number">{{counts.AWAITING_PAYMENT}}</text><text>待支付</text></view><view bindtap="goOrders"><text class="stat-number">{{counts.IN_PROGRESS}}</text><text>执行中</text></view><view bindtap="goOrders"><text class="stat-number">{{counts.DELIVERED}}</text><text>待验收</text></view></view>
    <view class="surface demand-card" wx:for="{{recent}}" wx:key="id" data-id="{{item.id}}" bindtap="openMine" hover-class="pressed"><view class="card-top"><text class="status-pill {{item.cls}}">{{item.statusText}}</text><text class="small">{{item.time}}</text></view><view class="demand-title">{{item.projectName}}</view><view class="card-bottom"><text class="amount">¥{{item.budgetY}}</text><text class="small">{{item.quoteCount}} 人报价 · 查看进度 ›</text></view></view>
-   <view wx:if="{{!recent.length}}" class="surface home-empty"><view>📋</view><text>还没有发布需求</text><text class="small">让专业工程师帮您完成下一次仿真</text><button class="blue-button" bindtap="goPublish">发布第一个需求</button></view>
+   <view wx:if="{{!recent.length}}" class="surface home-empty"><view><ui-symbol value="📋"/></view><text>还没有发布需求</text><text class="small">让专业工程师帮您完成下一次仿真</text><button class="blue-button" bindtap="goPublish">发布第一个需求</button></view>
   </view>
  </block>
  <block wx:if="{{role==='ENGINEER'}}">
@@ -44,7 +44,7 @@
    <view class="search-entry" bindtap="goMarketHall"><text class="search-symbol">⌕</text><text class="grow">按方向、软件与预算筛选需求</text><text class="search-action">接单大厅 ›</text></view>
   </view>
   <view class="home-body">
-   <view class="shortcuts surface"><view class="shortcut" bindtap="goMarketHall"><view class="shortcut-icon blue">⚙️</view><text>接单大厅</text></view><view class="shortcut" bindtap="goMyQuotes"><view class="shortcut-icon yellow">📋</view><text>我的报价</text></view><view class="shortcut" bindtap="goMessages"><view class="shortcut-icon mint">💬</view><text>消息</text></view><view class="shortcut" bindtap="goMe"><view class="shortcut-icon pink">👤</view><text>个人中心</text></view></view>
+   <view class="shortcuts surface"><view class="shortcut" bindtap="goMarketHall"><view class="shortcut-icon blue"><ui-symbol value="⚙"/></view><text>接单大厅</text></view><view class="shortcut" bindtap="goMyQuotes"><view class="shortcut-icon yellow"><ui-symbol value="📋"/></view><text>我的报价</text></view><view class="shortcut" bindtap="goMessages"><view class="shortcut-icon mint"><ui-symbol value="💬"/></view><text>消息</text></view><view class="shortcut" bindtap="goMe"><view class="shortcut-icon pink"><ui-symbol value="👤"/></view><text>个人中心</text></view></view>
    <view wx:if="{{!canTakeOrders}}" class="notification" bindtap="goMarketHall"><text class="notice-icon">★</text><view class="grow"><view>完成身份认证，开启专业接单</view><view class="small">认证状态及补充要求以认证页面为准</view></view><text>›</text></view>
    <block wx:else>
     <view class="surface hall-stats"><view><text class="stat-number">{{hallStats.allCount===null?'—':hallStats.allCount}}</text><text class="small">全部可接需求</text></view><view><text class="stat-number">{{hallStats.todayCount===null?'—':hallStats.todayCount}}</text><text class="small">今日新增</text></view></view>
@@ -56,7 +56,7 @@
      <view class="demand-info"><view>预算：¥{{item.budgetY}}</view><view>工期：{{item.deliveryDays}} 天</view><view class="small">{{item.quoteCount}} 人报价 · {{item.viewCount}} 次浏览</view></view>
      <view class="card-bottom"><text class="amount">¥{{item.budgetY}}</text><button wx:if="{{!item.myQuote}}" class="blue-button quote-button" data-id="{{item.id}}" data-flexible="{{item.budgetFlexible?1:0}}" data-fen="{{item.budgetFen}}" catchtap="quickQuote">立即报价 ↗</button><text wx:else class="small">已提交报价 ›</text></view>
     </view>
-    <view wx:if="{{!hall.length}}" class="surface home-empty"><view>☘</view><text>暂无可接单需求</text><text class="small">下拉刷新，或前往大厅查看最新机会</text></view>
+    <view wx:if="{{!hall.length}}" class="surface home-empty"><view><ui-symbol value="☘"/></view><text>暂无可接单需求</text><text class="small">下拉刷新，或前往大厅查看最新机会</text></view>
     <button class="blue-button hall-button" bindtap="goMarketHall">前往接单大厅 · 查看更多</button>
    </block>
   </view>

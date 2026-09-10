@@ -30,7 +30,7 @@ module.exports = {
 
   <!-- 顶部导航 -->
   <view class="page-header">
-    <text class="page-title">🚀 发布需求</text>
+    <view class="ui-icon-copy page-title"><ui-symbol value="🚀"/> 发布需求</view>
     <text class="step-indicator">{{step}}/5</text>
   </view>
 
@@ -56,7 +56,7 @@ module.exports = {
 
   <!-- ===== 步骤1：基本信息 ===== -->
   <view class="form-section" wx:if="{{step === 1}}">
-    <text class="section-title">📋 基本信息</text>
+    <view class="ui-icon-copy section-title"><ui-symbol value="📋"/> 基本信息</view>
     <view class="form-group">
       <text class="form-label">项目名称 <text class="required">*</text></text>
       <input class="form-input" placeholder="请输入项目名称（至少4个字）" value="{{projectName}}"
@@ -85,7 +85,7 @@ module.exports = {
 
   <!-- ===== 步骤2：仿真配置 ===== -->
   <view class="form-section" wx:if="{{step === 2}}">
-    <text class="section-title">⚙️ 仿真配置</text>
+    <view class="ui-icon-copy section-title"><ui-symbol value="⚙"/> 仿真配置</view>
     <text class="section-desc">请选择需要的仿真软件和方向（可多选）</text>
     <view class="form-group">
       <text class="form-label">仿真软件 <text class="required">*</text></text>
@@ -123,14 +123,14 @@ module.exports = {
 
   <!-- ===== 步骤3：详细说明 ===== -->
   <view class="form-section" wx:if="{{step === 3}}">
-    <text class="section-title">📄 详细说明</text>
+    <view class="ui-icon-copy section-title"><ui-symbol value="📄"/> 详细说明</view>
     <view class="form-group">
       <text class="form-label">期望工期 <text class="required">*</text></text>
       <view class="deadline-options">
         <view wx:for="{{dicts.deliveryOptions}}" wx:key="key"
           class="deadline-item {{deliveryKey === item.key ? 'active' : ''}}"
           data-k="{{item.key}}" bindtap="pickDelivery">
-          <text class="deadline-icon">{{u.iconOf(item.key)}}</text>
+          <view class="ui-icon-copy deadline-icon"><ui-symbol value="{{u.iconOf(item.key)}}"/></view>
           <text class="deadline-label">{{u.shortLabel(item)}}</text>
           <text class="deadline-days">{{u.daysText(item)}}</text>
         </view>
@@ -154,12 +154,12 @@ module.exports = {
 
   <!-- ===== 步骤4：文件上传 ===== -->
   <view class="form-section" wx:if="{{step === 4}}">
-    <text class="section-title">📎 文件上传</text>
+    <view class="ui-icon-copy section-title"><ui-symbol value="📎"/> 文件上传</view>
     <text class="section-desc">上传模型文件、设计文档、参考图片等</text>
 
     <!-- 上传须知 -->
     <view class="upload-rule-box">
-      <text class="rule-icon">⚠️</text>
+      <view class="ui-icon-copy rule-icon"><ui-symbol value="⚠"/></view>
       <view class="rule-content">
         <text class="rule-title">上传须知</text>
         <text class="rule-item">• 文档/压缩包：从微信聊天或本地文件夹选择，建议压缩包</text>
@@ -171,16 +171,16 @@ module.exports = {
     </view>
 
     <view class="form-group">
-      <text class="form-label">📦 需求附件 <text class="form-hint">（每次最多选3个，已上传 {{files.length}}/{{maxAttachments}}）</text></text>
+      <view class="ui-icon-copy form-label"><ui-symbol value="📦"/> 需求附件 <text class="form-hint">（每次最多选3个，已上传 {{files.length}}/{{maxAttachments}}）</text></view>
       <view class="upload-area {{uploading ? 'disabled' : ''}}" bindtap="chooseFile"
         aria-role="button" aria-label="选择并上传需求附件">
-        <text class="upload-icon">📦</text>
+        <view class="ui-icon-copy upload-icon"><ui-symbol value="📦"/></view>
         <text class="upload-text">{{uploading ? uploadProgress : '选择附件'}}</text>
         <text class="upload-hint">可选择微信聊天文件，或手机相册/相机</text>
       </view>
       <view class="file-list" wx:if="{{files.length > 0}}">
         <view wx:for="{{files}}" wx:key="fileId" class="file-item">
-          <text class="file-icon">📄</text>
+          <view class="ui-icon-copy file-icon"><ui-symbol value="📄"/></view>
           <text class="file-name">{{item.name}}</text>
           <text class="file-size">{{item.sizeText}}</text>
           <view class="file-delete" data-i="{{index}}" catchtap="removeFile"
@@ -197,7 +197,7 @@ module.exports = {
 
   <!-- ===== 步骤5：确认提交 ===== -->
   <view class="form-section" wx:if="{{step === 5}}">
-    <text class="section-title">✅ 确认并提交</text>
+    <view class="ui-icon-copy section-title"><ui-symbol value="✅"/> 确认并提交</view>
     <text class="section-desc">请仔细核对以下信息</text>
     <view class="summary-card">
       <view class="summary-item"><text class="summary-label">项目名称</text><text class="summary-value">{{projectName || '未填写'}}</text></view>
@@ -219,7 +219,7 @@ module.exports = {
     </view>
 
     <button class="btn-success-block {{submitting ? 'disabled' : ''}}" bindtap="next">
-      {{submitting ? '提交中…' : '🚀 确认发布'}}
+      <ui-symbol value="{{submitting ? '提交中…' : '🚀 确认发布'}}"/>
     </button>
 
     <view class="form-actions-row">

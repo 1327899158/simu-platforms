@@ -7,7 +7,7 @@
     <view class="invoice-files" wx:if="{{invoice.files.length}}">
       <text class="files-title">电子发票文件</text>
       <view class="file-row" wx:for="{{invoice.files}}" wx:key="fileId" bindtap="downloadFile" data-id="{{item.fileId}}">
-        <view class="file-copy"><text class="file-name">📎 {{item.name}}</text><text class="file-size">{{item.sizeText}}</text></view>
+        <view class="file-copy"><view class="ui-icon-copy file-name"><ui-symbol value="📎"/> {{item.name}}</view><text class="file-size">{{item.sizeText}}</text></view>
         <text class="file-open">{{downloadingFileId === item.fileId ? '打开中…' : '查看'}}</text>
       </view>
     </view>

@@ -20,6 +20,7 @@
     "pages/review-form/index",
     "pages/customer-review-form/index",
     "pages/engineer-profile/index",
+    "pages/peer-profile/index",
     "pages/engineer-cases/index",
     "pages/blacklist/index",
     "pages/favorites/index",
@@ -81,12 +82,27 @@
     "backgroundColor": "#eff6f4",
     "borderStyle": "white",
     "list": [
-      { "pagePath": "pages/home/index", "text": "首页" },
-      { "pagePath": "pages/market/index", "text": "接单大厅" },
-      { "pagePath": "pages/chat-list/index", "text": "消息" },
-      { "pagePath": "pages/me/index", "text": "我的" }
+      {
+        "pagePath": "pages/home/index",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/market/index",
+        "text": "接单大厅"
+      },
+      {
+        "pagePath": "pages/chat-list/index",
+        "text": "消息"
+      },
+      {
+        "pagePath": "pages/me/index",
+        "text": "我的"
+      }
     ]
   },
   "sitemapLocation": "sitemap.json",
-  "lazyCodeLoading": "requiredComponents"
+  "lazyCodeLoading": "requiredComponents",
+  "usingComponents": {
+    "ui-symbol": "/components/ui-symbol/index"
+  }
 }

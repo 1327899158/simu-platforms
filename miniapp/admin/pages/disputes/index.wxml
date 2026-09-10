@@ -26,7 +26,7 @@
     data-id="{{item.id}}" bindtap="open" hover-class="order-pressed">
     <view class="admin-between">
       <view class="admin-grow">
-        <text class="reason-icon">{{item.reasonIcon}} {{item.reasonText}}</text>
+        <view class="ui-icon-copy reason-icon"><ui-symbol value="{{item.reasonIcon}}"/> {{item.reasonText}}</view>
         <text class="dispute-order">{{item.orderName}} · {{item.orderNo}}</text>
       </view>
       <text class="admin-badge {{item.badgeClass}}">{{item.statusText}}</text>

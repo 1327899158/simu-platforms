@@ -1,3 +1,5 @@
+/* Inline fallback for former text nodes containing graphic symbols. Page-specific layout rules take precedence. */
+.ui-icon-copy { display: inline; }
 /* ================================================================
    仿真服务平台 · 年轻轻量化马卡龙 Design Token
    主色天蓝 #5BC0EB，薄荷绿底 #DDEBD9 + 白卡片 + 荧光黄 #F5D33F 强调。

@@ -52,6 +52,15 @@ async function conversationSendAccess(c) {
 }
 
 function register(router) {
+  // 仅会话参与者可查看对方基础资料；显式白名单避免泄露实名或联系方式。
+  router.get('/api/conversations/:id/peer-profile', async (req,res,params)=>{
+    const user=await requireUser(req);
+    const c=await myConversation(user,params.id);
+    const peerId=c.customerId===user.id?c.engineerId:c.customerId;
+    const row=await queryOne('SELECT id,nickname,avatarUrl,role,status,deletedAt FROM users WHERE id=?',[peerId]);
+    if(!row||row.deletedAt||row.status!=='ACTIVE')throw err.notFound('该用户资料暂不可用');
+    ok(res,{id:row.id,nickname:row.nickname,avatarUrl:row.avatarUrl||'',role:row.role});
+  });
   router.post('/api/engineers/:id/conversation', async(req,res,params)=>{
     const user=await requireUser(req);
     if(user.role!=='CUSTOMER'||user.id===params.id) throw err.forbidden('仅客户可发起工程师咨询');

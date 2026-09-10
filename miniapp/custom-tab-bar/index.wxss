@@ -1,3 +1,4 @@
+.ui-icon-copy { display: inline; }
 .custom-tab-bar {
   position: fixed;
   z-index: 999;

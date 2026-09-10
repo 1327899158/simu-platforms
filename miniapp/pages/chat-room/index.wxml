@@ -2,9 +2,8 @@
 
   <!-- 顶部导航 -->
   <view class="chat-header">
-    <text class="header-title">💬 {{peer.nickname || '聊天'}}</text>
-    <button size="mini" wx:if="{{peer.id}}" bindtap="reportPeer">举报</button>
-    <button size="mini" wx:if="{{peer.id && (role === 'CUSTOMER' || role === 'ENGINEER')}}" bindtap="blockPeer">拉黑</button>
+    <text class="header-title">{{peer.nickname || '聊天'}}</text>
+    <button class="peer-profile-link" wx:if="{{peer}}" bindtap="viewPeer">查看资料 ›</button>
   </view>
 
   <!-- 消息列表 -->
@@ -19,9 +18,9 @@
 
       <!-- 普通消息 -->
       <view class="message-item {{item.mine ? 'self' : 'other'}}" wx:else>
-        <image wx:if="{{!item.mine && item.senderAvatar}}" src="{{item.senderAvatar}}" class="msg-avatar"
+        <image wx:if="{{!item.mine && item.senderAvatar}}" src="{{item.senderAvatar}}" class="msg-avatar" bindtap="viewPeer"
           mode="aspectFill" style="width:{{avatarSize}}rpx;height:{{avatarSize}}rpx" />
-        <view wx:if="{{!item.mine && !item.senderAvatar}}" class="msg-avatar avatar-placeholder"
+        <view wx:if="{{!item.mine && !item.senderAvatar}}" class="msg-avatar avatar-placeholder" bindtap="viewPeer"
           style="width:{{avatarSize}}rpx;height:{{avatarSize}}rpx;font-size:{{avatarSize/2}}rpx">对</view>
 
         <view class="message-content {{item.mine ? 'content-self' : 'content-other'}}" style="max-width:{{bubbleMaxWidth}}">
@@ -35,7 +34,7 @@
           </view>
           <!-- 文件消息 -->
           <view wx:else class="filemsg" bindtap="openFile" data-fid="{{item.fileId}}">
-            📎 {{item.content || '[文件]'}}
+            <ui-symbol value="📎"/> {{item.content || '[文件]'}}
           </view>
           <text class="message-time">{{item.time}}</text>
         </view>
@@ -57,7 +56,7 @@
   <!-- 底部输入 -->
   <view class="chat-input-area" wx:if="{{canSend}}">
     <view class="img-btn {{imageSending ? 'disabled' : ''}}" bindtap="sendImage">
-      {{imageSending ? '…' : '🖼️'}}
+      <ui-symbol value="{{imageSending ? '…' : '🖼️'}}"/>
     </view>
     <input class="chat-input" placeholder="输入消息..." value="{{text}}" bindinput="input" maxlength="2000"
       confirm-type="send" bindconfirm="send" adjust-position />

@@ -2,7 +2,7 @@
   <view class="admin-hero">
     <view class="admin-between">
       <view class="admin-grow">
-        <text class="admin-hero-title">⚖️ 订单纠纷</text>
+        <view class="ui-icon-copy admin-hero-title"><ui-symbol value="⚖"/> 订单纠纷</view>
         <text class="admin-hero-desc">{{dispute.order ? dispute.order.projectName : '纠纷'}}<text wx:if="{{dispute.order}}"> · {{dispute.order.orderNo}}</text></text>
       </view>
       <text class="detail-badge">{{dispute.statusText}}</text>

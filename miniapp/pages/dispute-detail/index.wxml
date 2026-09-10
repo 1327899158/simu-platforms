@@ -1,14 +1,14 @@
 <view class="page-container" wx:if="{{dispute}}">
   <view class="hero illustrated-panel"><image class="panel-art support-art" src="/assets/commit.png" mode="aspectFit" aria-hidden="true"/>
     <view class="hero-top">
-      <text class="hero-title">⚖️ 订单纠纷</text>
+      <view class="ui-icon-copy hero-title"><ui-symbol value="⚖"/> 订单纠纷</view>
       <text class="status {{dispute.statusCls}}">{{dispute.statusText}}</text>
     </view>
     <text class="hero-desc">{{dispute.order ? dispute.order.projectName : '纠纷'}}<text wx:if="{{dispute.order}}"> · {{dispute.order.orderNo}}</text></text>
   </view>
 
   <view class="evidence-timer {{dispute.evidenceOpen ? 'active' : 'ended'}}">
-    <view class="timer-icon">{{dispute.evidenceOpen ? '⏳' : '🔒'}}</view>
+    <view class="timer-icon"><ui-symbol value="{{dispute.evidenceOpen ? '⏳' : '🔒'}}"/></view>
     <view class="timer-copy">
       <text class="timer-title">{{dispute.evidenceOpen ? '48小时举证进行中' : '举证通道已关闭'}}</text>
       <text class="timer-value">{{evidenceCountdown}}</text>
@@ -30,7 +30,7 @@
   <view class="card evidence-card">
     <view class="evidence-header">
       <view>
-        <text class="card-title compact">📎 双方证据（{{dispute.evidence.length}}）</text>
+        <view class="ui-icon-copy card-title compact"><ui-symbol value="📎"/> 双方证据（{{dispute.evidence.length}}）</view>
         <text class="evidence-subtitle">我已提交 {{dispute.myEvidenceCount}} / 20 份</text>
       </view>
       <button class="upload-button" wx:if="{{dispute.evidenceOpen}}" bindtap="addEvidence" disabled="{{uploading}}">

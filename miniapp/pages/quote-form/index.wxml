@@ -2,7 +2,7 @@
 
   <!-- 顶部导航 -->
   <view class="page-header illustrated-panel"><image class="panel-art order-art" src="/assets/order.png" mode="aspectFit" aria-hidden="true"/>
-    <text class="page-title">💰 提交报价</text>
+    <view class="ui-icon-copy page-title"><ui-symbol value="💰"/> 提交报价</view>
   </view>
 
   <view class="form-section">

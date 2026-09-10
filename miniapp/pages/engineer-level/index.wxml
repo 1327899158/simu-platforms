@@ -3,13 +3,13 @@
   <view class="muted" wx:if="{{error}}" bindtap="load">{{error}} · 点击重试</view>
   <view class="muted" wx:if="{{loading}}">正在核对等级数据…</view>
   <view class="card result" wx:if="{{current}}">
-    <text class="engineer-level-tag level-{{current.key}}">{{current.icon}} {{current.name}}</text>
+    <view class="ui-icon-copy engineer-level-tag level-{{current.key}}"><ui-symbol value="{{current.icon}}"/> {{current.name}}</view>
     <text class="metric">累计完成 {{current.completed}} 单 · 好评率 {{positiveText}}</text>
     <text class="metric">纠纷率 {{disputeText}} · {{current.reviews}} 条有效评价</text>
     <text class="muted">达到条件自动更新头衔，无需提交晋级申请。验收、评价及审核后刷新，查看资料时再次核对。</text>
   </view>
   <view class="card" wx:if="{{advancement && advancement.next}}">
-    <text class="heading">下一头衔：{{advancement.next.icon}} {{advancement.next.name}}</text>
+    <view class="ui-icon-copy heading">下一头衔：<ui-symbol value="{{advancement.next.icon}}"/> {{advancement.next.name}}</view>
     <text class="muted">单量目标完成度 {{advancement.orderProgressPct}}%（还需同时满足其他条件）</text>
     <progress percent="{{advancement.orderProgressPct}}" activeColor="#355e4a" backgroundColor="#edf2e9" stroke-width="6"/>
     <view class="requirement" wx:for="{{advancement.requirements}}" wx:key="key">
@@ -19,10 +19,10 @@
     </view>
     <button wx:if="{{current.key === 'UNQUALIFIED'}}" bindtap="goQualification">完善认证与资质材料</button>
   </view>
-  <view class="card" wx:elif="{{advancement}}"><text class="heading">👑 已达到最高头衔</text><text class="muted">持续保持高质量交付与良好沟通，维持当前等级。</text></view>
+  <view class="card" wx:elif="{{advancement}}"><view class="ui-icon-copy heading"><ui-symbol value="👑"/> 已达到最高头衔</view><text class="muted">持续保持高质量交付与良好沟通，维持当前等级。</text></view>
   <text class="heading">等级与晋升条件</text>
   <view class="card" wx:for="{{levels}}" wx:key="key">
-    <text class="engineer-level-tag level-{{item.key}}">{{item.icon}} {{item.name}}</text>
+    <view class="ui-icon-copy engineer-level-tag level-{{item.key}}"><ui-symbol value="{{item.icon}}"/> {{item.name}}</view>
     <text wx:if="{{current.key === item.key}}" class="met">当前等级</text>
     <text class="metric">{{item.rule}}</text>
     <text wx:if="{{item.rate}}" class="muted">预留费率 {{item.rate}}% · 本期不影响支付结算</text>

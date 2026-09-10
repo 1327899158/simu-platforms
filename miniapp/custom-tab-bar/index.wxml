@@ -2,7 +2,7 @@
   <view class="tab-item {{currentPath === item.pagePath ? 'active' : ''}}"
     wx:for="{{tabs}}" wx:key="pagePath" data-path="{{item.pagePath}}" bindtap="switchTab">
     <text class="tab-badge" wx:if="{{item.pagePath === '/pages/chat-list/index' && unreadTotal}}">{{unreadTotal > 99 ? '99+' : unreadTotal}}</text>
-    <text class="tab-icon">{{item.icon}}</text>
+    <view class="ui-icon-copy tab-icon"><ui-symbol value="{{item.icon}}"/></view>
     <text class="tab-text">{{item.text}}</text>
   </view>
 </view>

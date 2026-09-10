@@ -24,7 +24,7 @@ module.exports = {
   <button size="mini" wx:if="{{order.customer.id||order.engineer.id}}" bindtap="reportOrderPeer">举报对方</button>
   <!-- 状态卡片 -->
   <view class="status-card illustrated-panel"><image class="panel-art order-art" src="/assets/order.png" mode="aspectFit" aria-hidden="true"/>
-    <text class="status-icon">{{u.statusIcon(order.status)}}</text>
+    <view class="ui-icon-copy status-icon"><ui-symbol value="{{u.statusIcon(order.status)}}"/></view>
     <view class="status-info">
       <text class="status-label">{{order.statusText}}</text>
       <text class="status-hint">{{u.statusHint(order.status)}}</text>
@@ -34,7 +34,7 @@ module.exports = {
   <!-- 纠纷横幅 -->
   <view class="dispute-banner" wx:if="{{dispute}}">
     <view class="dispute-banner-left">
-      <text class="dispute-banner-icon">⚖️</text>
+      <view class="ui-icon-copy dispute-banner-icon"><ui-symbol value="⚖"/></view>
       <view class="dispute-banner-copy">
         <text class="dispute-banner-title">{{dispute.status === 'OPEN' ? '订单存在进行中的纠纷' : '该订单已有纠纷记录'}}</text>
         <text class="dispute-banner-desc">{{dispute.reasonText}} · {{dispute.statusText}}</text>
@@ -45,7 +45,7 @@ module.exports = {
 
   <!-- 基本信息 -->
   <view class="info-card">
-    <text class="card-title">📄 基本信息</text>
+    <view class="ui-icon-copy card-title"><ui-symbol value="📄"/> 基本信息</view>
     <view class="info-row">
       <text class="info-label">项目名称</text>
       <text class="info-value">{{order.projectName}}</text>
@@ -86,19 +86,19 @@ module.exports = {
 
   <!-- 项目描述 -->
   <view class="info-card" wx:if="{{order.description}}">
-    <text class="card-title">📝 项目描述</text>
+    <view class="ui-icon-copy card-title"><ui-symbol value="📝"/> 项目描述</view>
     <text class="desc-text">{{order.description}}</text>
   </view>
 
   <!-- 特殊要求 -->
   <view class="info-card" wx:if="{{order.specialNote}}">
-    <text class="card-title">🎯 特殊要求</text>
+    <view class="ui-icon-copy card-title"><ui-symbol value="🎯"/> 特殊要求</view>
     <text class="desc-text">{{order.specialNote}}</text>
   </view>
 
   <!-- 附件列表 -->
   <view class="info-card" wx:if="{{files.length}}">
-    <text class="card-title">📎 附件（{{files.length}}）</text>
+    <view class="ui-icon-copy card-title"><ui-symbol value="📎"/> 附件（{{files.length}}）</view>
     <view class="attachment-list">
       <view class="attachment-item" wx:for="{{files}}" wx:key="fileId" data-id="{{item.fileId}}" bindtap="download">
         <text class="attachment-kind {{item.purpose === 'RESULT' || item.kind === 'RESULT' ? 'result' : ''}}">{{item.purpose === 'RESULT' || item.kind === 'RESULT' ? '成果' : '需求'}}</text>
@@ -114,7 +114,7 @@ module.exports = {
 
     <!-- 工程师报价 -->
     <view class="info-card" wx:if="{{order.status === 'QUOTING' || order.status === 'AWAITING_PAYMENT'}}">
-      <text class="card-title">💬 工程师报价（{{quotes.length}}）</text>
+      <view class="ui-icon-copy card-title"><ui-symbol value="💬"/> 工程师报价（{{quotes.length}}）</view>
       <view class="no-data-text" wx:if="{{!quotes.length}}">暂无工程师报价，请耐心等待</view>
       <view class="quote-item {{item.status === 'SELECTED' ? 'selected' : ''}}" wx:for="{{quotes}}" wx:key="id">
         <view class="quote-header">
@@ -122,22 +122,22 @@ module.exports = {
             <image wx:if="{{item.engineer.avatarUrl}}" src="{{item.engineer.avatarUrl}}" class="quote-avatar" mode="aspectFill" />
             <view wx:else class="quote-avatar quote-avatar-fallback">{{item.engineer.nickname[0]}}</view>
             <view class="quote-engineer-info">
-              <text class="quote-engineer-name">👨‍💼 {{item.engineer.nickname}}</text>
-              <text wx:if="{{item.engineer.level}}" class="engineer-level-tag level-{{item.engineer.level.key}}">{{item.engineer.level.icon}} {{item.engineer.level.name}}</text>
+              <view class="ui-icon-copy quote-engineer-name"><ui-symbol value="👨‍💼"/> {{item.engineer.nickname}}</view>
+              <view wx:if="{{item.engineer.level}}" class="ui-icon-copy engineer-level-tag level-{{item.engineer.level.key}}"><ui-symbol value="{{item.engineer.level.icon}}"/> {{item.engineer.level.name}}</view>
               <text class="quote-sub">已完成 {{item.engineer.completedCount}} 单 · {{item.engineer.reviewCount ? ('★ ' + item.engineer.averageScore + '（' + item.engineer.reviewCount + '条）') : '暂无评价'}}</text>
             </view>
           </view>
           <text class="status st-blue" wx:if="{{item.status === 'SELECTED'}}">已选中</text>
         </view>
         <view class="quote-body">
-          <text class="quote-price">💰 ¥{{item.amountY}}</text>
-          <text class="quote-days">📅 承诺 {{item.days}} 天</text>
+          <view class="ui-icon-copy quote-price"><ui-symbol value="💰"/> ¥{{item.amountY}}</view>
+          <view class="ui-icon-copy quote-days"><ui-symbol value="📅"/> 承诺 {{item.days}} 天</view>
         </view>
         <text class="quote-desc" wx:if="{{item.solution}}">{{item.solution}}</text>
         <view class="quote-profile-link" bindtap="goEngineerProfile" data-id="{{item.engineer.id}}">查看工程师资料、案例与评价 ›</view>
         <view class="quote-actions" wx:if="{{order.status === 'QUOTING' && item.status === 'PENDING'}}">
           <view class="btn-quote-chat" bindtap="goQuoteChat" data-id="{{item.id}}">
-            {{chatOpeningQuoteId === item.id ? '进入中…' : '💬 先聊一聊'}}
+            <ui-symbol value="{{chatOpeningQuoteId === item.id ? '进入中…' : '💬 先聊一聊'}}"/>
           </view>
           <view class="btn-select"
             bindtap="select" data-id="{{item.id}}" data-nick="{{item.engineer.nickname}}"
@@ -153,14 +153,14 @@ module.exports = {
         <text class="pay-amount">¥{{order.finalY}}</text>
       </view>
       <button class="btn-pay {{paying ? 'disabled' : ''}}" bindtap="pay">
-        {{paying ? '处理中…' : '💳 立即支付'}}
+        <ui-symbol value="{{paying ? '处理中…' : '💳 立即支付'}}"/>
       </button>
       <view class="pay-tip">超时未支付将自动释放选标；真实通道将调起微信支付收银台</view>
     </view>
 
     <!-- 验收 -->
     <view class="action-card" wx:if="{{order.status === 'DELIVERED'}}">
-      <button class="btn-primary-block" bindtap="confirmDone">✅ 确认验收，完成订单</button>
+      <button class="btn-primary-block" bindtap="confirmDone"><ui-symbol value="✅"/> 确认验收，完成订单</button>
       <button class="btn-danger-block" bindtap="rejectDelivery">驳回本次交付</button>
     </view>
 
@@ -176,7 +176,7 @@ module.exports = {
 
     <!-- 退款申请进行中 -->
     <view class="refund-request-card" wx:if="{{refundRequest && refundRequest.status === 'PENDING'}}">
-      <text class="refund-request-title">↩️ 退款申请已提交</text>
+      <view class="ui-icon-copy refund-request-title"><ui-symbol value="↩"/> 退款申请已提交</view>
       <text class="refund-request-desc">等待工程师确认；若对方拒绝，你可自行决定是否申请客服介入。</text>
       <view class="refund-reason-box">
         <text class="refund-detail-label">退款理由</text>
@@ -187,7 +187,7 @@ module.exports = {
         <view class="refund-file-row" wx:for="{{refundRequest.files}}" wx:key="fileId"
           bindtap="download" data-id="{{item.fileId}}">
           <view class="refund-file-copy">
-            <text class="refund-file-name">📎 {{item.name}}</text>
+            <view class="ui-icon-copy refund-file-name"><ui-symbol value="📎"/> {{item.name}}</view>
             <text class="refund-file-size">{{item.sizeText}}</text>
           </view>
           <text class="refund-file-action">{{downloadingFileId === item.fileId ? '打开中…' : '查看'}}</text>
@@ -215,7 +215,7 @@ module.exports = {
         <view class="refund-file-row" wx:for="{{refundRequest.files}}" wx:key="fileId"
           bindtap="download" data-id="{{item.fileId}}">
           <view class="refund-file-copy">
-            <text class="refund-file-name">📎 {{item.name}}</text>
+            <view class="ui-icon-copy refund-file-name"><ui-symbol value="📎"/> {{item.name}}</view>
             <text class="refund-file-size">{{item.sizeText}}</text>
           </view>
           <text class="refund-file-action">{{downloadingFileId === item.fileId ? '打开中…' : '查看'}}</text>
@@ -228,12 +228,12 @@ module.exports = {
     <view class="action-section">
       <button class="btn-chat"
         wx:if="{{order.status === 'IN_PROGRESS' || order.status === 'DELIVERED' || order.status === 'COMPLETED'}}"
-        bindtap="goChat">💬 与工程师沟通</button>
-      <button class="btn-delete-order" wx:if="{{order.status === 'QUOTING'}}" bindtap="del">🗑️ 删除订单</button>
+        bindtap="goChat"><ui-symbol value="💬"/> 与工程师沟通</button>
+      <button class="btn-delete-order" wx:if="{{order.status === 'QUOTING'}}" bindtap="del"><ui-symbol value="🗑"/> 删除订单</button>
       <!-- 退款入口：工程师拒绝后由客户自主决定是否申请客服介入。 -->
       <button class="btn-refund"
         wx:if="{{(order.status === 'IN_PROGRESS' || order.status === 'DELIVERED') && !dispute && !refundRequest && !refundFormOpen}}"
-        bindtap="requestRefund">↩️ 发起退款</button>
+        bindtap="requestRefund"><ui-symbol value="↩"/> 发起退款</button>
     </view>
 
     <!-- 退款申请表：理由必填，附件选填 -->
@@ -263,7 +263,7 @@ module.exports = {
       <view class="refund-upload-list" wx:if="{{refundUploads.length}}">
         <view class="refund-upload-row" wx:for="{{refundUploads}}" wx:key="fileId">
           <view class="refund-file-copy">
-            <text class="refund-file-name">📎 {{item.name}}</text>
+            <view class="ui-icon-copy refund-file-name"><ui-symbol value="📎"/> {{item.name}}</view>
             <text class="refund-file-size">{{item.sizeText}}</text>
           </view>
           <text class="refund-remove-file" bindtap="removeRefundFile" data-index="{{index}}">删除</text>
@@ -285,7 +285,7 @@ module.exports = {
   <block wx:if="{{mode === 'market'}}">
     <view class="info-card" wx:if="{{order.myQuote}}">
       <view class="card-title-row">
-        <text class="card-title">💰 我的报价</text>
+        <view class="ui-icon-copy card-title"><ui-symbol value="💰"/> 我的报价</view>
         <text class="status st-blue">{{order.myQuote.status === 'PENDING' ? '待客户确认' : order.myQuote.status === 'SELECTED' ? '已选中' : order.myQuote.status}}</text>
       </view>
       <view class="info-row">
@@ -301,7 +301,7 @@ module.exports = {
     <!-- 同行报价：自己的报价仍在上方单独展示 -->
     <view class="info-card peer-quotes-card" wx:if="{{order.status === 'QUOTING' || peerQuotes.length}}">
       <view class="card-title-row">
-        <text class="card-title">📊 其他工程师报价（{{peerQuotes.length}}）</text>
+        <view class="ui-icon-copy card-title"><ui-symbol value="📊"/> 其他工程师报价（{{peerQuotes.length}}）</view>
         <text class="peer-quotes-tip">报价透明</text>
       </view>
       <view class="no-data-text" wx:if="{{!peerQuotes.length}}">暂时还没有其他工程师报价</view>
@@ -311,15 +311,15 @@ module.exports = {
             <image wx:if="{{item.engineer.avatarUrl}}" src="{{item.engineer.avatarUrl}}" class="quote-avatar" mode="aspectFill" />
             <view wx:else class="quote-avatar quote-avatar-fallback">{{item.engineer.nickname ? item.engineer.nickname[0] : '工'}}</view>
             <view class="quote-engineer-info">
-              <text class="quote-engineer-name">👨‍💼 {{item.engineer.nickname || '工程师'}}</text>
+              <view class="ui-icon-copy quote-engineer-name"><ui-symbol value="👨‍💼"/> {{item.engineer.nickname || '工程师'}}</view>
               <text class="quote-sub">已完成 {{item.engineer.completedCount}} 单 · {{item.engineer.reviewCount ? ('★ ' + item.engineer.averageScore + '（' + item.engineer.reviewCount + '条）') : '暂无评价'}}</text>
             </view>
           </view>
           <text class="status st-blue" wx:if="{{item.status === 'SELECTED'}}">已选中</text>
         </view>
         <view class="quote-body">
-          <text class="quote-price">💰 ¥{{item.amountY}}</text>
-          <text class="quote-days">📅 承诺 {{item.days}} 天</text>
+          <view class="ui-icon-copy quote-price"><ui-symbol value="💰"/> ¥{{item.amountY}}</view>
+          <view class="ui-icon-copy quote-days"><ui-symbol value="📅"/> 承诺 {{item.days}} 天</view>
         </view>
         <text class="quote-desc" wx:if="{{item.solution}}">{{item.solution}}</text>
         <view class="quote-profile-link" bindtap="goEngineerProfile" data-id="{{item.engineer.id}}">查看工程师资料、案例与评价 ›</view>
@@ -327,7 +327,7 @@ module.exports = {
     </view>
 
     <view class="invoice-engineer-card" wx:if="{{order.iAmSelected && order.status === 'COMPLETED'}}">
-      <text class="review-action-title">🧾 发票处理</text>
+      <view class="ui-icon-copy review-action-title"><ui-symbol value="🧾"/> 发票处理</view>
       <text class="review-action-desc">{{invoiceRequest ? ('客户申请：' + invoiceRequest.statusText) : '客户暂未申请发票'}}</text>
       <button class="invoice-action-btn" wx:if="{{invoiceRequest}}" bindtap="goInvoiceRequest">前往处理</button>
     </view>
@@ -339,7 +339,7 @@ module.exports = {
     <!-- 退款确认：待处理期间工程师只能同意或拒绝 -->
     <view class="refund-decision-card" wx:if="{{refundRequest && refundRequest.status === 'PENDING'}}">
       <view class="refund-decision-head">
-        <text class="refund-decision-icon">↩️</text>
+        <view class="ui-icon-copy refund-decision-icon"><ui-symbol value="↩"/></view>
         <view class="refund-decision-copy">
           <text class="refund-decision-title">客户申请退款</text>
           <text class="refund-decision-desc">订单履约已暂停，请确认是否同意退款。拒绝后将恢复原订单状态，客户可自行申请客服介入。</text>
@@ -354,7 +354,7 @@ module.exports = {
         <view class="refund-file-row" wx:for="{{refundRequest.files}}" wx:key="fileId"
           bindtap="download" data-id="{{item.fileId}}">
           <view class="refund-file-copy">
-            <text class="refund-file-name">📎 {{item.name}}</text>
+            <view class="ui-icon-copy refund-file-name"><ui-symbol value="📎"/> {{item.name}}</view>
             <text class="refund-file-size">{{item.sizeText}}</text>
           </view>
           <text class="refund-file-action">{{downloadingFileId === item.fileId ? '打开中…' : '查看'}}</text>
@@ -370,23 +370,23 @@ module.exports = {
 
     <view class="action-section" wx:if="{{!refundRequest || refundRequest.status !== 'PENDING'}}">
       <button class="btn-primary-block" wx:if="{{order.status === 'QUOTING'}}" bindtap="goQuote">
-        {{order.myQuote ? '✏️ 修改报价' : '💰 我要报价'}}
+        <ui-symbol value="{{order.myQuote ? '✏️ 修改报价' : '💰 我要报价'}}"/>
       </button>
       <button class="btn-deliver {{delivering ? 'disabled' : ''}}"
         wx:if="{{order.iAmSelected && order.status === 'IN_PROGRESS'}}" bindtap="deliver">
-        {{delivering ? '上传中…' : '📦 上传成果并交付'}}
+        <ui-symbol value="{{delivering ? '上传中…' : '📦 上传成果并交付'}}"/>
       </button>
       <button class="btn-chat"
         wx:if="{{order.iAmSelected && (order.status === 'IN_PROGRESS' || order.status === 'DELIVERED' || order.status === 'COMPLETED')}}"
-        bindtap="goChat">💬 与客户沟通</button>
+        bindtap="goChat"><ui-symbol value="💬"/> 与客户沟通</button>
       <!-- 纠纷入口：被选中且已进入履约阶段，无进行中纠纷时发起 -->
       <button class="btn-dispute"
         wx:if="{{order.iAmSelected && order.status !== 'QUOTING' && order.status !== 'REFUND_PENDING' && order.status !== 'CLOSED' && order.status !== 'CANCELLED' && !dispute}}"
-        bindtap="goDisputeForm">⚖️ 发起纠纷</button>
+        bindtap="goDisputeForm"><ui-symbol value="⚖"/> 发起纠纷</button>
     </view>
 
     <view class="info-card" wx:if="{{order.customer}}">
-      <text class="card-title">👤 客户</text>
+      <view class="ui-icon-copy card-title"><ui-symbol value="👤"/> 客户</view>
       <text class="desc-text">{{order.customer.nickname}}（支付后可见联系方式）</text>
     </view>
   </block>

@@ -2,7 +2,7 @@
   <view class="page-header">
 
     <view>
-      <text class="page-title">🔍 浏览需求</text>
+      <view class="ui-icon-copy page-title"><ui-symbol value="🔍"/> 浏览需求</view>
       <text class="page-subtitle">寻找适合你的仿真项目</text>
     </view>
     <text class="hint-text">了解市场行情</text>
@@ -29,7 +29,7 @@
   <view class="filter-sort-container">
     <view class="filter-section">
       <view class="section-header">
-        <text class="section-title">📂 分类筛选</text>
+        <view class="ui-icon-copy section-title"><ui-symbol value="📂"/> 分类筛选</view>
         <button class="filter-reset {{category === '' ? 'active' : ''}}" data-value="" bindtap="pickCategory">全部分类 {{category === '' ? '✓' : ''}}</button>
       </view>
       <view class="filter-bar">
@@ -44,18 +44,18 @@
 
     <view class="sort-section">
       <view class="section-header">
-        <text class="section-title">📊 排序方式</text>
+        <view class="ui-icon-copy section-title"><ui-symbol value="📊"/> 排序方式</view>
         <text class="section-hint">按需排序</text>
       </view>
       <view class="sort-bar">
         <button class="sort-item {{sort === 'latest' ? 'active' : ''}}"
           data-value="latest" bindtap="pickSort">
-          <text class="sort-icon">🕐</text>
+          <view class="ui-icon-copy sort-icon"><ui-symbol value="🕐"/></view>
           <text class="sort-name">最新发布</text>
         </button>
         <button class="sort-item {{sort === 'hot' ? 'active' : ''}}"
           data-value="hot" bindtap="pickSort">
-          <text class="sort-icon">🔥</text>
+          <view class="ui-icon-copy sort-icon"><ui-symbol value="🔥"/></view>
           <text class="sort-name">最热门</text>
         </button>
       </view>
@@ -94,9 +94,9 @@
 
       <view class="req-footer">
         <view class="req-meta">
-          <text class="req-time">📆 {{item.time}}</text>
-          <text class="req-quote-count">💬 {{item.quoteCount || 0}} 个报价</text>
-          <text class="req-hot" wx:if="{{sort === 'hot'}}">🔥 热度 {{item.hotValue}}</text>
+          <view class="ui-icon-copy req-time"><ui-symbol value="📆"/> {{item.time}}</view>
+          <view class="ui-icon-copy req-quote-count"><ui-symbol value="💬"/> {{item.quoteCount || 0}} 个报价</view>
+          <view class="ui-icon-copy req-hot" wx:if="{{sort === 'hot'}}"><ui-symbol value="🔥"/> 热度 {{item.hotValue}}</view>
         </view>
         <text class="quoted-text" wx:if="{{item.myQuote}}">已提交报价</text>
         <button wx:else class="quote-btn btn-para" data-id="{{item.id}}"
@@ -106,7 +106,7 @@
     </view>
 
     <view class="empty-state" wx:if="{{!loading && !items.length}}">
-      <text class="empty-icon">🔍</text>
+      <view class="ui-icon-copy empty-icon"><ui-symbol value="🔍"/></view>
       <text class="empty-text">暂无可接单需求</text>
       <text class="empty-desc">当前分类下没有需求，试试其他分类</text>
     </view>

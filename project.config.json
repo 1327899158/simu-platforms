@@ -15,6 +15,7 @@
     "minifyWXML": true
   },
   "compileType": "miniprogram",
+  "miniprogramRoot": "miniapp/",
   "simulatorPluginLibVersion": {},
   "packOptions": {
     "ignore": [],

@@ -24,6 +24,7 @@ function withTimeout(promise, ms) {
 }
 
 Page({
+  viewPeer(){if(this.data.convId)wx.navigateTo({url:'/pages/peer-profile/index?convId='+encodeURIComponent(this.data.convId)});},
   reportPeer(){if(this.data.peer)require('../../utils/community').report(this.data.peer.id);},
   async blockPeer() {
     if (this._blocking || !this.data.peer) return;

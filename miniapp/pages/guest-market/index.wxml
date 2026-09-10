@@ -18,7 +18,7 @@
   </view>
 
   <view class="unlock-card" bindtap="goLogin">
-    <view class="unlock-icon">🔓</view>
+    <view class="unlock-icon"><ui-symbol value="🔓"/></view>
     <view class="unlock-content"><text class="unlock-title">登录解锁完整接单能力</text><text class="unlock-copy">查看预算、附件、客户需求并立即报价</text></view>
     <text class="unlock-arrow">›</text>
   </view>
@@ -66,8 +66,8 @@
   </view>
 
   <view class="guest-tabbar">
-    <view class="guest-tab" data-page="home" bindtap="goTab"><text class="tab-icon">⌂</text><text>首页</text></view>
-    <view class="guest-tab active" data-page="market" bindtap="goTab"><text class="tab-icon">▤</text><text>大厅</text></view>
-    <view class="guest-tab" data-page="profile" bindtap="goTab"><text class="tab-icon">☺</text><text>我的</text></view>
+    <view class="guest-tab" data-page="home" bindtap="goTab"><view class="ui-icon-copy tab-icon"><ui-symbol value="⌂"/></view><text>首页</text></view>
+    <view class="guest-tab active" data-page="market" bindtap="goTab"><view class="ui-icon-copy tab-icon"><ui-symbol value="▤"/></view><text>大厅</text></view>
+    <view class="guest-tab" data-page="profile" bindtap="goTab"><view class="ui-icon-copy tab-icon"><ui-symbol value="☺"/></view><text>我的</text></view>
   </view>
 </view>

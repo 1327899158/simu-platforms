@@ -9,6 +9,7 @@ function resolveUrl(url) {
 }
 
 Page({
+  openPeer(e){wx.navigateTo({url:'/pages/peer-profile/index?convId='+encodeURIComponent(e.currentTarget.dataset.id)});},
   data: { items: [], role: '', unreadTotal: 0 },
   onShow() {
     const user = ensureLogin();

@@ -237,3 +237,5 @@
 .btn-action { border-radius: 999rpx; }
 
 @import "../../theme.wxss";
+/* 筛选与卡片操作分行，长订单号不再挤压按钮。 */
+.page-container .filter-panel{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14rpx}.page-container .filter-item{width:100%;min-width:0;box-sizing:border-box;margin:0;padding:18rpx 14rpx;min-height:78rpx;justify-content:center;background:#f5f7f7;border:1rpx solid #d2dfe1;color:#526b70;box-shadow:none}.page-container .filter-item.active{background:#e4f2f7;border-color:#8bbdcc;color:#315f70}.quote-footer{display:flex;flex-direction:column;align-items:stretch;gap:20rpx}.quote-time{word-break:break-all;white-space:normal}.quote-actions{display:flex;justify-content:flex-end;gap:16rpx;width:100%}.quote-actions .btn-action{margin:0;min-width:144rpx;padding:18rpx 26rpx;line-height:1.4;font-size:25rpx;box-sizing:border-box}.quote-actions .detail{background:#c9e9f3;color:#305e70}.quote-actions .withdraw{background:#f6f7f7;color:#7c8586;border:1rpx solid #d6dfe1}

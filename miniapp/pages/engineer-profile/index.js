@@ -18,7 +18,7 @@ Page({
     const user = ensureLogin();
     if (!user) return;
     if (!this.data.id) return wx.navigateBack();
-    this.setData({ canContact: user.role === 'CUSTOMER' && user.id !== this.data.id });
+    this.setData({ canContact: user.role === 'CUSTOMER' && user.id !== this.data.id, canManagePeer: ['CUSTOMER', 'ENGINEER'].includes(user.role) && user.id !== this.data.id });
     this.load();
   },
   onPullDownRefresh() { this.load().finally(() => wx.stopPullDownRefresh()); },

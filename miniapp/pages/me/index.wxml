@@ -3,7 +3,7 @@
 
   <view class="hero hero-sunny me-hero" wx:if="{{user}}">
     <image wx:if="{{user.avatarUrl}}" class="me-avatar" src="{{user.avatarUrl}}" mode="aspectFill" />
-    <view wx:else class="me-avatar me-avatar-fb">{{user.nickname ? user.nickname[0] : '👤'}}</view>
+    <view wx:else class="me-avatar me-avatar-fb">{{user.nickname ? user.nickname[0] : '用'}}</view>
     <view class="me-info">
       <text class="me-name">Hi，{{user.nickname || '用户'}}</text>
       <view class="me-badges"><text class="badge-y">{{roleBadgeText}}</text></view>
@@ -11,7 +11,7 @@
     <button class="me-edit" bindtap="goEdit">编辑资料 ›</button>
   </view>
 
-  <view class="card-sky spread level-entry" wx:if="{{user.role === 'ENGINEER'}}" bindtap="goLevel"><view class="entry-icon">{{engineerLevel.icon || '🏅'}}</view><view class="sky-copy"><text class="sky-title">{{engineerLevel.name || '工程师等级'}}</text><text class="sky-desc">查看晋级条件，了解成长进度</text></view><text class="entry-arrow">›</text></view>
+  <view class="card-sky spread level-entry" wx:if="{{user.role === 'ENGINEER'}}" bindtap="goLevel"><image class="entry-icon menu-vector" src="/assets/icons/award.svg" mode="aspectFit"/><view class="sky-copy"><text class="sky-title">{{engineerLevel.name || '工程师等级'}}</text><text class="sky-desc">查看晋级条件，了解成长进度</text></view><text class="entry-arrow">›</text></view>
   <view class="data-card-y" wx:if="{{user}}">
     <view class="stat"><b>{{user.completedCount || 0}}</b><span>完成订单</span></view>
     <view class="stat"><b>{{user.averageScore || '—'}}</b><span>好评评分</span></view>
@@ -20,7 +20,7 @@
 
   <view class="card-sky spread" wx:if="{{user}}" bindtap="goQualification">
     <view class="sky-copy">
-      <text class="sky-title">🪪 身份认证</text>
+      <text class="sky-title">身份认证</text>
       <text class="sky-desc">当前状态：{{verifyText}}</text>
     </view>
     <text class="btn-y">查看</text>
@@ -36,55 +36,55 @@
 
   <view class="menu-card" wx:if="{{user}}">
     <view class="menu-row" bindtap="goQualification">
-      <text class="m-icon">🪪</text>
+      <image class="m-icon menu-vector" src="/assets/icons/identity.svg" mode="aspectFit"/>
       <text class="m-title">身份认证</text>
       <text class="m-arrow">›</text>
     </view>
     <view class="menu-row" wx:if="{{user.role === 'CUSTOMER'}}" bindtap="goOrders">
-      <text class="m-icon">📋</text>
+      <image class="m-icon menu-vector" src="/assets/icons/orders.svg" mode="aspectFit"/>
       <text class="m-title">我的订单</text>
       <text class="m-arrow">›</text>
     </view>
     <view class="menu-row" wx:if="{{user.role === 'CUSTOMER'}}" bindtap="goInvoices">
-      <text class="m-icon">🧾</text>
+      <image class="m-icon menu-vector" src="/assets/icons/invoice.svg" mode="aspectFit"/>
       <text class="m-title">发票管理</text>
       <text class="m-arrow">›</text>
     </view>
     <view class="menu-row" wx:if="{{user.role === 'ENGINEER'}}" bindtap="goMyQuotes">
-      <text class="m-icon">💰</text>
+      <image class="m-icon menu-vector" src="/assets/icons/quote.svg" mode="aspectFit"/>
       <text class="m-title">我的报价</text>
       <text class="m-arrow">›</text>
     </view>
-    <view class="menu-row" wx:if="{{user.role === 'ENGINEER'}}" bindtap="goCases"><text class="m-icon">📚</text><text class="m-title">案例展示</text><text class="m-arrow">›</text></view>
+    <view class="menu-row" wx:if="{{user.role === 'ENGINEER'}}" bindtap="goCases"><image class="m-icon menu-vector" src="/assets/icons/cases.svg" mode="aspectFit"/><text class="m-title">案例展示</text><text class="m-arrow">›</text></view>
     <view class="menu-row" wx:if="{{user.role === 'ENGINEER'}}" bindtap="goMyReviews">
-      <text class="m-icon">⭐</text>
+      <image class="m-icon menu-vector" src="/assets/icons/review.svg" mode="aspectFit"/>
       <text class="m-title">我的评价</text>
       <text class="m-arrow">›</text>
     </view>
-    <view class="menu-row" wx:if="{{user.role === 'CUSTOMER' || user.role === 'ENGINEER'}}" bindtap="goBlacklist"><text class="m-icon">🚫</text><text class="m-title">黑名单</text><text class="m-arrow">›</text></view>
-    <view class="menu-row" bindtap="communityPage" data-page="favorites"><text class="m-icon">♥</text><text class="m-title">我的收藏</text><text class="m-arrow">›</text></view>
-    <view class="menu-row" bindtap="communityPage" data-page="help"><text class="m-icon">?</text><text class="m-title">帮助、FAQ与关于我们</text><text class="m-arrow">›</text></view>
-    <view class="menu-row" bindtap="communityPage" data-page="support"><text class="m-icon">✉</text><text class="m-title">意见反馈 / 我的举报</text><text class="m-arrow">›</text></view>
-    <view class="menu-row" bindtap="communityPage" data-page="cooperation"><text class="m-icon">🤝</text><text class="m-title">常驻合作 / 定向需求</text><text class="m-arrow">›</text></view>
-    <view class="menu-row" wx:if="{{user.role==='ENGINEER'}}" bindtap="communityPage" data-page="incentives"><text class="m-icon">🏅</text><text class="m-title">激励中心</text><text class="m-arrow">›</text></view>
-    <view class="menu-row" bindtap="communityPage" data-page="account-closure"><text class="m-icon">⚙</text><text class="m-title">注销账号</text><text class="m-arrow">›</text></view>
+    <view class="menu-row" wx:if="{{user.role === 'CUSTOMER' || user.role === 'ENGINEER'}}" bindtap="goBlacklist"><image class="m-icon menu-vector" src="/assets/icons/block.svg" mode="aspectFit"/><text class="m-title">黑名单</text><text class="m-arrow">›</text></view>
+    <view class="menu-row" bindtap="communityPage" data-page="favorites"><image class="m-icon menu-vector" src="/assets/icons/favorite.svg" mode="aspectFit"/><text class="m-title">我的收藏</text><text class="m-arrow">›</text></view>
+    <view class="menu-row" bindtap="communityPage" data-page="help"><image class="m-icon menu-vector" src="/assets/icons/help.svg" mode="aspectFit"/><text class="m-title">帮助、FAQ与关于我们</text><text class="m-arrow">›</text></view>
+    <view class="menu-row" bindtap="communityPage" data-page="support"><image class="m-icon menu-vector" src="/assets/icons/support.svg" mode="aspectFit"/><text class="m-title">意见反馈 / 我的举报</text><text class="m-arrow">›</text></view>
+    <view class="menu-row" bindtap="communityPage" data-page="cooperation"><image class="m-icon menu-vector" src="/assets/icons/cooperation.svg" mode="aspectFit"/><text class="m-title">常驻合作 / 定向需求</text><text class="m-arrow">›</text></view>
+    <view class="menu-row" wx:if="{{user.role==='ENGINEER'}}" bindtap="communityPage" data-page="incentives"><image class="m-icon menu-vector" src="/assets/icons/award.svg" mode="aspectFit"/><text class="m-title">激励中心</text><text class="m-arrow">›</text></view>
+    <view class="menu-row" bindtap="communityPage" data-page="account-closure"><image class="m-icon menu-vector" src="/assets/icons/settings.svg" mode="aspectFit"/><text class="m-title">注销账号</text><text class="m-arrow">›</text></view>
     <view class="menu-row" bindtap="goMyDisputes">
-      <text class="m-icon">⚖️</text>
+      <image class="m-icon menu-vector" src="/assets/icons/dispute.svg" mode="aspectFit"/>
       <text class="m-title">我的纠纷</text>
       <text class="m-arrow">›</text>
     </view>
     <view class="menu-row" bindtap="goAccountSecurity">
-      <text class="m-icon">🔑</text>
+      <image class="m-icon menu-vector" src="/assets/icons/security.svg" mode="aspectFit"/>
       <text class="m-title">{{user.username ? '重置密码' : '设置账号和密码'}}</text>
       <text class="m-arrow">›</text>
     </view>
     <view class="menu-row" wx:if="{{user.role === 'ENGINEER'}}" bindtap="goInvoices">
-      <text class="m-icon">🧾</text>
+      <image class="m-icon menu-vector" src="/assets/icons/invoice.svg" mode="aspectFit"/>
       <text class="m-title">发票处理</text>
       <text class="m-arrow">›</text>
     </view>
     <view class="menu-row" bindtap="switchRole">
-      <text class="m-icon">🔄</text>
+      <image class="m-icon menu-vector" src="/assets/icons/switch.svg" mode="aspectFit"/>
       <text class="m-title">切换角色（演示）</text>
       <text class="m-arrow">›</text>
     </view>

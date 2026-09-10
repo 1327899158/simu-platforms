@@ -232,3 +232,4 @@
 .chat-header .header-title{flex:1;min-width:0}.chat-header button{margin:0 0 0 20rpx;flex-shrink:0;color:#8c4141;font-size:24rpx}
 
 @import "../../theme.wxss";
+.chat-header{justify-content:space-between;gap:18rpx}.chat-header .header-title{flex:1;min-width:0;text-align:left}.chat-header .peer-profile-link{flex-shrink:0;margin:0;padding:14rpx 22rpx;border:1rpx solid #ccdee3;background:#edf6f8;color:#41788a;border-radius:24rpx;font-size:23rpx;line-height:1.5}.peer-profile-link::after{border:0}

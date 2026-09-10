@@ -7,7 +7,7 @@
   <view class="section-title">处理进度</view><view class="card"><view class="timeline"><view wx:for="{{detail.events}}" wx:key="createdAt" class="timeline-item"><view class="badge">{{item.statusText}}</view><view class="caption">{{item.createdAt}}</view><view class="body">{{item.note}}</view></view></view></view>
  </block>
  <block wx:else>
-  <view class="hero between"><view class="grow"><view class="eyebrow">{{kind==='REPORT'?'TRUST &amp; SAFETY':'YOUR VOICE MATTERS'}}</view><view class="title">{{kind==='REPORT'?'举报用户':'意见反馈'}}</view><view class="muted">{{kind==='REPORT'?'让每一次专业合作更安心':'每一条建议，都让平台更好一点'}}</view></view><view class="hero-icon">{{kind==='REPORT'?'⚑':'✉'}}</view></view>
+  <view class="hero between"><view class="grow"><view class="eyebrow">{{kind==='REPORT'?'TRUST &amp; SAFETY':'YOUR VOICE MATTERS'}}</view><view class="title">{{kind==='REPORT'?'举报用户':'意见反馈'}}</view><view class="muted">{{kind==='REPORT'?'让每一次专业合作更安心':'每一条建议，都让平台更好一点'}}</view></view><view class="hero-icon"><ui-symbol value="{{kind==='REPORT'?'⚑':'✉'}}"/></view></view>
   <view class="notice">{{kind==='REPORT'?'举报由管理员核实处理，与拉黑独立，不会自动处罚对方。请如实描述，并保护无关人员的个人信息。':'欢迎反馈产品建议与使用体验。提交后可在下方查看受理情况及处理结果。'}}</view>
   <block wx:if="{{kind==='REPORT'}}">
    <view class="card between"><view class="avatar">工</view><view class="grow"><view class="badge">举报对象</view><view class="muted">{{targetId}}</view></view></view>
@@ -26,7 +26,7 @@
   <view class="section-title">我的反馈与举报<text class="caption">进度记录</text></view>
   <view wx:if="{{error}}" class="error" bindtap="retry">{{error}} · 重试</view>
   <view wx:for="{{items}}" wx:key="id" class="card between" data-id="{{item.id}}" bindtap="open"><view class="grow"><view class="title">{{item.category}}</view><view class="caption">{{item.createdAt}}</view></view><view class="badge">{{item.statusText}} ›</view></view>
-  <view wx:if="{{!items.length&&!error}}" class="card empty"><view class="empty-icon">✉</view><view class="muted">暂无提交记录，期待您的建议</view></view>
+  <view wx:if="{{!items.length&&!error}}" class="card empty"><view class="empty-icon"><ui-symbol value="✉"/></view><view class="muted">暂无提交记录，期待您的建议</view></view>
   <button wx:if="{{hasMore}}" bindtap="more">加载更多记录</button>
  </block>
 </view>

@@ -3,13 +3,13 @@
  <view wx:if="{{error}}" class="error" bindtap="load">{{error}} · 重试</view>
  <block wx:if="{{info}}">
   <block wx:if="{{info.request.status==='PENDING'}}">
-   <view class="result"><view class="result-icon">⏳</view><view class="title">注销申请已提交</view><view class="muted">账号已进入15天冷静期</view><view class="caption">预计执行时间：{{info.request.executeAfter}}</view></view>
+   <view class="result"><view class="result-icon"><ui-symbol value="⏳"/></view><view class="title">注销申请已提交</view><view class="muted">账号已进入15天冷静期</view><view class="caption">预计执行时间：{{info.request.executeAfter}}</view></view>
    <view class="notice"><view class="title">如何取消注销？</view>冷静期内可登录本账号，在本页点击“撤销注销申请”恢复正常使用。登录本身不会自动撤销。</view>
    <view class="error" wx:if="{{info.request.lastError}}">执行暂缓：{{info.request.lastError}}。您可以撤销申请后处理。</view>
    <view class="section-title">冷静期内账号状态</view><view class="card body">• 可查看已有资料，暂停新增业务。&#10;• 到期执行前，会再次检查未完成事务。&#10;• 注销完成后，账号停用并处理个人档案。</view>
   </block>
   <block wx:else>
-   <view class="hero between"><view class="grow"><view class="eyebrow">ACCOUNT &amp; PRIVACY</view><view class="title">注销账号</view><view class="muted">离开之前，请认真阅读以下说明</view></view><view class="hero-icon">☘</view></view>
+   <view class="hero between"><view class="grow"><view class="eyebrow">ACCOUNT &amp; PRIVACY</view><view class="title">注销账号</view><view class="muted">离开之前，请认真阅读以下说明</view></view><view class="hero-icon"><ui-symbol value="☘"/></view></view>
    <view class="notice warning">提交后进入15天冷静期，期间可以主动撤销。到期检查通过后执行注销，请谨慎操作。</view>
   </block>
   <view class="section-title">注销前置检查<text class="badge">{{info.blockers.length?'待处理':'检查通过'}}</text></view>

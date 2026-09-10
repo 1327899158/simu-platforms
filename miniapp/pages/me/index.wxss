@@ -251,3 +251,4 @@
 .page-container .btn-y{background:#fff5bf;color:#776728;border:1rpx solid #ece4bd;padding:12rpx 26rpx;font-size:24rpx;flex-shrink:0}
 .page-container .data-card-y{background:rgba(255,255,255,.72);border:1rpx solid rgba(255,255,255,.8)}
 .page-container .verify-hint{color:#6c8184;line-height:1.7;margin:0 12rpx 24rpx}
+.page-container .menu-vector{width:50rpx;height:50rpx;flex-shrink:0;display:block;background:transparent}.page-container .entry-icon.menu-vector{width:56rpx;height:56rpx}

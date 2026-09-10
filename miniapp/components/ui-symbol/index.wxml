@@ -1,0 +1,1 @@
+<view class="symbols"><block wx:for="{{parts}}" wx:key="index"><image wx:if="{{item.src}}" class="symbol" src="{{item.src}}" mode="aspectFit"/><text wx:else>{{item.text}}</text></block></view>

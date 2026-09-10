@@ -1,0 +1,4 @@
+<button wx:if="{{enabled&&userId}}" class="more" bindtap="open" aria-label="更多用户操作">•••</button>
+<view wx:if="{{opened}}" class="mask" bindtap="close" catchtouchmove="noop">
+ <view class="sheet" catchtap="noop"><view class="handle"></view><button class="action" bindtap="block" disabled="{{busy}}" loading="{{busy}}">加入黑名单</button><button class="action report" bindtap="report" disabled="{{busy}}">举报</button><button class="action cancel" bindtap="close" disabled="{{busy}}">取消</button></view>
+</view>

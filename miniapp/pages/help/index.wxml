@@ -1,12 +1,12 @@
 
 <view class="community">
- <view class="hero between"><view class="grow"><view class="eyebrow">HELP &amp; SUPPORT</view><view class="title">帮助与设置</view><view class="muted">常见问题，在这里找到答案</view></view><view class="hero-icon">☘</view></view>
+ <view class="hero between"><view class="grow"><view class="eyebrow">HELP &amp; SUPPORT</view><view class="title">帮助与设置</view><view class="muted">常见问题，在这里找到答案</view></view><view class="hero-icon"><ui-symbol value="☘"/></view></view>
  <view class="tabs"><button class="{{!filter?'active':''}}" data-kind="" bindtap="filter">全部</button><button class="{{filter==='FAQ'?'active':''}}" data-kind="FAQ" bindtap="filter">常见问题</button><button class="{{filter==='HELP'?'active':''}}" data-kind="HELP" bindtap="filter">帮助</button><button class="{{filter==='ABOUT'?'active':''}}" data-kind="ABOUT" bindtap="filter">关于我们</button></view>
  <view class="error" wx:if="{{error}}" bindtap="load">{{error}} · 重试</view>
  <block wx:for="{{items}}" wx:key="id"><view wx:if="{{!filter||filter===item.kind}}" class="card">
  <view wx:if="{{item.kind==='ABOUT'}}" class="result"><view class="avatar" style="margin:0 auto 20rpx">仿</view><view class="title">{{item.title}}</view><view class="body">{{item.content}}</view></view>
  <block wx:else><view class="between" data-id="{{item.id}}" bindtap="expand"><view class="grow"><view class="badge">{{item.kind==='FAQ'?'常见问题':'使用帮助'}}</view><view class="title" style="margin-top:18rpx">{{item.title}}</view></view><text>{{expanded===item.id?'−':'＋'}}</text></view><view wx:if="{{expanded===item.id}}" class="body list-row">{{item.content}}</view></block>
  </view></block>
- <view wx:if="{{!items.length&&!error}}" class="card empty"><view class="empty-icon">☘</view><view class="title">帮助内容正在准备中</view><view class="muted">您也可以先提交反馈，告诉我们遇到的问题</view></view>
- <view class="card between" bindtap="feedback"><view class="avatar">✉</view><view class="grow"><view class="title">没有找到答案？</view><view class="muted">提交意见反馈 / 查看我的反馈与举报</view></view><text>›</text></view>
+ <view wx:if="{{!items.length&&!error}}" class="card empty"><view class="empty-icon"><ui-symbol value="☘"/></view><view class="title">帮助内容正在准备中</view><view class="muted">您也可以先提交反馈，告诉我们遇到的问题</view></view>
+ <view class="card between" bindtap="feedback"><view class="avatar"><ui-symbol value="✉"/></view><view class="grow"><view class="title">没有找到答案？</view><view class="muted">提交意见反馈 / 查看我的反馈与举报</view></view><text>›</text></view>
 </view>

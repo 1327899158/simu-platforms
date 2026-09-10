@@ -1,7 +1,7 @@
 <view class="page-container">
 
   <view class="hero illustrated-panel"><image class="panel-art support-art" src="/assets/commit.png" mode="aspectFit" aria-hidden="true"/>
-    <text class="hero-title">⚠️ 发起纠纷</text>
+    <view class="ui-icon-copy hero-title"><ui-symbol value="⚠"/> 发起纠纷</view>
     <text class="hero-desc">纠纷发起后订单将暂停处理，等待双方举证与平台仲裁</text>
   </view>
 
@@ -12,7 +12,7 @@
       <view wx:for="{{reasons}}" wx:key="key"
         class="reason-item {{reasonType === item.key ? 'active' : ''}}"
         data-key="{{item.key}}" bindtap="pickReason">
-        <text class="reason-icon">{{item.icon}}</text>
+        <view class="ui-icon-copy reason-icon"><ui-symbol value="{{item.icon}}"/></view>
         <text class="reason-label">{{item.label}}</text>
       </view>
     </view>
@@ -32,7 +32,7 @@
     <text class="card-subtitle">可上传聊天记录截图、成果文件等，作为仲裁依据</text>
     <view class="evid-list" wx:if="{{uploads.length}}">
       <view class="evid-item" wx:for="{{uploads}}" wx:key="fileId">
-        <text class="evid-name">📎 {{item.name}}</text>
+        <view class="ui-icon-copy evid-name"><ui-symbol value="📎"/> {{item.name}}</view>
         <text class="evid-size">{{item.sizeText}}</text>
         <text class="evid-remove" data-index="{{index}}" bindtap="removeEvidence">✕</text>
       </view>

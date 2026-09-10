@@ -2,7 +2,7 @@
 
   <!-- 顶部导航 -->
   <view class="page-header">
-    <text class="page-title">📋 我的报价</text>
+    <text class="page-title">我的报价</text>
     <text class="quote-count">共 {{currentCount}} 个</text>
   </view>
 
@@ -32,21 +32,21 @@
 
       <view class="quote-body">
         <view class="quote-row">
-          <text class="quote-label">💰 报价金额</text>
+          <text class="quote-label">报价金额</text>
           <text class="quote-value price">¥{{item.amountY}}</text>
         </view>
         <view class="quote-row">
-          <text class="quote-label">📅 工期</text>
+          <text class="quote-label">工期</text>
           <text class="quote-value">{{item.days}} 天</text>
         </view>
         <view class="quote-row" wx:if="{{item.solution}}">
-          <text class="quote-label">📝 方案</text>
+          <text class="quote-label">方案</text>
           <text class="quote-value">{{item.solution}}</text>
         </view>
       </view>
 
       <view class="quote-footer">
-        <text class="quote-time">📆 {{item.time}} · {{item.order.orderNo}}</text>
+        <text class="quote-time">{{item.time}} · {{item.order.orderNo}}</text>
         <view class="quote-actions">
           <button class="btn-action withdraw" wx:if="{{item.status === 'PENDING'}}"
             data-id="{{item.id}}" catchtap="withdraw">撤回</button>
@@ -57,10 +57,10 @@
 
     <!-- 空状态 -->
     <view class="empty-state" wx:if="{{!items.length}}">
-      <text class="empty-icon">📭</text>
+      <image class="empty-icon" src="/assets/icons-contrast/quote.svg" style="width:80rpx;height:80rpx"/>
       <text class="empty-text">暂无报价</text>
       <text class="empty-desc">去仿真大厅浏览并报价吧</text>
-      <button class="btn-sm" bindtap="gotoMarket">🔍 浏览需求</button>
+      <button class="btn-sm" bindtap="gotoMarket">浏览需求</button>
     </view>
   </view>
 

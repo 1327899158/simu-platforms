@@ -1,7 +1,7 @@
 <view class="page-container">
   <view class="hero-card">
     <view class="hero-orb orb-one"></view><view class="hero-orb orb-two"></view>
-    <text class="hero-eyebrow">⚡ 仿真服务平台</text>
+    <view class="ui-icon-copy hero-eyebrow"><ui-symbol value="⚡"/> 仿真服务平台</view>
     <view class="hero-title-wrap">
       <text class="hero-title">让仿真更简单 · 让结果更可靠</text>
       <view class="hero-title-shine-window">
@@ -11,7 +11,7 @@
     <text class="hero-subtitle">精准如光 · 高效交付</text>
     <text class="hero-desc">汇聚专业工程师，一站式解决复杂工程问题</text>
     <view class="hero-tags"><text>快速对接</text><text>精准匹配</text><text>价格透明</text><text>数据安全</text></view>
-    <view class="hero-action" bindtap="goLogin">✨ 立即体验</view>
+    <view class="hero-action" bindtap="goLogin"><ui-symbol value="✨"/> 立即体验</view>
   </view>
 
   <swiper class="quick-swiper" circular autoplay interval="3500" duration="450" current="{{activeBanner}}" bindchange="onBannerChange">
@@ -19,7 +19,7 @@
       <view class="quick-card {{item.theme}}" bindtap="goLogin">
         <view class="quick-light"></view>
         <view class="quick-content"><text class="quick-title">{{item.title}}</text><text class="quick-desc">{{item.desc}}</text><text class="quick-action">{{item.action}} →</text></view>
-        <text class="quick-icon">{{item.icon}}</text>
+        <view class="ui-icon-copy quick-icon"><ui-symbol value="{{item.icon}}"/></view>
       </view>
     </swiper-item>
   </swiper>
@@ -46,27 +46,27 @@
   </view>
 
   <view class="role-card">
-    <text class="section-title">🚀 选择你的角色</text>
+    <view class="ui-icon-copy section-title"><ui-symbol value="🚀"/> 选择你的角色</view>
     <text class="section-desc">注册成为客户或工程师，立即体验</text>
     <view class="role-grid">
-      <view class="role-option customer" bindtap="goLogin"><view class="role-top"><text class="role-icon">👤</text><text class="role-badge">推荐</text></view><text class="role-name">我是客户</text><text class="role-copy">发布仿真需求寻找专业工程师</text><text class="role-button">立即发布 →</text></view>
-      <view class="role-option engineer" bindtap="goLogin"><view class="role-top"><text class="role-icon">🛠️</text><text class="role-badge">热门</text></view><text class="role-name">我是工程师</text><text class="role-copy">接单赚钱展示专业技能</text><text class="role-button">立即接单 →</text></view>
+      <view class="role-option customer" bindtap="goLogin"><view class="role-top"><view class="ui-icon-copy role-icon"><ui-symbol value="👤"/></view><text class="role-badge">推荐</text></view><text class="role-name">我是客户</text><text class="role-copy">发布仿真需求寻找专业工程师</text><text class="role-button">立即发布 →</text></view>
+      <view class="role-option engineer" bindtap="goLogin"><view class="role-top"><view class="ui-icon-copy role-icon"><ui-symbol value="🛠"/></view><text class="role-badge">热门</text></view><text class="role-name">我是工程师</text><text class="role-copy">接单赚钱展示专业技能</text><text class="role-button">立即接单 →</text></view>
     </view>
   </view>
 
   <view class="benefit-section">
-    <text class="section-title">✨ 为什么选择我们</text>
+    <view class="ui-icon-copy section-title"><ui-symbol value="✨"/> 为什么选择我们</view>
     <view class="benefit-grid">
-      <view class="benefit-item"><text class="benefit-icon blue">🚀</text><text class="benefit-title">极速发布</text><text class="benefit-desc">3分钟完成需求发布，快速对接工程师</text></view>
-      <view class="benefit-item"><text class="benefit-icon purple">🧑‍🔬</text><text class="benefit-title">专业团队</text><text class="benefit-desc">汇聚行业顶尖工程师，覆盖全学科领域</text></view>
-      <view class="benefit-item"><text class="benefit-icon green">💰</text><text class="benefit-title">价格透明</text><text class="benefit-desc">清晰的报价体系，无隐形消费</text></view>
-      <view class="benefit-item"><text class="benefit-icon gold">🔒</text><text class="benefit-title">安全可靠</text><text class="benefit-desc">企业级数据加密，保护您的知识产权</text></view>
+      <view class="benefit-item"><view class="ui-icon-copy benefit-icon blue"><ui-symbol value="🚀"/></view><text class="benefit-title">极速发布</text><text class="benefit-desc">3分钟完成需求发布，快速对接工程师</text></view>
+      <view class="benefit-item"><view class="ui-icon-copy benefit-icon purple"><ui-symbol value="🧑‍🔬"/></view><text class="benefit-title">专业团队</text><text class="benefit-desc">汇聚行业顶尖工程师，覆盖全学科领域</text></view>
+      <view class="benefit-item"><view class="ui-icon-copy benefit-icon green"><ui-symbol value="💰"/></view><text class="benefit-title">价格透明</text><text class="benefit-desc">清晰的报价体系，无隐形消费</text></view>
+      <view class="benefit-item"><view class="ui-icon-copy benefit-icon gold"><ui-symbol value="🔒"/></view><text class="benefit-title">安全可靠</text><text class="benefit-desc">企业级数据加密，保护您的知识产权</text></view>
     </view>
   </view>
 
   <view class="guest-tabbar">
-    <view class="guest-tab active" data-page="home" bindtap="goTab"><text class="tab-icon">⌂</text><text>首页</text></view>
-    <view class="guest-tab" data-page="market" bindtap="goTab"><text class="tab-icon">▤</text><text>仿真大厅</text></view>
-    <view class="guest-tab" data-page="profile" bindtap="goTab"><text class="tab-icon">☺</text><text>我的</text></view>
+    <view class="guest-tab active" data-page="home" bindtap="goTab"><view class="ui-icon-copy tab-icon"><ui-symbol value="⌂"/></view><text>首页</text></view>
+    <view class="guest-tab" data-page="market" bindtap="goTab"><view class="ui-icon-copy tab-icon"><ui-symbol value="▤"/></view><text>仿真大厅</text></view>
+    <view class="guest-tab" data-page="profile" bindtap="goTab"><view class="ui-icon-copy tab-icon"><ui-symbol value="☺"/></view><text>我的</text></view>
   </view>
 </view>
