@@ -1,3 +1,4 @@
+<announcement-banner/>
 
 <view class="community">
  <view class="hero between"><view class="grow"><view class="eyebrow">BETTER TOGETHER</view><view class="title">{{setting?'常驻合作设置':'长期合作'}}</view><view class="muted">让默契延续，让专业合作更轻松</view></view><view class="hero-icon"><ui-symbol value="🤝"/></view></view>

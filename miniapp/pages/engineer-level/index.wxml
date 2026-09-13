@@ -1,3 +1,4 @@
+<announcement-banner/>
 <view class="wrap">
   <text class="title">我的工程师等级</text>
   <view class="muted" wx:if="{{error}}" bindtap="load">{{error}} · 点击重试</view>

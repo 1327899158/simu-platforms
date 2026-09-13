@@ -1,3 +1,4 @@
+<announcement-banner/>
 <view wx:if="{{error}}" class="empty" bindtap="load">{{error}} · 点击重试</view>
 <view wx:if="{{loading}}" class="empty">加载资料中…</view>
 <view class="page" wx:if="{{profile && !error}}">

@@ -1,3 +1,4 @@
+<announcement-banner/>
 
 <view class="community">
  <view class="between"><view class="title">我的收藏</view><button class="link" bindtap="toggleManage">{{managing?'完成':'管理'}}</button></view>

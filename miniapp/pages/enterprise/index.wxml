@@ -1,3 +1,4 @@
+<announcement-banner/>
 <view class="community">
  <view class="hero"><image class="enterprise-art" src="/assets/identity.png" mode="aspectFit"/><view class="title">企业认证</view><view class="muted">提交企业资质，审核后展示认证标识</view></view>
  <view class="notice">请提供真实营业执照及相关资质，确保名称、信用代码清晰可读。材料仅本人和授权管理员可查看。企业认证不替代个人实名认证，也不自动开通开票或提现。</view>

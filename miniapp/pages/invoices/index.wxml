@@ -1,3 +1,4 @@
+<announcement-banner/>
 <view class="page-container">
   <view class="hero" wx:if="{{role === 'CUSTOMER'}}"><text class="hero-title">发票管理 + 申请开票</text><text class="hero-desc">可开票订单 {{billableCount}} 笔 · 累计可开票金额 ¥{{billableAmountYuan}}</text></view>
   <view class="hero" wx:else><text class="hero-title">发票处理</text><text class="hero-desc">你可自行开票，或申请平台协助开票。平台开票可能收取服务费，费用另行确认。</text></view>

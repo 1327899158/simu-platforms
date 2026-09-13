@@ -1,3 +1,4 @@
+<announcement-banner/>
 <!--忘记密码页面-->
 <view class="page">
   <view class="header">

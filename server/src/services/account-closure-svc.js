@@ -5,6 +5,7 @@ const {err}=require('../lib/http');
 // 只去标识化账号档案；交易、票据、举证及审计继续保留，不进行破坏性级联删除。
 async function blockers(exec,id) {
   const checks=[
+    ['未处理客服工单',`SELECT COUNT(*) n FROM service_tickets WHERE userId=? AND status IN ('OPEN','PROCESSING')`,[id]],
     ['待审核企业认证',`SELECT COUNT(*) n FROM enterprise_certifications WHERE userId=? AND status='PENDING'`,[id]],
     ['模拟钱包余额或冻结资金',`SELECT COUNT(*) n FROM demo_wallets WHERE userId=? AND (availableFen>0 OR frozenFen>0)`,[id]],
     ['未完成需求或订单',`SELECT COUNT(*) n FROM orders o LEFT JOIN quotes q ON q.id=o.selectedQuoteId WHERE (o.customerId=? OR q.engineerId=?) AND o.deletedAt IS NULL AND o.status NOT IN ('COMPLETED','CANCELLED','CLOSED')`,[id,id]],

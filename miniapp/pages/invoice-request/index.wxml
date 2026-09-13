@@ -1,3 +1,4 @@
+<announcement-banner/>
 <view class="page-container" wx:if="{{!loading}}">
   <view class="hero"><text class="hero-title">{{user.role === 'CUSTOMER' ? '申请发票' : '发票申请详情'}}</text><text class="hero-desc">真实开票由工程师或平台后续处理；本页不涉及支付和开票接口。</text></view>
   <view class="card" wx:if="{{invoice}}">

@@ -1,0 +1,1 @@
+<view class="banner" wx:if="{{current}}"><image src="/assets/icons-contrast/signal.svg" mode="aspectFit"/><view class="viewport" bindtap="detail"><view class="scroll-text" style="animation-duration:{{current.duration}}s">{{current.title}}：{{current.content}}</view></view><view class="close" catchtap="close" aria-label="关闭公告">×</view></view>

@@ -9,9 +9,11 @@ const documents=require('../services/enterprise-documents');
 async function engineer(req){const u=await requireUser(req);if(u.role!=='ENGINEER')throw err.forbidden('仅工程师可申请企业认证');return u;}
 async function badge(id){const r=await queryOne("SELECT companyName FROM enterprise_certifications WHERE userId=? AND status='APPROVED'",[id]);return r?{companyName:r.companyName,label:'企业已认证'}:null;}
 function register(router){
-  router.get('/api/orders/:id/delivery',async(req,res,p)=>ok(res,await delivery.run(await requireUser(req),p.id)));
+  router.get('/api/orders/:id/delivery',async(req,res,p)=>{const u=await requireUser(req),overdue=await require('../services/overdue-svc').inspect(p.id,u);ok(res,{...await delivery.run(u,p.id),overdue});});
+  router.post('/api/orders/:id/delivery/nudge',async(req,res,p)=>ok(res,await require('../services/overdue-svc').inspect(p.id,await requireUser(req),true)));
   for(const action of ['apply','respond'])router.post('/api/orders/:id/delivery/'+action,async(req,res,p)=>{
-    const result=await delivery.run(await requireUser(req),p.id,action,await readJson(req));
+    const u=await requireUser(req);await require('../services/overdue-svc').inspect(p.id,u);
+    const result=await delivery.run(u,p.id,action,await readJson(req));
     await require('../services/chat-svc').systemMessageForOrder(p.id,action==='apply'?'工程师提交了延期申请，请客户进入订单详情审批。':'客户已处理延期申请，请进入订单详情查看结果。').catch(e=>console.error('[extension-message]',e.message));ok(res,result);
   });
   router.post('/api/enterprise/documents',async(req,res)=>ok(res,await documents.upload((await engineer(req)).id,await readJson(req))));

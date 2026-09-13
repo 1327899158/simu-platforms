@@ -1,3 +1,4 @@
+<announcement-banner/>
 <!-- pages/me/index.wxml · 设计稿 1:1 还原 -->
 <view class="page-container">
 
@@ -38,6 +39,7 @@
   >自主认证通过（调试）</button>
 
   <view class="menu-card" wx:if="{{user}}">
+    <view class="menu-row" bindtap="communityPage" data-page="customer-service"><image class="m-icon menu-vector" src="/assets/icons/support.svg" mode="aspectFit"/><text class="m-title">客服中心</text><text class="m-arrow">›</text></view>
     <view class="menu-row" wx:if="{{user.role === 'ENGINEER'}}" bindtap="communityPage" data-page="enterprise"><image class="m-icon menu-vector" src="/assets/icons/identity.svg" mode="aspectFit"/><text class="m-title">企业认证</text><text class="m-arrow">›</text></view>
     <view class="menu-row" bindtap="goQualification">
       <image class="m-icon menu-vector" src="/assets/icons/identity.svg" mode="aspectFit"/>

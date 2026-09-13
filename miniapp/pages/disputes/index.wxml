@@ -1,3 +1,4 @@
+<announcement-banner/>
 <view class="page-container">
 
   <view class="page-header illustrated-panel"><image class="panel-art support-art" src="/assets/commit.png" mode="aspectFit" aria-hidden="true"/>

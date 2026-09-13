@@ -1,3 +1,4 @@
+<announcement-banner/>
 
 <view class="community">
  <view class="hero between"><view class="grow"><view class="eyebrow">HELP &amp; SUPPORT</view><view class="title">帮助与设置</view><view class="muted">常见问题，在这里找到答案</view></view><view class="hero-icon"><ui-symbol value="☘"/></view></view>

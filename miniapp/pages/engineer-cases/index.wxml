@@ -1,3 +1,4 @@
+<announcement-banner/>
 <view class="case-page">
   <view class="case-hero"><text class="case-title">把已完成的项目，变成你的作品</text><text class="case-muted">已添加 {{items.length}} / {{maxCases}} 个案例。客户可在你的个人资料中查看。</text><button class="primary" bindtap="add" disabled="{{loading || saving}}">＋ 从已完成订单添加</button><text class="preview" bindtap="preview">预览客户看到的个人资料 ›</text></view>
   <view class="privacy">仅公开你填写的标题、介绍、主动上传的展示图片、项目方向、软件及完成月份。不要填写客户姓名、联系方式或保密细节；订单原文、金额、成果文件不会随案例公开。</view>

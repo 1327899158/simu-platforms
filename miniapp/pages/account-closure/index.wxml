@@ -1,3 +1,4 @@
+<announcement-banner/>
 
 <view class="community">
  <view wx:if="{{error}}" class="error" bindtap="load">{{error}} · 重试</view>

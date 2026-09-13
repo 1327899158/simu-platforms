@@ -1,6 +1,7 @@
 {
   "pages": [
     "pages/home/index",
+    "pages/customer-service/index",
     "pages/enterprise/index",
     "pages/estimate/index",
     "pages/activity/index",
@@ -69,7 +70,9 @@
         "pages/dispute-detail/index",
         "pages/invoices/index",
         "pages/wallet/index",
-        "pages/enterprise/index"
+        "pages/enterprise/index",
+        "pages/customer-service/index",
+        "pages/announcements/index"
       ]
     }
   ],
@@ -112,6 +115,7 @@
   "usingComponents": {
     "ui-symbol": "/components/ui-symbol/index",
     "case-gallery": "/components/case-gallery/index",
-    "signin-float": "/components/signin-float/index"
+    "signin-float": "/components/signin-float/index",
+    "announcement-banner": "/components/announcement-banner/index"
   }
 }

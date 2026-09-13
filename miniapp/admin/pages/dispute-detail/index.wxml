@@ -87,5 +87,11 @@
   <view class="admin-card" wx:if="{{dispute.status !== 'OPEN'}}">
     <text class="admin-muted">该纠纷已{{dispute.statusText}}，不可再次仲裁。</text>
   </view>
+  <view class="admin-card" wx:if="{{canResolve && dispute.status==='RESOLVED' && dispute.refundAmountFen>0}}">
+    <text class="admin-card-title">退款处理登记</text><text class="admin-muted">当前未接自动退款通道。请先在线下或支付平台核实处理，再登记结果；登记不会发起打款。</text>
+    <input class="admin-input" placeholder="实际退款流水号（完成登记必填）" value="{{refundReference}}" bindinput="refundReferenceInput" maxlength="64"/>
+    <button class="admin-button" data-status="FAILED" bindtap="registerRefund" disabled="{{submitting || dispute.refundStatus==='PROCESSED'}}">登记处理失败</button>
+    <button class="admin-button" data-status="PROCESSED" bindtap="registerRefund" disabled="{{submitting || dispute.refundStatus==='PROCESSED'}}">核实后登记已退款</button>
+  </view>
 </view>
 <view class="admin-loading" wx:if="{{loading}}">正在加载纠纷详情…</view>

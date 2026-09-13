@@ -1,3 +1,4 @@
+<announcement-banner/>
 <view class="page" wx:if="{{order}}">
   <view class="hero">
     <text class="hero-title">评价 {{order.engineer.nickname || '工程师'}}</text>

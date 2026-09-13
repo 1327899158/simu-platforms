@@ -1,3 +1,4 @@
+<announcement-banner/>
 <wxs module="u">
 /* WXML 插值不支持调用数组方法，选中态判断与展示映射放在 WXS 里 */
 var ICONS = { fast: '⚡', standard: '📊', relaxed: '☕', custom: '✏️' };

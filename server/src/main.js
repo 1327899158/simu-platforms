@@ -36,6 +36,7 @@ require('./routes/engineer-cases').register(router);
 require('./routes/blacklist').register(router);
 require('./routes/community').register(router);
 require('./routes/benefits').register(router);
+require('./routes/customer-service').register(router);
 require('./routes/payments').register(router);
 require('./routes/invoices').register(router);
 require('./routes/disputes').register(router);
@@ -82,6 +83,9 @@ async function bootstrap() {
   await require('./services/home-migration')(require('./db').query);
   await require('./services/community-migration').migrate(require('./db').query);
   await require('./services/delivery-enterprise-migration').migrate(require('./db').query);
+  await require('./services/customer-service-migration').migrate(require('./db').query);
+  require('./services/completion-reward-svc').start();
+  require('./services/overdue-svc').start();
   require('./services/account-closure-svc').start();
   server.listen(config.port, '0.0.0.0', () => {
     console.log(JSON.stringify({

@@ -1,3 +1,4 @@
+<announcement-banner/>
 <view class="community earnings"><view class="title">收益数据</view><view class="muted">每一份专业交付，都有迹可循</view>
 <view wx:if="{{error}}" class="error" bindtap="retry">{{error}} · 点击重试</view>
 <block wx:if="{{info}}"><view class="notice">{{info.basis}}</view><view wx:if="{{info.paymentMode==='mock'}}" class="notice">当前为模拟支付环境，以下数据不代表真实资金。</view>

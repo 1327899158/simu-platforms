@@ -320,6 +320,16 @@ Page({
       refundUploads: [],
     });
   },
+  async overdueAftersales(){
+    await this.load();
+    if(this.data.dispute)return this.goDisputeDetail();
+    if(this.data.refundRequest)return wx.showModal({title:'已有售后申请',content:'请在订单下方的退款申请记录中查看处理进度。',showCancel:false});
+    if(this.data.role!=='CUSTOMER'||this.data.order?.status!=='IN_PROGRESS')return wx.showToast({title:'订单状态已变化，请查看处理记录',icon:'none'});
+    const r=await new Promise(resolve=>wx.showActionSheet({itemList:['申请退款','申请纠纷协调'],success:resolve,fail:()=>resolve(null)}));
+    if(!r)return;if(r.tapIndex===1)return this.goDisputeForm();
+    this.requestRefund();this.setData({refundReason:'订单已逾期未交付，申请退款。'});
+    wx.pageScrollTo({selector:'.refund-form-card',duration:250});
+  },
 
   onRefundReason(e) {
     this.setData({ refundReason: e.detail.value });

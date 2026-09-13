@@ -1,10 +1,21 @@
 <view class="delivery" wx:if="{{state.deadline || error}}">
- <view class="title">交付期限</view>
+ <view class="title">{{overdueVisible ? '订单已逾期未交付' : '交付期限'}}</view>
  <view wx:if="{{error}}" bindtap="refresh">{{error}} · 点击重试</view>
  <block wx:if="{{state.deadline}}">
   <view class="clock" wx:if="{{status==='IN_PROGRESS'}}">{{clock}}</view>
   <view class="muted">截止 {{state.deadlineText}}</view>
   <view class="muted">按付款时间与成交报价工期计算，延期按自然日增加。</view>
+  <view class="overdue-card" wx:if="{{overdueVisible}}">
+   <view class="overdue-heading">{{state.extensionText}}</view>
+   <view class="muted">约定交付时限为 {{state.deadlineText}}，{{role==='ENGINEER'?'您':'工程师'}}尚未交付。逾期不自动延期。</view>
+   <view class="muted" wx:if="{{state.overdue.reminded}}">系统已发送订单提醒{{role==='ENGINEER'?'，请尽快交付或申请延期':'给工程师'}}。</view>
+   <view class="muted" wx:if="{{state.pending}}">申请延期并不改变截止时间，须经客户同意后生效。待审批期间暂停自动违约判定，拒绝后仍从原期限计时。</view>
+   <view class="actions" wx:if="{{role==='CUSTOMER'}}"><button bindtap="nudge" disabled="{{busy || state.overdue.nudged}}">{{state.overdue.nudged?'已催单':'催促交付'}}</button><button bindtap="aftersales" disabled="{{busy}}">申请售后</button></view>
+   <view class="muted" wx:if="{{role==='ENGINEER' && state.overdue.nudged}}">客户已催单，请及时回应。</view>
+   <view class="overdue-note">若客户不同意延期，可申请售后或继续等待。逾期满48小时仍未交付且无待审批延期申请，将判定违约并登记全额待退款，由平台处理，不会自动原路退款。延期被拒不会重置48小时计时。</view>
+   <view class="muted">平台记录逾期履约事件，信用分与完单率自动考核尚未启用。</view>
+  </view>
+  <view class="overdue-card" wx:if="{{state.overdue.breach}}"><view class="overdue-heading">已判定逾期违约</view><view class="muted">{{state.overdue.breach.refundStatus==='PROCESSED'?'平台已登记退款处理结果，请查看记录核对。':state.overdue.breach.refundStatus==='FAILED'?'退款处理失败，等待平台跟进。':'全额待退款记录已生成，等待平台处理，当前并非已退款。'}}</view><button bindtap="refundRecord">查看退款处理记录</button></view>
   <button wx:if="{{status==='IN_PROGRESS' && state.canApply && !state.pending}}" bindtap="toggle" disabled="{{busy}}">申请延期交付</button>
   <view wx:if="{{form && status==='IN_PROGRESS' && !state.pending}}">
    <view class="field-label">延期天数<text class="field-hint">（1至90天）</text></view>

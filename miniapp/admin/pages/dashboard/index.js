@@ -11,6 +11,8 @@ Page({
       const admin = await loadAdmin();
       const stats = await request('GET', '/admin/dashboard', null, { silent: true });
       const definitions = [
+        {key:'customer-service',title:'客服工作台',desc:'受理咨询、工单回复与处理',path:'/admin/pages/customer-service/index',permission:'CUSTOMER_SERVICE'},
+        {key:'announcements',title:'公告管理',desc:'编辑内容、时间区间及接收角色',path:'/admin/pages/announcements/index',permission:'ANNOUNCEMENT_MANAGE'},
         {key:'enterprise',title:'企业认证审核',desc:'营业执照、资质材料及审核结果',path:'/admin/pages/enterprise/index',permission:'IDENTITY_APPROVE'},
         {key:'wallet',title:'模拟钱包与提现',desc:'测试入账、冻结、审核和模拟打款',path:'/admin/pages/wallet/index',permission:'WALLET_MANAGE'},
         {key:'help',title:'帮助内容管理',desc:'FAQ、帮助与关于我们',path:'/admin/pages/help/index',permission:'HELP_MANAGE'},

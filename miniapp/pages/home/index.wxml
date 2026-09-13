@@ -1,3 +1,4 @@
+<announcement-banner/>
 
 <view class="home-page {{role==='ENGINEER'?'engineer-home':'customer-home'}}">
  <block wx:if="{{role==='CUSTOMER'}}">

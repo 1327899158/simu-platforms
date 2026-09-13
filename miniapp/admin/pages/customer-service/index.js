@@ -1,0 +1,1 @@
+const {loadAdmin,hasPermission,denyAndExit}=require('../../utils/admin');Page({data:{ready:false},async onLoad(){try{const a=await loadAdmin();if(!hasPermission(a,'CUSTOMER_SERVICE'))throw Error('没有客服处理权限');this.setData({ready:true});}catch(e){denyAndExit(e.message);}}});

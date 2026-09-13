@@ -1,3 +1,4 @@
+<announcement-banner/>
 <view class="community payment-page">
  <view class="hero illustrated-panel"><image class="panel-art" src="/assets/pay.png" mode="aspectFit" aria-hidden="true"/><view class="art-copy"><view class="eyebrow">ORDER CONFIRMATION</view><view class="title">{{success?'模拟支付成功':'确认订单'}}</view><view class="muted">{{success?'订单状态已更新，可返回查看进度':'核对订单信息，安心开启合作'}}</view></view></view>
  <view class="notice warning">模拟支付体验：不会调用微信支付，也不会扣款。确认后会真实更新本项目中的订单状态。</view>
