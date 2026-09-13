@@ -5,7 +5,7 @@
  * 变化：
  *   - 不再需要 token 管理（无 accessToken / refreshToken）
  *   - 鉴权由微信网关注入 X-WX-OPENID 自动完成
- *   - 401 无需重试刷新，直接跳登录（理论上不会出现，除非账号被封）
+ *   - 业务接口401跳登录；登录尝试失败可交由当前表单处理。
  */
 const { ENV_ID, SERVICE_NAME, BASE_URL } = require('./config');
 
@@ -91,6 +91,7 @@ function toLogin() {
 /**
  * 统一请求入口。
  * opt.silent = true：错误不弹 Toast。
+ * opt.redirectOnUnauthorized = false：登录尝试的401留在当前表单。
  */
 async function request(method, path, data, opt = {}) {
   let res;
@@ -108,8 +109,11 @@ async function request(method, path, data, opt = {}) {
 
   // 未登录 / 账号不可用
   if (statusCode === 401 || body.code === 40100) {
-    toLogin();
-    throw new Error(body.message || '登录已失效，请重新登录');
+    if (opt.redirectOnUnauthorized !== false) toLogin();
+    const e = new Error(body.message || (opt.redirectOnUnauthorized === false ? '登录失败，请检查输入' : '登录已失效，请重新登录'));
+    e.statusCode = statusCode;
+    e.code = body.code;
+    throw e;
   }
 
   const msg = body.message || `请求失败(${statusCode})`;

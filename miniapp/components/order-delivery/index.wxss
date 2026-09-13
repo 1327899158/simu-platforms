@@ -1,1 +1,7 @@
 .delivery{margin:24rpx;padding:28rpx;border:1rpx solid #c8e0e5;border-radius:28rpx;background:rgba(242,251,250,.94);color:#294b58}.title{font-size:30rpx;font-weight:700}.clock{font-size:36rpx;font-weight:700;color:#287e9a;margin:18rpx 0}.muted{font-size:24rpx;color:#71848b;line-height:1.7;word-break:break-all}.record{border-top:1rpx solid #dce8ea;margin-top:22rpx;padding-top:18rpx;font-size:26rpx}.actions{display:flex;gap:16rpx}.actions button{flex:1}button{font-size:26rpx;margin-top:20rpx;border-radius:18rpx;background:#dcf0f6;color:#246783}button::after{border:0}input,textarea{box-sizing:border-box;width:100%;margin-top:18rpx;background:#fff;border-radius:16rpx;padding:18rpx;font-size:26rpx}textarea{height:150rpx}
+.field-label{margin-top:24rpx;font-size:26rpx;font-weight:500;line-height:40rpx;color:#294b58}
+.field-hint{font-size:24rpx;font-weight:400;color:#71848b}
+.days-field{display:flex;align-items:center;box-sizing:border-box;min-height:88rpx;margin-top:12rpx;padding:0 22rpx;background:#fff;border:1rpx solid #dce8ea;border-radius:16rpx}
+.days-field .days-input{flex:1;min-width:0;width:auto;height:84rpx;min-height:84rpx;margin:0;padding:0;border:0;border-radius:0;font-size:28rpx;font-weight:400;line-height:normal;color:#294b58}
+.days-placeholder{font-size:26rpx;font-weight:400;color:#8b9ba2}
+.days-unit{flex-shrink:0;margin-left:16rpx;font-size:26rpx;line-height:40rpx;color:#71848b}

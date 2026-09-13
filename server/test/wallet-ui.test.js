@@ -21,8 +21,7 @@ test('新页面全部注册，模拟钱包不采集完整银行卡或调用真�
  assert.match(read('miniapp/pages/home/index.wxml'),/signin-float wx:if="{{role==='ENGINEER'}}"/);
 });
 test('拖动签到浮窗后不会误触导航',()=>{
- let c,navigations=0;vm.runInNewContext(read('miniapp/components/signin-float/index.js'),{Component:x=>c=x,wx:{setStorageSync(){},navigateTo(){navigations++;}},Date});
+ let c,navigations=0;vm.runInNewContext(read('miniapp/components/signin-float/index.js'),{require:()=>require('../../miniapp/utils/signin-position'),Component:x=>c=x,wx:{setStorageSync(){},navigateTo(){navigations++;}},Date});
  const ctx={...c.methods};ctx.start({touches:[{clientX:0,clientY:0}]});ctx.move({touches:[{clientX:30,clientY:30}]});ctx.end();ctx.open();assert.equal(navigations,0);
  ctx._ignoreUntil=0;ctx.open();assert.equal(navigations,1);
 });
-

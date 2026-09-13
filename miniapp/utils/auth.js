@@ -29,7 +29,7 @@ async function login(roleHint = 'customer') {
   });
 
   // 发请求给云托管（X-WX-OPENID 由微信网关自动注入）
-  const data = await request('POST', '/auth/wx-login', { roleHint });
+  const data = await request('POST', '/auth/wx-login', { roleHint }, { silent: true, redirectOnUnauthorized: false });
   saveUser(data.user);
   return data.user;
 }
@@ -104,7 +104,7 @@ async function refreshUser() {
  * 账号密码登录
  */
 async function loginByUsername(username, password) {
-  const data = await request('POST', '/auth/login', { username, password });
+  const data = await request('POST', '/auth/login', { username, password }, { silent: true, redirectOnUnauthorized: false });
   saveUser(data.user);
   saveSession(data.token);
   return data.user;
@@ -126,7 +126,7 @@ async function registerByPhone(username, phone, password, smsCode, roleHint = 'c
  * 手机号登录（验证码方式）
  */
 async function loginByPhone(phone, smsCode, roleHint = 'customer') {
-  const data = await request('POST', '/auth/phone-login', { phone, smsCode, roleHint });
+  const data = await request('POST', '/auth/phone-login', { phone, smsCode, roleHint }, { silent: true, redirectOnUnauthorized: false });
   saveUser(data.user);
   saveSession(data.token);
   return data.user;
