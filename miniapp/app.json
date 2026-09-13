@@ -1,6 +1,7 @@
 {
   "pages": [
     "pages/home/index",
+    "pages/enterprise/index",
     "pages/estimate/index",
     "pages/activity/index",
     "pages/engineer-directory/index",
@@ -67,7 +68,8 @@
         "pages/disputes/index",
         "pages/dispute-detail/index",
         "pages/invoices/index",
-        "pages/wallet/index"
+        "pages/wallet/index",
+        "pages/enterprise/index"
       ]
     }
   ],

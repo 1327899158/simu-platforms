@@ -31,6 +31,7 @@ module.exports = {
     </view>
   </view>
 
+  <order-delivery wx:if="{{order.paidAt && (mode==='customer' || order.iAmSelected)}}" order-id="{{order.id}}" status="{{order.status}}"/>
   <!-- 纠纷横幅 -->
   <view class="dispute-banner" wx:if="{{dispute}}">
     <view class="dispute-banner-left">

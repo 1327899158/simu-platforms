@@ -6,7 +6,7 @@
     <view wx:else class="me-avatar me-avatar-fb">{{user.nickname ? user.nickname[0] : '用'}}</view>
     <view class="me-info">
       <text class="me-name">Hi，{{user.nickname || '用户'}}</text>
-      <view class="me-badges"><text class="badge-y">{{roleBadgeText}}</text></view>
+      <view class="me-badges"><text class="badge-y">{{roleBadgeText}}</text><text class="badge-y" wx:if="{{user.enterprise}}">企业已认证</text></view>
     </view>
     <button class="me-edit" bindtap="goEdit">编辑资料 ›</button>
   </view>
@@ -38,6 +38,7 @@
   >自主认证通过（调试）</button>
 
   <view class="menu-card" wx:if="{{user}}">
+    <view class="menu-row" wx:if="{{user.role === 'ENGINEER'}}" bindtap="communityPage" data-page="enterprise"><image class="m-icon menu-vector" src="/assets/icons/identity.svg" mode="aspectFit"/><text class="m-title">企业认证</text><text class="m-arrow">›</text></view>
     <view class="menu-row" bindtap="goQualification">
       <image class="m-icon menu-vector" src="/assets/icons/identity.svg" mode="aspectFit"/>
       <text class="m-title">身份认证</text>

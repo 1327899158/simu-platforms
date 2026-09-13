@@ -27,6 +27,7 @@ require('./routes/files').register(router);
 require('./routes/identity').register(router);
 require('./routes/home').register(router);
 require('./routes/orders').register(router);
+require('./routes/delivery-enterprise').register(router);
 require('./routes/market').register(router);
 require('./routes/earnings').register(router);
 require('./routes/quotes').register(router);
@@ -80,6 +81,7 @@ async function bootstrap() {
   await dbInit();
   await require('./services/home-migration')(require('./db').query);
   await require('./services/community-migration').migrate(require('./db').query);
+  await require('./services/delivery-enterprise-migration').migrate(require('./db').query);
   require('./services/account-closure-svc').start();
   server.listen(config.port, '0.0.0.0', () => {
     console.log(JSON.stringify({

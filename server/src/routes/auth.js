@@ -260,7 +260,7 @@ function register(router) {
   // GET /api/me
   router.get('/api/me', async (req, res) => {
     const user = await requireUser(req);
-    ok(res, await loadUserView(user.id));
+    ok(res, { ...await loadUserView(user.id), enterprise: await require('./delivery-enterprise').badge(user.id) });
   });
 
   // PATCH /api/me { nickname?, avatarUrl?, engineer?: { specialties?, softwares?, intro?, realName? } }

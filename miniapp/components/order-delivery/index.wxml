@@ -1,0 +1,20 @@
+<view class="delivery" wx:if="{{state.deadline || error}}">
+ <view class="title">交付期限</view>
+ <view wx:if="{{error}}" bindtap="refresh">{{error}} · 点击重试</view>
+ <block wx:if="{{state.deadline}}">
+  <view class="clock" wx:if="{{status==='IN_PROGRESS'}}">{{clock}}</view>
+  <view class="muted">截止 {{state.deadlineText}}</view>
+  <view class="muted">按付款时间与成交报价工期计算，延期按自然日增加。</view>
+  <button wx:if="{{status==='IN_PROGRESS' && state.canApply && !state.pending}}" bindtap="toggle" disabled="{{busy}}">申请延期交付</button>
+  <view wx:if="{{form && status==='IN_PROGRESS' && !state.pending}}">
+   <input type="number" placeholder="延期天数（1—90天）" value="{{days}}" data-key="days" bindinput="input" maxlength="2"/>
+   <textarea placeholder="延期原因" value="{{reason}}" data-key="reason" bindinput="input" maxlength="1000"/>
+   <button bindtap="apply" loading="{{busy}}" disabled="{{busy}}">提交客户审批</button>
+  </view>
+  <view class="record" wx:for="{{state.items}}" wx:key="id">
+   <view>申请延期 {{item.days}} 天 · {{item.statusText}}</view><view class="muted">{{item.reason}}</view><view class="muted">申请截止时间：{{item.proposedText}}</view>
+   <view class="actions" wx:if="{{item.status==='PENDING' && status==='IN_PROGRESS' && state.canRespond}}"><button data-id="{{item.id}}" data-decision="REJECTED" bindtap="respond" disabled="{{busy}}">不同意</button><button data-id="{{item.id}}" data-decision="APPROVED" bindtap="respond" disabled="{{busy}}">同意延期</button></view>
+   <view class="muted" wx:if="{{item.status==='PENDING' && status!=='IN_PROGRESS'}}">订单当前状态不可审批延期</view>
+  </view>
+ </block>
+</view>

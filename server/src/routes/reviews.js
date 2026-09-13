@@ -189,6 +189,7 @@ function register(router) {
       cases: await publicCases(engineer.id),
       cooperation: await require('../services/cooperation-svc').settings(engineer.id),
       badges: await require('../services/benefits-svc').badges(engineer.id),
+      enterprise: await require('./delivery-enterprise').badge(engineer.id),
       id: engineer.id,
       nickname: engineer.nickname || '工程师',
       avatarUrl: engineer.avatarUrl || '',

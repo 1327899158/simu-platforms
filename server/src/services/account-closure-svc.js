@@ -5,6 +5,7 @@ const {err}=require('../lib/http');
 // 只去标识化账号档案；交易、票据、举证及审计继续保留，不进行破坏性级联删除。
 async function blockers(exec,id) {
   const checks=[
+    ['待审核企业认证',`SELECT COUNT(*) n FROM enterprise_certifications WHERE userId=? AND status='PENDING'`,[id]],
     ['模拟钱包余额或冻结资金',`SELECT COUNT(*) n FROM demo_wallets WHERE userId=? AND (availableFen>0 OR frozenFen>0)`,[id]],
     ['未完成需求或订单',`SELECT COUNT(*) n FROM orders o LEFT JOIN quotes q ON q.id=o.selectedQuoteId WHERE (o.customerId=? OR q.engineerId=?) AND o.deletedAt IS NULL AND o.status NOT IN ('COMPLETED','CANCELLED','CLOSED')`,[id,id]],
     ['待处理退款申请',`SELECT COUNT(*) n FROM refund_requests WHERE (customerId=? OR engineerId=?) AND status IN ('PENDING','AGREED')`,[id,id]],
@@ -60,6 +61,7 @@ async function sweep() {
     await exec('DELETE FROM user_favorites WHERE userId=?',[user.id]);
     await exec('DELETE FROM user_blocks WHERE ownerId=? OR blockedUserId=?',[user.id,user.id]);
     await exec('UPDATE cooperation_settings SET enabled=0 WHERE engineerId=?',[user.id]);
+    await exec("UPDATE enterprise_certifications SET status='CLOSED' WHERE userId=?",[user.id]);
     await exec("UPDATE account_closures SET status='COMPLETED',completedAt=UTC_TIMESTAMP(3),lastError=NULL,updatedAt=UTC_TIMESTAMP(3) WHERE userId=?",[user.id]);
     await exec("INSERT INTO account_closure_events(id,userId,action,createdAt) VALUES(?,?,'COMPLETED',UTC_TIMESTAMP(3))",[newId(),user.id]);
   });

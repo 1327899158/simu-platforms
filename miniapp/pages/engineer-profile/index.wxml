@@ -12,6 +12,7 @@
     </view>
   </view>
   <view class="profile-actions-row"><button class="collect-button" wx:if="{{canManagePeer}}" bindtap="favoriteEngineer"><image src="/assets/icons-contrast/collection-star.svg" mode="aspectFit"/>收藏工程师</button><button class="cooperate-button" wx:if="{{canContact}}" bindtap="cooperation">常驻合作 / 定向下单</button></view>
+  <view class="profile-badges" wx:if="{{profile.enterprise}}"><view><image src="/assets/icons/identity.svg" mode="aspectFit"/><text>企业已认证 · {{profile.enterprise.companyName}}</text></view></view>
   <view class="profile-badges" wx:if="{{profile.badges.length}}"><view wx:for="{{profile.badges}}" wx:key="key"><image src="/assets/icons-contrast/{{item.icon}}.svg" mode="aspectFit"/><text>{{item.title}}</text></view></view>
   <view class="case-note" wx:if="{{profile.cooperation.enabled}}" bindtap="cooperation">定向下单专享 · 工程师让利 {{profile.cooperation.discountBps/1000}} 折 · 首单适用，优惠体现在工程师报价中 ›</view>
   <view class="rating-card">

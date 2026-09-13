@@ -1,0 +1,14 @@
+<view class="community">
+ <view class="hero"><image class="enterprise-art" src="/assets/identity.png" mode="aspectFit"/><view class="title">企业认证</view><view class="muted">提交企业资质，审核后展示认证标识</view></view>
+ <view class="notice">请提供真实营业执照及相关资质，确保名称、信用代码清晰可读。材料仅本人和授权管理员可查看。企业认证不替代个人实名认证，也不自动开通开票或提现。</view>
+ <view class="error" wx:if="{{error}}" bindtap="load">{{error}} · 点击重试</view>
+ <view class="card" wx:if="{{record}}"><view class="enterprise-status">{{record.statusText}}</view><view class="muted" wx:if="{{record.result}}">审核意见：{{record.result}}</view></view>
+ <view class="card" wx:if="{{ready}}">
+  <view>企业名称</view><input value="{{companyName}}" placeholder="与营业执照一致" maxlength="120" disabled="{{!editable || busy}}" data-key="companyName" bindinput="input"/>
+  <view>统一社会信用代码</view><input value="{{creditCode}}" placeholder="18位统一社会信用代码" maxlength="18" disabled="{{!editable || busy}}" data-key="creditCode" bindinput="input"/>
+  <view>营业执照及相关资质（1—5张）</view>
+  <view class="document" wx:for="{{evidence}}" wx:key="*this"><text data-id="{{item}}" bindtap="preview">查看资质图片 {{index+1}} ›</text><button wx:if="{{editable}}" data-id="{{item}}" bindtap="remove" disabled="{{busy || uploading}}">移除</button></view>
+  <button wx:if="{{editable && evidence.length<5}}" bindtap="add" loading="{{uploading}}" disabled="{{uploading || busy}}">上传资质图片</button>
+  <button class="primary" wx:if="{{editable}}" bindtap="submit" loading="{{busy}}" disabled="{{busy || uploading}}">提交审核</button>
+ </view>
+</view>
