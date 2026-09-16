@@ -1,6 +1,10 @@
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict');
-const {resolveMedia}=require('../../miniapp/utils/private-media');
+const {resolveMedia}=require('../../miniapp/utils/request');
+test('公共请求不依赖新增 private-media 模块',()=>{
+ const source=require('node:fs').readFileSync(require.resolve('../../miniapp/utils/request'),'utf8');
+ assert.doesNotMatch(source,/require\(['"]\.\/private-media(?:\.js)?['"]\)/);
+});
 test('私有媒体只转换显示字段、去重请求并保留头像原始ID',async()=>{
  const data={avatarUrl:'cloud://env/a',rows:[{avatarUrl:'cloud://env/a',imgUrl:'cloud://env/b',fileID:'cloud://env/c'}]};
  const called=[];
