@@ -105,7 +105,15 @@ async function request(method, path, data, opt = {}) {
   const body = res.data || {};
   const statusCode = res.statusCode || 200;
 
-  if (statusCode === 200 && body.code === 0) return body.data;
+  if (statusCode === 200 && body.code === 0) {
+    if(path==='/files/resolve-url')return body.data;
+    // Login responses are resolved on the next authenticated /me request.
+    if(path.startsWith('/auth/'))return body.data;
+    return require('./private-media').resolveMedia(body.data,async fileID=>{
+      const r=await request('POST','/files/resolve-url',{fileID},{silent:true,redirectOnUnauthorized:false});
+      return r.url;
+    });
+  }
 
   // 未登录 / 账号不可用
   if (statusCode === 401 || body.code === 40100) {

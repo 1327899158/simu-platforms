@@ -46,24 +46,7 @@ function cloudDownload(fileID) {
 }
 
 function getTempFileUrl(fileID) {
-  return new Promise((resolve, reject) => {
-    if (!wx.cloud || typeof wx.cloud.getTempFileURL !== 'function') {
-      reject(new Error('当前微信版本不支持获取云文件地址'));
-      return;
-    }
-    wx.cloud.getTempFileURL({
-      fileList: [fileID],
-      success: (result) => {
-        const item = result.fileList && result.fileList[0];
-        if (item && item.tempFileURL && (!item.status || item.status === 0)) {
-          resolve(item.tempFileURL);
-          return;
-        }
-        reject(new Error((item && (item.errMsg || item.message)) || '未取得云文件地址'));
-      },
-      fail: reject,
-    });
-  });
+  return require('./request').request('POST','/files/resolve-url',{fileID},{silent:true}).then(r=>r.url);
 }
 
 function httpDownload(url) {
@@ -130,7 +113,10 @@ async function downloadAndOpen(info) {
   }
   let result;
   let source = '';
-  if (info.fileID && wx.cloud && typeof wx.cloud.downloadFile === 'function') {
+  if (info.url) {
+    try { result=await httpDownload(info.url); source='authorized-url'; }
+    catch(e){throw stageError('TEMP_URL','临时地址下载失败',errorMessage(e),traceId);}
+  } else if (info.fileID && wx.cloud && typeof wx.cloud.downloadFile === 'function') {
     try {
       // wx.cloud 已在 app 启动时绑定 ENV_ID；官方下载参数只需 fileID。
       result = await cloudDownload(info.fileID);

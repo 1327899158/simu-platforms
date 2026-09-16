@@ -28,7 +28,9 @@ async function begin(user,purpose,openid){
   await c.execute('SELECT id FROM users WHERE id=? FOR UPDATE',[user.id]);
   const [[count]]=await c.execute('SELECT COUNT(*) n FROM private_upload_tasks WHERE userId=? AND createdAt>=DATE_SUB(UTC_TIMESTAMP(3),INTERVAL 1 DAY)',[user.id]);
   if(Number(count.n)>=50)throw err.tooMany('今日私密图片上传次数已达上限');
-  const id=newId(),cloudPath=`private-staging/${openid}/${id}`,finalPath=`private-documents/${purpose.toLowerCase()}/${id}`;
+  // Final key is independent of the client-visible task ID: clients must not
+  // pre-create the archive object and become its owner under creator-only ACLs.
+  const id=newId(),cloudPath=`private-staging/${openid}/${id}`,finalPath=`private-documents/${purpose.toLowerCase()}/${newId()}`;
   const stagingFileId=await metadata(cloudPath),finalFileId=await metadata(finalPath);
   await c.execute("INSERT INTO private_upload_tasks(id,userId,purpose,stagingFileId,finalFileId,finalPath,createdAt,expiresAt) VALUES(?,?,?,?,?,?,UTC_TIMESTAMP(3),DATE_ADD(UTC_TIMESTAMP(3),INTERVAL 15 MINUTE))",[id,user.id,purpose,stagingFileId,finalFileId,finalPath]);
   return {taskId:id,cloudPath,envId:config.cloudbaseEnv,maxBytes:LIMIT};

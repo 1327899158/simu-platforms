@@ -373,7 +373,8 @@ function register(router) {
        WHERE f.id = ? AND ivf.purpose='SUPPORTING'`, [params.id]
     );
     if (!file) throw err.notFound('身份认证材料不存在');
-    return ok(res, { ...file, sizeBytes: Number(file.sizeBytes || 0) });
+    const url=await require('../services/storage-url').storageUrl(file.fileID);
+    return ok(res, { ...file, url, sizeBytes: Number(file.sizeBytes || 0) });
   });
 
   router.post('/api/admin/engineers/:id/review', async (req, res, params) => {

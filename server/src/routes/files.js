@@ -223,6 +223,17 @@ async function requireEngineerIdentity(req) {
 }
 
 function register(router) {
+  router.post('/api/files/resolve-url', async (req,res) => {
+    const user=await requireUser(req);
+    const body=await readJson(req,4096);
+    const fileID=v.str(body.fileID,'文件标识',{max:512});
+    assertCloudFileId(fileID);
+    const file=await queryOne('SELECT f.*,oa.purpose FROM uploaded_files f LEFT JOIN order_attachments oa ON oa.fileId=f.id WHERE f.fileID=? LIMIT 1',[fileID]);
+    if(!file)throw err.notFound('文件不存在');
+    if(!await canReadFile(user,file))throw err.forbidden('无权查看该文件');
+    if(await queryOne('SELECT fileId FROM file_cleanup_log WHERE fileId=?',[file.id]))throw err.notFound('文件已清理');
+    ok(res,{url:await require('../services/storage-url').storageUrl(file.fileID)});
+  });
   // Local wx.uploadFile fallback. CloudBase deployments normally use
   // wx.cloud.uploadFile followed by /commit, but local mode also needs a real
   // endpoint instead of a 404.
@@ -379,7 +390,7 @@ function register(router) {
     if (!(await canReadFile(user, file))) throw err.forbidden('无权下载该文件');
     if (await queryOne('SELECT fileId FROM file_cleanup_log WHERE fileId=?', [file.id])) throw err.notFound('文件已到期清理，订单记录仍保留');
     let url;
-    if (search?.get('preview') === '1' && file.kind === 'IMAGE') {
+    if (config.privateStorageEnabled || search?.get('preview') === '1' && file.kind === 'IMAGE') {
       // 先验证业务可见性，再由服务端签发短期预览链接，兼容云存储仅上传者可读的规则。
       const result = await getStorage().getTempFileURL({ fileList: [{ fileID: file.fileID, maxAge: 300 }] });
       url = result.fileList?.[0]?.tempFileURL;

@@ -36,6 +36,7 @@ test('私密上传绑定业务账号、用途、文件ID和有效期',async()=>{
 });
 test('直传确认幂等，正式文件不可由客户端路径替换，预览返回URL不返回Base64',async()=>{
  const r=await init();const result=await storage.commit('owner','SUPPORT',r.taskId,task.stagingFileId);
+ assert.notEqual(task.finalPath.split('/').pop(),r.taskId);
  assert.equal(result.id,r.taskId);assert.match(JSON.parse(record.payload).fileID,/private-documents\/support\//);
  await storage.commit('owner','SUPPORT',r.taskId,task.stagingFileId);assert.equal(uploads,1);
  const view=await storage.cloudView(record);assert.ok(view.url);assert.equal(view.base64,undefined);
