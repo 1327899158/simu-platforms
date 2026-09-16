@@ -13,9 +13,14 @@ Page({
   if(this.data.uploading||this.data.busy||this.data.evidence.length>=5)return;
   this.setData({uploading:true});
   try{
-    const r=await require('../../utils/private-image').uploadPrivate('SUPPORT');
+    const chosen=await new Promise((resolve,reject)=>wx.chooseImage({count:1,sizeType:['compressed'],success:resolve,fail:reject}));
+    const compressed=await new Promise((resolve,reject)=>wx.compressImage({src:chosen.tempFilePaths[0],quality:30,compressedWidth:1200,success:resolve,fail:reject}));
+    const fs=wx.getFileSystemManager();
+    const data=await new Promise((resolve,reject)=>fs.readFile({filePath:compressed.tempFilePath,encoding:'base64',success:resolve,fail:reject}));
+    if(data.data.length>546136)throw Error('截图较大，请裁剪后重试（压缩后400KB以内）');
+    const r=await request('POST','/support/evidence',{base64:data.data});
     this.setData({evidence:this.data.evidence.concat(r)});
-  }catch(e){require('../../utils/private-image').showError(e);}
+  }catch(e){if(!String(e.errMsg||'').includes('cancel'))wx.showToast({title:e.message||'截图上传失败',icon:'none'});}
   finally{this.setData({uploading:false});}
  },
  removeEvidence(e){if(!this.data.busy)this.setData({evidence:this.data.evidence.filter((x,i)=>i!==Number(e.currentTarget.dataset.index))});},

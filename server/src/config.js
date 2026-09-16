@@ -40,8 +40,6 @@ const config = {
   // 云开发环境 ID（用于服务端调用云存储/云数据库）。云托管平台提供的
   // TCB_ENV_ID 优先，避免迁移环境后旧的自定义变量覆盖当前运行环境。
   cloudbaseEnv: process.env.TCB_ENV_ID || process.env.CLOUDBASE_ENV_ID || '',
-  // 确认私密目录安全规则发布并通过跨账号测试后才能开启。
-  privateStorageEnabled: process.env.PRIVATE_STORAGE_ENABLED === 'true',
 
   // 微信小程序 AppID（用于校验 X-WX-APPID 头）
   wxAppid: process.env.WX_APPID || '',

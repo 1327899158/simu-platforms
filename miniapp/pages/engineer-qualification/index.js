@@ -22,7 +22,7 @@ function statusText(status, submittedAt) {
 
 Page({
   data: {
-    loading: true, editable: false, uploading: false, saving: false, bindingPhone: false, uploadText: '',
+    loading: true, uploading: false, saving: false, bindingPhone: false, uploadText: '',
     realName: '', phone: '', idCardNumber: '', verifyStatus: 'PENDING', verifyText: '未申请', reviewReason: '',
     files: [], maxSupportingFiles: MAX_SUPPORTING,
     maxFileMb: DEFAULT_MAX_MB, maxFileBytes: DEFAULT_MAX_MB * 1024 * 1024,
@@ -33,7 +33,7 @@ Page({
   },
   onPullDownRefresh() { this.load().finally(() => wx.stopPullDownRefresh()); },
   async load() {
-    this.setData({ loading: true, editable: false });
+    this.setData({ loading: true });
     try {
       const [identity, dicts] = await Promise.all([
         request('GET', '/identity', null, { silent: true }),
@@ -46,7 +46,6 @@ Page({
         realName: identity.realName || '', phone: identity.phone || '', idCardNumber: identity.idCardNumber || '',
         verifyStatus: identity.verifyStatus || 'PENDING', verifyText: statusText(identity.verifyStatus, identity.submittedAt),
         reviewReason: identity.reviewReason || '',
-        editable: identity.verifyStatus !== 'APPROVED' && !(identity.verifyStatus === 'PENDING' && identity.submittedAt),
         files: all.filter((file) => file.purpose === 'SUPPORTING').map(decorate),
         maxSupportingFiles: Number(identity.maxSupportingFiles || MAX_SUPPORTING),
         maxFileMb, maxFileBytes: Number(dicts?.limits?.maxUploadBytes) || maxFileMb * 1024 * 1024,
@@ -59,7 +58,6 @@ Page({
   onIdCard(e) { this.setData({ idCardNumber: e.detail.value.replace(/[^0-9Xx]/g, '').toUpperCase().slice(0, 18) }); },
 
   async onGetPhoneNumber(e) {
-    if (!this.data.editable) return;
     const detail = e.detail || {};
     if (!detail.code || (detail.errMsg && detail.errMsg !== 'getPhoneNumber:ok')) {
       return wx.showToast({ title: '已取消手机号授权', icon: 'none' });
@@ -91,7 +89,6 @@ Page({
   },
 
   chooseSupporting() {
-    if (!this.data.editable || this.data.saving) return;
     if (this.data.uploading) return;
     const rest = this.data.maxSupportingFiles - this.data.files.length;
     if (rest <= 0) return wx.showToast({ title: `最多上传 ${this.data.maxSupportingFiles} 份资料`, icon: 'none' });
@@ -113,7 +110,6 @@ Page({
     else wx.chooseImage({ count: Math.min(3, rest), sourceType: ['album'], success: (r) => accept((r.tempFilePaths || []).map((path, i) => ({ path, size: r.tempFiles?.[i]?.size }))) });
   },
   async uploadSupporting(selected) {
-    if (!this.data.editable || this.data.saving) return;
     const candidates = (selected || []).filter((file) => file.path);
     const oversized = candidates.find((file) => file.size > this.data.maxFileBytes);
     if (oversized) return wx.showModal({ title: '文件超过大小限制', content: `“${oversized.name}”超过 ${this.data.maxFileMb}MB。`, showCancel: false });
@@ -136,7 +132,6 @@ Page({
     } catch (_) {}
   },
   removeSupporting(e) {
-    if (!this.data.editable || this.data.saving || this.data.uploading) return;
     const index = Number(e.currentTarget.dataset.index);
     const file = this.data.files[index];
     if (!file) return;
@@ -161,7 +156,6 @@ Page({
     finally { wx.hideLoading(); }
   },
   async submit() {
-    if (!this.data.editable || this.data.loading) return;
     if (this.data.saving || this.data.uploading) return;
     const { realName, phone, idCardNumber, files } = this.data;
     if (!realName.trim()) return wx.showToast({ title: '请填写真实姓名', icon: 'none' });

@@ -7,7 +7,6 @@ const {err}=require('../lib/http');
 // 企业资质不进入现有“登录用户可直读”的云存储；加密存储，下载须验证归属/管理权限。
 const key=()=>crypto.createHash('sha256').update(String(config.identityDataKey)).digest();
 async function upload(userId,b){
-  if(b.taskId)return require('./private-storage').commit(userId,'ENTERPRISE',v.str(b.taskId,'上传任务',{min:1,max:32}),v.str(b.fileID,'云文件',{min:10,max:512}));
   const base64=v.str(b.base64,'资质图片数据',{min:1,max:560000});
   if(!/^[A-Za-z0-9+/]+={0,2}$/.test(base64))throw err.bad('资质图片数据格式错误');
   const bytes=Buffer.from(base64,'base64');if(bytes.length>400*1024)throw err.bad('压缩后资质图片不能超过400KB');
@@ -22,7 +21,6 @@ async function upload(userId,b){
 }
 async function read(id,userId,admin=false){
   const row=await queryOne('SELECT * FROM enterprise_documents WHERE id=?',[id]);if(!row||(!admin&&row.userId!==userId))throw err.notFound('企业资质不存在');
-  const cloud=await require('./private-storage').cloudView(row);if(cloud)return cloud;
   const [iv,tag,bytes]=row.payload.split('.').map(x=>Buffer.from(x,'base64'));const decipher=crypto.createDecipheriv('aes-256-gcm',key(),iv);decipher.setAuthTag(tag);
   return {mime:row.mime,base64:Buffer.concat([decipher.update(bytes),decipher.final()]).toString('base64')};
 }

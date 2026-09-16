@@ -75,16 +75,7 @@ async function requireApprovedIdentity(user) {
   return user;
 }
 
-async function assertIdentityEditable(conn, userId) {
-  await conn.execute('SELECT id FROM users WHERE id=? FOR UPDATE', [userId]);
-  const [[identity]] = await conn.execute('SELECT verifyStatus,submittedAt FROM identity_verifications WHERE userId=? FOR UPDATE', [userId]);
-  const [[legacy]] = await conn.execute('SELECT verifyStatus FROM engineer_profiles WHERE userId=? FOR UPDATE', [userId]);
-  if (identity?.verifyStatus === 'APPROVED' || legacy?.verifyStatus === 'APPROVED') throw err.conflict('身份认证已通过，无需重复认证');
-  if (identity?.verifyStatus === 'PENDING' && identity.submittedAt) throw err.conflict('身份认证正在审核中，请勿重复提交或修改资料');
-}
-
 module.exports = {
-  assertIdentityEditable,
   encryptIdCard, decryptIdCard, idCardHash, isValidIdCard, validateIdentityFields,
   ensureIdentityRecord, identityStatus, requireApprovedIdentity,
 };

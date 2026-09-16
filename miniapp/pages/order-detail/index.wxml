@@ -107,7 +107,7 @@ module.exports = {
         <text class="attachment-kind {{item.purpose === 'RESULT' || item.kind === 'RESULT' ? 'result' : ''}}">{{item.purpose === 'RESULT' || item.kind === 'RESULT' ? '成果' : '需求'}}</text>
         <text class="attachment-name">{{item.name}}</text>
         <text class="attachment-size">{{item.sizeText}}</text>
-        <text class="attachment-dl">{{item.cleanedAt ? '已到期清理' : (downloadingFileId === item.fileId ? '下载中…' : '下载')}}</text>
+        <text class="attachment-dl">{{downloadingFileId === item.fileId ? '下载中…' : '下载'}}</text>
       </view>
     </view>
   </view>

@@ -1,4 +1,4 @@
 {
-  "read": "auth != null && /^private-staging\\//.test(resource.path) == false && /^private-documents\\//.test(resource.path) == false",
-  "write": "auth != null && /^private-documents\\//.test(resource.path) == false && resource.openid == auth.openid"
+  "read": "auth != null",
+  "write": "auth != null && resource.openid == auth.openid"
 }

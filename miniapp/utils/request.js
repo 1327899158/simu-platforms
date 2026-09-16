@@ -9,25 +9,6 @@
  */
 const { ENV_ID, SERVICE_NAME, BASE_URL } = require('./config');
 
-// Keep this on the main request path, without a separately loaded module.
-// Resolve display fields only; preserve IDs used for editing and uploading.
-async function resolveMedia(value, resolve) {
-  const pending = new Map();
-  const visit = async (item) => {
-    if (!item || typeof item !== 'object') return;
-    await Promise.all(Object.keys(item).map(async (key) => {
-      const original = item[key];
-      if ((key === 'avatarUrl' || key === 'imgUrl') && typeof original === 'string' && original.startsWith('cloud://')) {
-        if (!pending.has(original)) pending.set(original, Promise.resolve().then(() => resolve(original)).catch(() => ''));
-        if (key === 'avatarUrl') item.avatarFileID = original;
-        item[key] = await pending.get(original);
-      } else if (typeof original === 'object') await visit(original);
-    }));
-  };
-  await visit(value);
-  return value;
-}
-
 /** 判断是否在开发者工具/本地（wx.cloud 不可用时降级到 wx.request） */
 function isCloudAvailable() {
   return typeof wx.cloud !== 'undefined' && typeof wx.cloud.callContainer === 'function';
@@ -124,15 +105,7 @@ async function request(method, path, data, opt = {}) {
   const body = res.data || {};
   const statusCode = res.statusCode || 200;
 
-  if (statusCode === 200 && body.code === 0) {
-    if(path==='/files/resolve-url')return body.data;
-    // Login responses are resolved on the next authenticated /me request.
-    if(path.startsWith('/auth/'))return body.data;
-    return resolveMedia(body.data,async fileID=>{
-      const r=await request('POST','/files/resolve-url',{fileID},{silent:true,redirectOnUnauthorized:false});
-      return r.url;
-    });
-  }
+  if (statusCode === 200 && body.code === 0) return body.data;
 
   // 未登录 / 账号不可用
   if (statusCode === 401 || body.code === 40100) {
@@ -242,4 +215,4 @@ function uploadHttp(filePath, { kind = 'DOC', orderId = '', name = '', mime = ''
   });
 }
 
-module.exports = { request, upload, toLogin, resolveMedia };
+module.exports = { request, upload, toLogin };

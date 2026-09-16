@@ -24,7 +24,6 @@ require('./routes/auth').register(router);
 require('./routes/auth-multi').register(router);  // 新增：多种登录方式
 require('./routes/dicts').register(router);
 require('./routes/files').register(router);
-require('./routes/private-uploads').register(router);
 require('./routes/identity').register(router);
 require('./routes/home').register(router);
 require('./routes/orders').register(router);
@@ -85,10 +84,6 @@ async function bootstrap() {
   await require('./services/community-migration').migrate(require('./db').query);
   await require('./services/delivery-enterprise-migration').migrate(require('./db').query);
   await require('./services/customer-service-migration').migrate(require('./db').query);
-  await require('./services/file-retention').migrate(require('./db').query);
-  await require('./services/private-storage').migrate(require('./db').query);
-  require('./services/private-storage').start();
-  require('./services/file-retention').start();
   require('./services/completion-reward-svc').start();
   require('./services/overdue-svc').start();
   require('./services/account-closure-svc').start();
