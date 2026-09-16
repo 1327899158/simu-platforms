@@ -375,6 +375,7 @@ function register(router) {
     );
     if (!file) throw err.notFound('文件不存在');
     if (!(await canReadFile(user, file))) throw err.forbidden('无权下载该文件');
+    if (await queryOne('SELECT fileId FROM file_cleanup_log WHERE fileId=?', [file.id])) throw err.notFound('文件已到期清理，订单记录仍保留');
     let url;
     if (search?.get('preview') === '1' && file.kind === 'IMAGE') {
       // 先验证业务可见性，再由服务端签发短期预览链接，兼容云存储仅上传者可读的规则。
@@ -404,9 +405,10 @@ function register(router) {
     if (!access) throw err.forbidden('无权查看该订单文件');
     const purposeFilter = access === 'REQUIREMENT' ? ` AND oa.purpose = 'REQUIREMENT'` : '';
     const rows = await query(
-      `SELECT f.*, oa.purpose
+      `SELECT f.*, oa.purpose, l.cleanedAt
          FROM order_attachments oa
          JOIN uploaded_files f ON f.id = oa.fileId
+         LEFT JOIN file_cleanup_log l ON l.fileId = f.id
         WHERE oa.orderId = ?
           AND oa.purpose IN ('REQUIREMENT', 'RESULT')${purposeFilter}
         ORDER BY oa.createdAt`,
@@ -422,6 +424,7 @@ function register(router) {
       mime: f.mime || '',
       sizeBytes: Number(f.sizeBytes),
       createdAt: f.createdAt,
+      cleanedAt: f.cleanedAt || null,
     })));
   });
 

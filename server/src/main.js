@@ -84,6 +84,8 @@ async function bootstrap() {
   await require('./services/community-migration').migrate(require('./db').query);
   await require('./services/delivery-enterprise-migration').migrate(require('./db').query);
   await require('./services/customer-service-migration').migrate(require('./db').query);
+  await require('./services/file-retention').migrate(require('./db').query);
+  require('./services/file-retention').start();
   require('./services/completion-reward-svc').start();
   require('./services/overdue-svc').start();
   require('./services/account-closure-svc').start();
