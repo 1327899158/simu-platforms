@@ -5,7 +5,8 @@ const chat=require('./chat-svc');
 const DAY=86400000;
 async function migrate(q){
  await q(`CREATE TABLE IF NOT EXISTS order_file_retention(orderId VARCHAR(32) PRIMARY KEY, completedAt DATETIME(3) NOT NULL, deleteAfter DATETIME(3) NOT NULL, notified7At DATETIME(3) NULL, notified1At DATETIME(3) NULL)`);
- await q(`CREATE TABLE IF NOT EXISTS file_cleanup_log(fileId VARCHAR(32) PRIMARY KEY, orderId VARCHAR(32) NOT NULL, cleanedAt DATETIME(3) NOT NULL, fileID VARCHAR(512) NOT NULL, name VARCHAR(255) NOT NULL)`);
+ // MySQL列名不区分大小写：业务fileId与云对象ID必须使用不同名称。
+ await q(`CREATE TABLE IF NOT EXISTS file_cleanup_log(fileId VARCHAR(32) PRIMARY KEY, orderId VARCHAR(32) NOT NULL, cleanedAt DATETIME(3) NOT NULL, cloudFileId VARCHAR(512) NOT NULL, name VARCHAR(255) NOT NULL)`);
 }
 function plan(completedAt,now=Date.now()){return new Date(Math.max(new Date(completedAt).getTime()+90*DAY,now+7*DAY));}
 function action(row,now=Date.now()){
@@ -60,7 +61,7 @@ async function processOrder(id){
    const item=result.fileList?.find(x=>(x.fileID||x.fileid)===f.fileID);
    const code=item?.code??item?.status;
    if(result.code||!item||!['0','SUCCESS'].includes(String(code)))throw Error('云存储未确认删除成功');
-   await exec('INSERT INTO file_cleanup_log(fileId,orderId,cleanedAt,fileID,name) VALUES(?,?,UTC_TIMESTAMP(3),?,?)',[f.id,id,f.fileID,f.name]);
+   await exec('INSERT INTO file_cleanup_log(fileId,orderId,cleanedAt,cloudFileId,name) VALUES(?,?,UTC_TIMESTAMP(3),?,?)',[f.id,id,f.fileID,f.name]);
    // 每个事务只删除一个对象，避免后续对象失败导致此前清理记录回滚。
    break;
   }

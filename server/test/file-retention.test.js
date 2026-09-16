@@ -15,10 +15,21 @@ mock('../src/db',{query:async()=>[],tx:async fn=>fn({execute:async(sql,a)=>{
  if(sql.startsWith('INSERT INTO order_file_retention')){row={completedAt:a[1],deleteAfter:a[2]};return [{}];}
  if(sql.startsWith('UPDATE order_file_retention')){row[sql.includes('notified7At')?'notified7At':'notified1At']=a[0];row.deleteAfter=a[1];return [{}];}
  if(sql.startsWith('SELECT fileId'))return [referenced?[{fileId:'f'}]:[]];
- if(sql.startsWith('INSERT INTO file_cleanup_log')){logged++;return [{}];}
+ if(sql.startsWith('INSERT INTO file_cleanup_log')){assert.match(sql,/\(fileId,orderId,cleanedAt,cloudFileId,name\)/);assert.equal(a[0],'f');assert.equal(a[2],'cloud://test-env.bucket/uploads/u/o/f');logged++;return [{}];}
  throw Error(sql);
 }})});
 const svc=require('../src/services/file-retention');
+test('清理迁移字段在MySQL大小写不敏感规则下不重名，云对象字段独立命名',async()=>{
+ const statements=[];await svc.migrate(async sql=>statements.push(sql));
+ assert.equal(statements.length,2);
+ for(const sql of statements){
+  const columns=[...sql.matchAll(/(?:\(|,)\s*(\w+)\s+(?:VARCHAR|DATETIME)\s*\(/gi)].map(m=>m[1].toLowerCase());
+  assert.ok(columns.length>0);assert.equal(new Set(columns).size,columns.length,sql);
+ }
+ const ddl=statements.find(sql=>sql.includes('file_cleanup_log'));
+ assert.match(ddl,/fileId VARCHAR\(32\) PRIMARY KEY/);
+ assert.match(ddl,/cloudFileId VARCHAR\(512\) NOT NULL/);
+});
 function reset(){row=null;completedAt=new Date(Date.now()-100*DAY);blocked=referenced=fail=false;removed=logged=notices=0;files=[{id:'f',fileID:'cloud://test-env.bucket/uploads/u/o/f',name:'模型'}];}
 test('保留90天，历史订单完整7天，停机错过1天通知时不直接删除',()=>{
  const now=Date.now();assert.equal(+svc.plan(new Date(now-100*DAY),now),now+7*DAY);
