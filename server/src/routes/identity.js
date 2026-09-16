@@ -73,6 +73,7 @@ function register(router) {
     if (new Set(supportingFileIds).size !== supportingFileIds.length) throw err.bad('补充认证材料不能重复');
     try {
       await tx(async (conn) => {
+        await require('../services/identity-svc').assertIdentityEditable(conn, user.id);
         await ownedFiles(conn, user.id, supportingFileIds);
         const [duplicate] = await conn.execute(
           `SELECT userId FROM identity_verifications WHERE idCardHash=? AND userId<>? FOR UPDATE`,
@@ -120,6 +121,7 @@ function register(router) {
     if (!file) throw err.notFound('认证材料不存在');
     if (file.uploaderId !== user.id) throw err.forbidden('无权删除该认证材料');
     await tx(async (conn) => {
+      await require('../services/identity-svc').assertIdentityEditable(conn, user.id);
       await conn.execute(`DELETE FROM identity_verification_files WHERE userId=? AND fileId=?`, [user.id, file.id]);
       // 兼容迁移前工程师材料的旧关系，避免外键阻止文件元数据删除。
       await conn.execute(`DELETE FROM engineer_verification_files WHERE engineerId=? AND fileId=?`, [user.id, file.id]);

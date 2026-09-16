@@ -5,6 +5,7 @@ function confirm(title,content){return new Promise(resolve=>wx.showModal({title,
 async function previewEvidence(id,admin=false) {
   try {
     const r=await request('GET',(admin?'/admin':'')+'/support/evidence/'+encodeURIComponent(id));
+    if(r.url){wx.previewImage({urls:[r.url],current:r.url});return;}
     const path=wx.env.USER_DATA_PATH+'/support-'+id+(r.mime==='image/png'?'.png':'.jpg');
     await new Promise((resolve,reject)=>wx.getFileSystemManager().writeFile({filePath:path,data:r.base64,encoding:'base64',success:resolve,fail:reject}));
     wx.previewImage({urls:[path],current:path});

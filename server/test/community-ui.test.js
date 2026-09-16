@@ -24,7 +24,7 @@ test('定向保护覆盖大厅、详情、报价、附件；公开与定向草�
   const publish=read('miniapp/pages/publish/index.js');assert.match(publish,/_direct_/);assert.match(publish,/directEngineerId: this._directEngineerId/);
 });
 test('证据前端不再上传公开云文件，管理员与用户预览路径分离',()=>{
-  const source=read('miniapp/pages/support/index.js');assert.doesNotMatch(source,/cloud\.uploadFile/);assert.match(source,/\/support\/evidence/);assert.match(read('miniapp/admin/pages/support/index.js'),/previewEvidence\(e.currentTarget.dataset.id,true\)/);
+  const source=read('miniapp/pages/support/index.js');assert.doesNotMatch(source,/cloud\.uploadFile/);assert.match(source,/uploadPrivate\('SUPPORT'\)/);assert.match(read('miniapp/utils/private-image.js'),/\/support\/evidence/);assert.match(read('miniapp/admin/pages/support/index.js'),/previewEvidence\(e.currentTarget.dataset.id,true\)/);
 });
 test('迁移SQL与启动定义一致，具有领奖唯一约束',()=>{
   const defs=require('../src/services/community-migration').definitions;

@@ -307,6 +307,7 @@ function register(router) {
     }
     const now = nowIso();
     await tx(async (conn) => {
+      await require('../services/identity-svc').assertIdentityEditable(conn, user.id);
       for (const fileId of fileIds) {
         await conn.execute(
           `INSERT INTO engineer_verification_files(engineerId, fileId, createdAt) VALUES(?, ?, ?)`,
@@ -343,6 +344,7 @@ function register(router) {
     if (!file) throw err.notFound('身份认证材料不存在');
     if (file.uploaderId !== user.id) throw err.forbidden('无权删除该身份认证材料');
     await tx(async (conn) => {
+      await require('../services/identity-svc').assertIdentityEditable(conn, user.id);
       await conn.execute(`DELETE FROM engineer_verification_files WHERE engineerId = ? AND fileId = ?`, [user.id, file.id]);
       await conn.execute(`DELETE FROM identity_verification_files WHERE userId = ? AND fileId = ?`, [user.id, file.id]);
       await conn.execute(`DELETE FROM uploaded_files WHERE id = ? AND uploaderId = ?`, [file.id, user.id]);

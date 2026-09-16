@@ -8,23 +8,23 @@
 
   <view class="qualification-card form-card">
     <text class="section-title">本人信息</text>
-    <view class="field"><text class="field-label">真实姓名</text><input class="field-input" value="{{realName}}" maxlength="30" placeholder="请输入身份证上的姓名" bindinput="onRealName" /></view>
+    <view class="field"><text class="field-label">真实姓名</text><input disabled="{{!editable || saving}}" class="field-input" value="{{realName}}" maxlength="30" placeholder="请输入身份证上的姓名" bindinput="onRealName" /></view>
     <view class="field">
       <text class="field-label">手机号</text>
-      <button class="phone-authorize" open-type="getPhoneNumber" bindgetphonenumber="onGetPhoneNumber" loading="{{bindingPhone}}" disabled="{{bindingPhone}}">
+      <button class="phone-authorize" open-type="getPhoneNumber" bindgetphonenumber="onGetPhoneNumber" loading="{{bindingPhone}}" disabled="{{!editable || bindingPhone || saving}}">
         <text class="phone-value {{phone ? '' : 'placeholder'}}">{{phone || '点击授权获取微信绑定手机号'}}</text>
         <text class="phone-action">{{phone ? '重新授权' : '微信授权'}}</text>
       </button>
       <text class="phone-tip">点击手机号框后由微信弹出授权窗口；未同意授权时平台不会读取号码。</text>
     </view>
-    <view class="field"><text class="field-label">身份证号</text><input class="field-input" value="{{idCardNumber}}" maxlength="18" placeholder="请输入18位身份证号" bindinput="onIdCard" /></view>
+    <view class="field"><text class="field-label">身份证号</text><input disabled="{{!editable || saving}}" class="field-input" value="{{idCardNumber}}" maxlength="18" placeholder="请输入18位身份证号" bindinput="onIdCard" /></view>
   </view>
 
   <view class="qualification-card">
-    <view class="section-head"><view><text class="section-title">补充认证资料</text><text class="section-tip">学历、证书、项目案例等（选填）</text></view><button class="choose-button {{uploading ? 'disabled' : ''}}" disabled="{{uploading}}" bindtap="chooseSupporting">{{uploading ? uploadText : '上传资料'}}</button></view>
-    <view class="file-row" wx:for="{{files}}" wx:key="fileId"><view class="file-main" data-source="support" data-index="{{index}}" bindtap="openFile"><text class="file-icon">{{item.kind === 'IMAGE' ? '图' : '文'}}</text><view class="file-copy"><text class="file-name">{{item.name}}</text><text class="file-meta">{{item.sizeText}} · 点击查看</text></view></view><button class="remove-button" data-index="{{index}}" bindtap="removeSupporting">删除</button></view>
+    <view class="section-head"><view><text class="section-title">补充认证资料</text><text class="section-tip">学历、证书、项目案例等（选填）</text></view><button wx:if="{{editable}}" class="choose-button {{uploading ? 'disabled' : ''}}" disabled="{{uploading}}" bindtap="chooseSupporting">{{uploading ? uploadText : '上传资料'}}</button></view>
+    <view class="file-row" wx:for="{{files}}" wx:key="fileId"><view class="file-main" data-source="support" data-index="{{index}}" bindtap="openFile"><text class="file-icon">{{item.kind === 'IMAGE' ? '图' : '文'}}</text><view class="file-copy"><text class="file-name">{{item.name}}</text><text class="file-meta">{{item.sizeText}} · 点击查看</text></view></view><button wx:if="{{editable}}" class="remove-button" data-index="{{index}}" bindtap="removeSupporting">删除</button></view>
     <view class="empty" wx:if="{{!loading && !files.length}}">无需上传身份证照片；补充认证资料为选填</view>
   </view>
 
-  <button class="submit-button" loading="{{saving}}" disabled="{{saving || uploading}}" bindtap="submit">提交身份认证</button>
+  <button class="submit-button" loading="{{saving}}" disabled="{{!editable || loading || saving || uploading}}" bindtap="submit">{{loading ? '加载中…' : (editable ? '提交身份认证' : (verifyStatus === 'APPROVED' ? '已通过认证，无需重复提交' : '当前不可提交，请等待审核或下拉刷新'))}}</button>
 </view>
