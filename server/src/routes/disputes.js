@@ -242,7 +242,7 @@ function register(router) {
     const user = await requireUser(req);
     const b = await readJson(req);
     const description = v.str(b.description, '材料说明', { max: 1000, optional: true }) || null;
-    const fileIds = v.arr(b.fileIds, '证据文件', { minLen: 1, maxLen: 5 })
+    const fileIds = v.arr(b.fileIds, '证据文件', { minLen: 1, maxLen: 10 })
       .map((id) => v.str(id, '文件ID', { min: 1, max: 32 }));
     if (new Set(fileIds).size !== fileIds.length) throw err.bad('证据文件不能重复');
 

@@ -42,3 +42,13 @@
 .evidence-description-form { margin:20rpx 0; padding:20rpx; background:#f5f8fa; border-radius:16rpx; font-size:26rpx; }
 .evidence-description-form textarea { width:100%; min-height:120rpx; margin-top:16rpx; }
 .evidence-description { display:block; margin:12rpx 0; white-space:pre-wrap; word-break:break-all; font-size:26rpx; line-height:1.6; color:#405164; }
+
+.evidence-picker { display:flex; flex-wrap:wrap; gap:16rpx; margin-bottom:16rpx; }
+.evidence-thumb,.evidence-add { width:170rpx; height:170rpx; position:relative; border-radius:14rpx; }
+.evidence-thumb image { width:100%; height:100%; border-radius:14rpx; }
+.evidence-add { margin:0; padding:0; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#e8ebee; color:#69737d; font-size:22rpx; line-height:1.5; }
+.evidence-add::after,.evidence-remove::after { border:none; }
+.evidence-plus { font-size:64rpx; font-weight:300; }
+.evidence-remove { position:absolute; top:-10rpx; right:-10rpx; width:44rpx; height:44rpx; margin:0; padding:0; border-radius:50%; background:#46505a; color:white; line-height:40rpx; font-size:32rpx; }
+.evidence-submit { margin-top:24rpx; background:#35788d; color:white; border-radius:16rpx; font-size:28rpx; }
+.evidence-submit[disabled] { background:#d8dfe3; color:#8b949c; }

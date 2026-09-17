@@ -5,14 +5,14 @@ const { downloadAndOpen, formatDownloadError } = require('../../utils/cloud-file
 const { timeShort, fenToYuan } = require('../../utils/format');
 
 const MAX_EVIDENCE_PER_PARTY = 20;
-const MAX_FILES_PER_UPLOAD = 5;
+const MAX_FILES_PER_UPLOAD = 10;
 
 function pad2(value) { return String(value).padStart(2, '0'); }
 
 Page({
   data: {
     id: '', myId: '', dispute: null,
-    uploading: false, evidenceCountdown: '', evidenceDescription: '',
+    uploading: false, evidenceCountdown: '', evidenceDescription: '', pendingEvidence: [],
   },
   _countdownTimer: null,
   _deadlineMs: 0,
@@ -104,46 +104,66 @@ Page({
     this.setData({ evidenceCountdown: `${pad2(hours)}:${pad2(minutes)}:${pad2(seconds)}` });
   },
 
-  async addEvidence() {
-    const dispute = this.data.dispute;
-    if (!dispute || !dispute.evidenceOpen || this.data.uploading) return;
-    const description = this.data.evidenceDescription.trim();
-    const remainingSlots = MAX_EVIDENCE_PER_PARTY - Number(dispute.myEvidenceCount || 0);
-    if (remainingSlots <= 0) {
-      wx.showToast({ title: `每人最多提交${MAX_EVIDENCE_PER_PARTY}份证据`, icon: 'none' });
-      return;
-    }
-    wx.chooseMessageFile({
-      count: Math.min(MAX_FILES_PER_UPLOAD, remainingSlots),
-      type: 'all',
-      success: async (result) => {
-        const files = result.tempFiles || [];
-        if (!files.length) return;
-        this.setData({ uploading: true });
-        wx.showLoading({ title: '上传证据中…', mask: true });
-        try {
-          const fileIds = [];
-          for (const file of files) {
-            const isImage = /\.(png|jpe?g|gif|webp|bmp)$/i.test(file.name || '');
-            const saved = await upload(file.path, {
-              kind: isImage ? 'IMAGE' : 'DOC',
-              name: file.name || 'evidence',
-            });
-            fileIds.push(saved.id || saved.fileId);
-          }
-          await request('POST', `/disputes/${this.data.id}/evidence`, { fileIds, description }, { silent: true });
-          this.setData({ evidenceDescription: '' });
-          wx.showToast({ title: `已提交${fileIds.length}份证据`, icon: 'success' });
-          await this.load();
-        } catch (e) {
-          wx.showToast({ title: e.message || '证据上传失败', icon: 'none' });
-          await this.load();
-        } finally {
-          wx.hideLoading();
-          this.setData({ uploading: false });
-        }
+  addEvidence() {
+    const { dispute, pendingEvidence, uploading } = this.data;
+    if (!dispute?.evidenceOpen || uploading || this._choosingEvidence) return;
+    const count = Math.min(MAX_FILES_PER_UPLOAD - pendingEvidence.length,
+      MAX_EVIDENCE_PER_PARTY - Number(dispute.myEvidenceCount || 0) - pendingEvidence.length);
+    if (count <= 0) return wx.showToast({ title: '本次最多10张，每人累计最多20份', icon: 'none' });
+    this._choosingEvidence = true;
+    wx.chooseMedia({
+      count: Math.min(9, count), mediaType: ['image'], sourceType: ['album', 'camera'],
+      success: result => {
+        const files = (result.tempFiles || []).slice(0, count).map(file => ({ path: file.tempFilePath }));
+        this.setData({ pendingEvidence: this.data.pendingEvidence.concat(files) });
       },
+      complete: () => { this._choosingEvidence = false; },
     });
+  },
+  removePendingEvidence(e) {
+    if (this.data.uploading) return;
+    const files = this.data.pendingEvidence.slice();
+    files.splice(Number(e.currentTarget.dataset.index), 1);
+    this.setData({ pendingEvidence: files });
+  },
+  previewPendingEvidence(e) {
+    const urls = this.data.pendingEvidence.map(file => file.path);
+    wx.previewImage({ urls, current: urls[Number(e.currentTarget.dataset.index)] });
+  },
+  async submitEvidence() {
+    const { dispute, pendingEvidence, uploading } = this.data;
+    if (!dispute?.evidenceOpen || uploading) return;
+    if (!pendingEvidence.length) return wx.showToast({ title: '请先选择证据图片', icon: 'none' });
+    if (pendingEvidence.length > MAX_FILES_PER_UPLOAD || pendingEvidence.length + Number(dispute.myEvidenceCount || 0) > MAX_EVIDENCE_PER_PARTY) {
+      return wx.showToast({ title: '已超过可提交的证据数量', icon: 'none' });
+    }
+    const description = this.data.evidenceDescription.trim();
+    this.setData({ uploading: true });
+    wx.showLoading({ title: '上传证据中…', mask: true });
+    try {
+      const fileIds = [];
+      for (const file of pendingEvidence) {
+        // 保留成功上传的ID，提交失败重试时不重复上传云文件。
+        if (!file.fileId) {
+          const ext = /\.([a-zA-Z0-9]+)$/.exec(file.path);
+          const saved = await upload(file.path, { kind: 'IMAGE', name: 'evidence.' + (ext ? ext[1] : 'jpg') });
+          file.fileId = saved.id || saved.fileId;
+        }
+        fileIds.push(file.fileId);
+      }
+      await request('POST', '/disputes/' + this.data.id + '/evidence', { fileIds, description }, { silent: true });
+      this.setData({ evidenceDescription: '', pendingEvidence: [] });
+      wx.hideLoading();
+      wx.showToast({ title: '证据已提交', icon: 'success' });
+      await this.load();
+    } catch (e) {
+      wx.hideLoading();
+      wx.showToast({ title: e.message || '证据上传失败', icon: 'none' });
+      await this.load();
+    } finally {
+      wx.hideLoading();
+      this.setData({ uploading: false });
+    }
   },
 
   inputEvidenceDescription(e) { this.setData({ evidenceDescription: e.detail.value }); },

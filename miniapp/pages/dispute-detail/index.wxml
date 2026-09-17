@@ -34,18 +34,24 @@
         <view class="ui-icon-copy card-title compact"><ui-symbol value="📎"/> 双方证据（{{dispute.evidence.length}}）</view>
         <text class="evidence-subtitle">我已提交 {{dispute.myEvidenceCount}} / 20 份</text>
       </view>
-      <button class="upload-button" wx:if="{{dispute.evidenceOpen}}" bindtap="addEvidence" disabled="{{uploading}}">
-        {{uploading ? '上传中…' : '＋ 补充证据'}}
-      </button>
     </view>
 
     <view class="evidence-notice">
-      可先填写本次材料说明，再点击“补充证据”选择文件。同一次上传的文件共用说明。举证截止后不可再补充。
+      点击加号选择图片，每次最多10张。填写说明后点击上传按钮提交，举证截止后不可再补充。
     </view>
     <view class="evidence-description-form" wx:if="{{dispute.evidenceOpen}}">
+      <view class="evidence-picker">
+        <view class="evidence-thumb" wx:for="{{pendingEvidence}}" wx:key="path">
+          <image src="{{item.path}}" mode="aspectFill" data-index="{{index}}" bindtap="previewPendingEvidence"/>
+          <button class="evidence-remove" data-index="{{index}}" catchtap="removePendingEvidence" disabled="{{uploading}}" aria-label="移除图片">×</button>
+        </view>
+        <button class="evidence-add" bindtap="addEvidence" disabled="{{uploading}}" wx:if="{{pendingEvidence.length < 10 && pendingEvidence.length + dispute.myEvidenceCount < 20}}"><text class="evidence-plus">＋</text><text>添加图片</text></button>
+      </view>
+      <text class="evid-meta">本次已选 {{pendingEvidence.length}} / 10 张</text>
       <text>材料说明（选填）</text>
       <textarea value="{{evidenceDescription}}" bindinput="inputEvidenceDescription" maxlength="1000" disabled="{{uploading}}" placeholder="说明本次材料的内容及证明事项，最多1000字" auto-height/>
       <text class="evid-meta">{{evidenceDescription.length}} / 1000</text>
+      <button class="evidence-submit" bindtap="submitEvidence" loading="{{uploading}}" disabled="{{uploading || !pendingEvidence.length}}">{{uploading ? '上传中…' : '上传证据'}}</button>
     </view>
 
     <view class="evid-item" wx:for="{{dispute.evidence}}" wx:key="fileId"

@@ -1,7 +1,7 @@
 'use strict';
 const { query, queryOne } = require('../db');
 const LEVELS = [
-  { key: 'CERTIFIED', name: '认证工程师', icon: '✓', min: 0, positive: 0, dispute: null, rate: null, weight: 0, rule: '实名认证通过 + 已提交基础资质资料（0单起步）' },
+  { key: 'CERTIFIED', name: '认证工程师', icon: '✓', min: 0, positive: 0, dispute: null, rate: null, weight: 0, rule: '身份认证审核通过（0单起步）' },
   { key: 'ROOKIE', name: '新秀工程师', icon: '🆕', min: 1, positive: 85, dispute: null, rate: 15, weight: 0, rule: '累计1–9单，好评率≥85%' },
   { key: 'GROWING', name: '成长工程师', icon: '📈', min: 10, positive: 90, dispute: null, rate: 10, weight: 0, rule: '累计10–29单，好评率≥90%' },
   { key: 'SENIOR', name: '资深工程师', icon: '💎', min: 30, positive: 95, dispute: 2, rate: 8, weight: 0, rule: '累计30–59单，好评率≥95%，纠纷率<2%' },
@@ -11,7 +11,7 @@ const LEVELS = [
 function calculate(stats) {
   const positiveRate = stats.reviews ? stats.positive / stats.reviews * 100 : null;
   const disputeRate = stats.accepted ? stats.disputed / stats.accepted * 100 : 0;
-  let level = { key: 'UNQUALIFIED', name: '待完善资质', icon: '○', rate: null, weight: 0 };
+  let level = { key: 'UNQUALIFIED', name: '待身份认证', icon: '○', rate: null, weight: 0 };
   if (stats.qualified) {
     level = LEVELS[0];
     for (const candidate of LEVELS.slice(1)) {
@@ -31,7 +31,7 @@ function advancement(current) {
   const ratingMet = next.positive === 0 || (current.positiveRate !== null && current.positiveRate >= next.positive);
   const disputeMet = next.dispute === null || current.disputeRate < next.dispute;
   const requirements = [
-    { key: 'qualification', label: '身份认证与基础资质', met: qualified, currentText: qualified ? '已满足' : '未满足', targetText: '实名认证通过并提交基础资质材料' },
+    { key: 'qualification', label: '身份认证', met: qualified, currentText: qualified ? '已满足' : '未满足', targetText: '身份认证审核通过' },
     { key: 'orders', label: '累计完成订单', met: orderGap === 0, currentText: current.completed + ' 单', targetText: '至少 ' + next.min + ' 单', hint: orderGap ? '还差 ' + orderGap + ' 单' : '已达标' },
   ];
   if (next.positive > 0) requirements.push({ key: 'rating', label: '好评率', met: ratingMet,
@@ -49,7 +49,7 @@ async function getLevel(id) {
     (SELECT COUNT(DISTINCT d.orderId) FROM disputes d JOIN orders o ON o.id=d.orderId JOIN quotes q ON q.id=o.selectedQuoteId WHERE q.engineerId=? AND o.paidAt IS NOT NULL) AS disputed,
     (SELECT COUNT(*) FROM engineer_reviews WHERE engineerId=?) AS reviews,
     (SELECT COUNT(*) FROM engineer_reviews WHERE engineerId=? AND (qualityScore+attitudeScore+speedScore+COALESCE(professionalScore,(qualityScore+attitudeScore+speedScore)/3)+COALESCE(communicationScore,(qualityScore+attitudeScore+speedScore)/3))/5>=4) AS positive,
-    (SELECT COUNT(*) FROM identity_verifications iv WHERE iv.userId=? AND iv.verifyStatus='APPROVED' AND EXISTS(SELECT 1 FROM identity_verification_files f WHERE f.userId=iv.userId AND f.purpose='SUPPORTING')) AS qualified`, Array(6).fill(id));
+    (SELECT COUNT(*) FROM identity_verifications iv WHERE iv.userId=? AND iv.verifyStatus='APPROVED') AS qualified`, Array(6).fill(id));
   const stats = Object.fromEntries(Object.entries(row).map(([k,v]) => [k, Number(v || 0)]));
   const level = calculate(stats);
   await query(`UPDATE engineer_profiles SET levelKey=?, completedOrderCount=?, positiveReviewRate=?, disputeRate=?, levelUpdatedAt=UTC_TIMESTAMP(3) WHERE userId=?`,
