@@ -20,7 +20,15 @@ function register(router){
   await c.execute("INSERT INTO service_tickets(id,userId,category,title,content,evidence,status,createdAt,updatedAt) VALUES(?,?,?,?,?,?,'OPEN',UTC_TIMESTAMP(3),UTC_TIMESTAMP(3))",[id,u.id,category,title,content,JSON.stringify([...new Set(ids)])]);});ok(res,{id});});
  router.get('/api/service-tickets',async(req,res,p,q)=>{const u=await member(req),rows=await query(`SELECT id,title,category,status,updatedAt FROM service_tickets WHERE userId=? ORDER BY updatedAt DESC,id LIMIT 21 OFFSET ${offset(q)}`,[u.id]);ok(res,{items:rows.slice(0,20),hasMore:rows.length>20});});
  router.get('/api/service-tickets/:id',async(req,res,p)=>ok(res,await detail(p.id,(await member(req)).id)));
- router.get('/api/admin/service-tickets',async(req,res,p,q)=>{await requireAdmin(req,'CUSTOMER_SERVICE');const rows=await query(`SELECT t.*,u.nickname FROM service_tickets t JOIN users u ON u.id=t.userId ORDER BY (t.status IN ('OPEN','PROCESSING')) DESC,t.updatedAt DESC,t.id LIMIT 21 OFFSET ${offset(q)}`);ok(res,{items:rows.slice(0,20),hasMore:rows.length>20});});
+ router.get('/api/admin/service-tickets',async(req,res,p,q)=>{
+  await requireAdmin(req,'CUSTOMER_SERVICE');
+  // 老用户表与后建的客服表可能继承不同的 utf8mb4 排序规则。
+  // 显式统一关联比较，兼容已有数据库，无需在启动时执行改表操作。
+  const rows=await query(`SELECT t.*,u.nickname FROM service_tickets t
+   JOIN users u ON u.id COLLATE utf8mb4_unicode_ci = t.userId COLLATE utf8mb4_unicode_ci
+   ORDER BY (t.status IN ('OPEN','PROCESSING')) DESC,t.updatedAt DESC,t.id LIMIT 21 OFFSET ${offset(q)}`);
+  ok(res,{items:rows.slice(0,20),hasMore:rows.length>20});
+ });
  router.get('/api/admin/service-tickets/:id',async(req,res,p)=>{await requireAdmin(req,'CUSTOMER_SERVICE');ok(res,await detail(p.id,null,true));});
  for(const adminMode of [false,true])router.post('/api/'+(adminMode?'admin/':'')+'service-tickets/:id',async(req,res,p)=>{
   const actor=adminMode?await requireAdmin(req,'CUSTOMER_SERVICE'):{user:await member(req)},b=await readJson(req),action=v.oneOf(b.action,'操作',adminMode?['REPLY','ACCEPT','RESOLVE','CLOSE','REOPEN']:['REPLY','CLOSE','REOPEN']);const content=action==='REPLY'?v.str(b.content,'回复',{min:1,max:3000}):({ACCEPT:'客服已受理工单',RESOLVE:'客服标记问题已处理',CLOSE:'工单已关闭',REOPEN:'工单已重新打开'})[action];
