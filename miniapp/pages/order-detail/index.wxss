@@ -340,6 +340,13 @@
 .review-action-btn[disabled] { background: #C8CCD8; color: #fff; }
 .invoice-action-card, .invoice-engineer-card { display:flex; align-items:center; gap:18rpx; background:#FFFFFF; border-radius:var(--r-lg); padding:28rpx; box-shadow:var(--shadow-card); margin-bottom:20rpx; }
 .invoice-engineer-card { flex-wrap:wrap; }
+.invoice-reminder { margin-bottom:24rpx; padding:28rpx; border:2rpx solid #F4B86A; border-radius:var(--r-lg); background:#FFF5E6; }
+.invoice-reminder-heading { display:flex; align-items:center; gap:12rpx; color:#943B10; font-size:30rpx; font-weight:700; }
+.invoice-reminder-dot { width:16rpx; height:16rpx; border-radius:50%; background:#E65342; flex-shrink:0; }
+.invoice-reminder-title { display:block; margin-top:18rpx; color:#493522; font-size:28rpx; word-break:break-all; }
+.invoice-reminder-desc { display:block; margin-top:10rpx; color:#795C40; font-size:24rpx; line-height:1.6; }
+.invoice-reminder-btn { margin:22rpx 0 0; padding:18rpx 24rpx; border-radius:var(--r-pill); background:#A94716; color:#FFF; font-size:28rpx; font-weight:600; line-height:1.5; }
+.invoice-reminder-btn::after { border:none; }
 .invoice-action-btn { flex-shrink:0; min-width:136rpx; min-height:72rpx; line-height:72rpx; margin:0; padding:0 16rpx; border:0; border-radius:var(--r-pill); background:#E3F4FC; color:#2FA8DE; font-size:24rpx; }
 .invoice-action-btn::after { border:none; }
 .action-section {

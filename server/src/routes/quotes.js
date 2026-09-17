@@ -21,6 +21,22 @@ const quoteView = (qt, extra = {}) => ({
 });
 
 function register(router) {
+  router.get('/api/quotes/mine/unread', async (req, res) => {
+    const user = await requireUser(req);
+    if (user.role !== 'ENGINEER') throw err.forbidden('仅工程师可查看报价提醒');
+    const row = await queryOne("SELECT COUNT(*) AS c FROM quotes WHERE engineerId=? AND status='SELECTED' AND selectedUnread=1", [user.id]);
+    ok(res, { unreadCount: Number(row?.c || 0) });
+  });
+  router.post('/api/quotes/mine/mark-read', async (req, res) => {
+    const user = await requireUser(req);
+    if (user.role !== 'ENGINEER') throw err.forbidden('仅工程师可查看报价提醒');
+    const body = await readJson(req);
+    const ids = [...new Set(v.arr(body.ids, '报价ID', { maxLen: 100 }).map(id => v.str(id, '报价ID', { min: 1, max: 32 })))];
+    if (ids.length) await query(
+      `UPDATE quotes SET selectedUnread=0 WHERE engineerId=? AND status='SELECTED' AND id IN (${ids.map(() => '?').join(',')})`,
+      [user.id, ...ids]);
+    ok(res, { read: true });
+  });
   // POST /api/orders/:id/quotes
   router.post('/api/orders/:id/quotes', async (req, res, params) => {
     const user = await requireEngineer(req);

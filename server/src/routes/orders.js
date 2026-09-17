@@ -544,7 +544,7 @@ function register(router) {
          WHERE id=? AND customerId=? AND status='QUOTING' AND deletedAt IS NULL`,
         [quote.id, quote.amountFen, nowIso(), nowIso(), params.id, user.id]);
       if (!r.affectedRows) throw err.conflict('订单状态已变化，选标失败');
-      await conn.execute(`UPDATE quotes SET status='SELECTED', updatedAt=? WHERE id=?`, [nowIso(), quote.id]);
+      await conn.execute(`UPDATE quotes SET status='SELECTED', selectedUnread=1, updatedAt=? WHERE id=?`, [nowIso(), quote.id]);
       await conn.execute(
         `UPDATE quotes SET status='REJECTED', updatedAt=? WHERE orderId=? AND id!=? AND status='PENDING'`,
         [nowIso(), params.id, quote.id]);

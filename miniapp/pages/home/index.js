@@ -14,12 +14,14 @@ Page({
     recent: [],
     counts: { UNQUOTED: 0, AWAITING_CONFIRMATION: 0, AWAITING_PAYMENT: 0, IN_PROGRESS: 0, DELIVERED: 0 },
     unreadOrderCount: 0,
+    unreadQuoteCount: 0,
     // 工程师
     hall: [],
     hallStats: { allCount: null, todayCount: null },
     campaigns: [], notices: [], engineers: [], categories: [],
   },
   async onShow() {
+    clearInterval(this._quoteTimer);
     let user = ensureLogin();
     if (!user) return;
     try {
@@ -31,10 +33,13 @@ Page({
       role: user.role,
       user,
       canTakeOrders,
+      unreadQuoteCount: 0,
     });
     const tabBar = this.getTabBar && this.getTabBar();
     if (tabBar && tabBar.syncTabBar) tabBar.syncTabBar(user.role, '/pages/home/index');
     if (user.role === 'ENGINEER') {
+      this.loadQuoteUnread();
+      this._quoteTimer = setInterval(() => this.loadQuoteUnread(), 15000);
       if (canTakeOrders) this.loadHall();
       else this.setData({ hall: [] });
     } else {
@@ -44,8 +49,17 @@ Page({
       this._noticeTimer = setInterval(() => this.loadNotices(), 15000);
     }
   },
-  onHide() { clearInterval(this._noticeTimer); },
-  onUnload() { clearInterval(this._noticeTimer); },
+  onHide() { clearInterval(this._noticeTimer); clearInterval(this._quoteTimer); },
+  onUnload() { clearInterval(this._noticeTimer); clearInterval(this._quoteTimer); },
+  async loadQuoteUnread() {
+    const userId = this.data.user && this.data.user.id;
+    try {
+      const data = await request('GET', '/quotes/mine/unread', null, { silent: true });
+      if (this.data.role === 'ENGINEER' && this.data.user?.id === userId) {
+        this.setData({ unreadQuoteCount: Number(data.unreadCount || 0) });
+      }
+    } catch (_) {}
+  },
   async loadNotices() {
     try { this.setData({ notices: await request('GET','/home/notices',null,{silent:true}) }); } catch (_) {}
   },
@@ -65,7 +79,7 @@ Page({
   },
   onPullDownRefresh() {
     const p = this.data.role === 'ENGINEER'
-      ? (this.data.canTakeOrders ? this.loadHall() : Promise.resolve())
+      ? Promise.all([this.loadQuoteUnread(), this.data.canTakeOrders ? this.loadHall() : Promise.resolve()])
       : Promise.all([this.loadCustomer(), this.loadDiscovery()]);
     p.finally(() => wx.stopPullDownRefresh());
   },

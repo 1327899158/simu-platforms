@@ -88,6 +88,11 @@ Page({
         };
       }),
     });
+    // 仅清除本次成功加载并展示的选中报价；失败或筛选隐藏的报价保留提醒。
+    const selectedIds = items.filter(x => x.status === 'SELECTED').map(x => x.id);
+    if (selectedIds.length) {
+      await request('POST', '/quotes/mine/mark-read', { ids: selectedIds }, { silent: true }).catch(() => {});
+    }
   },
   open(e) { wx.navigateTo({ url: `/pages/order-detail/index?id=${e.currentTarget.dataset.oid}&mode=market` }); },
   // 撤回报价（后端支持：仅 PENDING 状态可撤回）

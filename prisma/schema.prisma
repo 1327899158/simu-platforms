@@ -198,6 +198,7 @@ model OrderView {
 }
 
 model Quote {
+  selectedUnread Boolean @default(false)
   id         String      @id @default(cuid())
   orderId    String
   engineerId String

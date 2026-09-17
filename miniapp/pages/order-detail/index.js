@@ -24,6 +24,7 @@ Page({
     dispute: null,
     refundRequest: null,
     invoiceRequest: null,
+    invoiceNeedsAction: false,
     respondingRefund: false,
     refundFormOpen: false,
     refundReason: '',
@@ -74,8 +75,17 @@ Page({
     // 发票信息仅订单双方可读取；不存在申请时返回 null，不影响订单详情。
     try {
       const invoiceRequest = await request('GET', `/orders/${id}/invoice-request`, null, { silent: true });
-      this.setData({ invoiceRequest });
-    } catch (e) { this.setData({ invoiceRequest: null }); }
+      const invoiceNeedsAction = this.data.role === 'ENGINEER' && !!order.iAmSelected
+        && !!invoiceRequest && ['REQUESTED', 'SELF_ISSUE'].includes(invoiceRequest.status);
+      this.setData({ invoiceRequest, invoiceNeedsAction });
+      if (invoiceNeedsAction) {
+        const reminderKey = `${id}:${invoiceRequest.id}:${invoiceRequest.status}`;
+        if (this._invoiceReminderKey !== reminderKey) {
+          this._invoiceReminderKey = reminderKey;
+          wx.showToast({ title: invoiceRequest.status === 'REQUESTED' ? '客户已申请发票，请及时处理' : '发票待开具，请上传发票', icon: 'none', duration: 3000 });
+        }
+      }
+    } catch (e) { this.setData({ invoiceRequest: null, invoiceNeedsAction: false }); }
     // 查询是否有进行中的纠纷（仅当事人可见）
     try {
       const dispute = await request('GET', `/orders/${id}/dispute`, null, { silent: true });
