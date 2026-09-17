@@ -116,7 +116,9 @@ async function verifySmsCode(phone, code, type = 'LOGIN', options = {}) {
   if (!phone || !code) throw err.bad('手机号和验证码不能为空');
   if (!/^\d{6}$/.test(code)) throw err.bad('验证码格式不正确');
 
-  const record = await queryOne(
+  const readOne = options.conn ? async (sql, params) => (await options.conn.execute(sql, params))[0][0] : queryOne;
+  const write = options.conn ? async (sql, params) => (await options.conn.execute(sql, params))[0] : query;
+  const record = await readOne(
     `SELECT id, expiresAt, usedAt FROM sms_codes
      WHERE phone = ? AND code = ? AND type = ?
      ORDER BY createdAt DESC LIMIT 1`,
@@ -139,7 +141,7 @@ async function verifySmsCode(phone, code, type = 'LOGIN', options = {}) {
 
   // Atomically consume the code. Two concurrent requests must not both pass
   // the read-before-write window.
-  const consumed = await query(
+  const consumed = await write(
     `UPDATE sms_codes SET usedAt = ?
      WHERE id = ? AND usedAt IS NULL AND expiresAt > UTC_TIMESTAMP(3)`,
     [nowIso(), record.id]

@@ -87,6 +87,7 @@ async function bootstrap() {
   require('./services/completion-reward-svc').start();
   require('./services/overdue-svc').start();
   require('./services/account-closure-svc').start();
+  require('./services/auto-complete-svc').startAutoComplete();
   server.listen(config.port, '0.0.0.0', () => {
     console.log(JSON.stringify({
       t: new Date().toISOString(), evt: 'listening', port: config.port,

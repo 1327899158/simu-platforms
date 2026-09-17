@@ -36,6 +36,7 @@ async function run(user,id,action,b={}) {return tx(async c=>{
   }
   const [[current]]=await c.execute('SELECT deadline FROM order_delivery_terms WHERE orderId=?',[id]);
   const [items]=await c.execute('SELECT * FROM delivery_extensions WHERE orderId=? ORDER BY createdAt DESC,id DESC LIMIT 50',[id]);
-  return {orderStatus:o.status,deadline:current.deadline,serverNow:new Date().toISOString(),canApply:o.status==='IN_PROGRESS'&&user.id===o.engineerId,canRespond:o.status==='IN_PROGRESS'&&user.id===o.customerId,items};
+  const acceptanceDeadline=require('./acceptance-policy').deadline(o);
+  return {acceptanceDeadline,orderStatus:o.status,deadline:current.deadline,serverNow:new Date().toISOString(),canApply:o.status==='IN_PROGRESS'&&user.id===o.engineerId,canRespond:o.status==='IN_PROGRESS'&&user.id===o.customerId,items};
 });}
 module.exports={run,authorize,initialDeadline};

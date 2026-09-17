@@ -40,7 +40,7 @@
  </block>
  <block wx:if="{{role==='ENGINEER'}}">
   <view class="home-hero engineer-hero">
-   <view class="hero-top"><text class="brand-caption">仿真服务平台 · 工程师</text><button class="bell" bindtap="goProfile">我的资料 ›</button></view>
+   <view class="hero-top"><text class="brand-caption">仿真通 · 仿真服务平台 · 工程师</text><button class="bell" bindtap="goProfile">我的资料 ›</button></view>
    <view class="hero-copy"><image class="home-mascot engineer-mascot" src="/assets/engineer_home-generated.png" mode="aspectFit" aria-hidden="true"/><view class="home-greeting">接单<text class="marker">工作台</text></view><view class="hero-subtitle">{{user.nickname||'工程师'}}，让专业被看见</view></view>
    <view class="search-entry"><image class="search-eye" src="/assets/icons-contrast/search.svg"/><input class="grow" value="{{keyword}}" bindinput="inputSearch" bindconfirm="searchDemands" confirm-type="search" maxlength="80" placeholder="搜索需求标题、内容或方向"/><button class="search-submit" bindtap="searchDemands">搜索</button></view>
   </view>

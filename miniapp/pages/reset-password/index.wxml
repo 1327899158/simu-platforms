@@ -2,7 +2,7 @@
 <!--忘记密码页面-->
 <view class="page">
   <view class="header">
-    <text class="title">重置密码</text>
+    <text class="title">重置密码/手机换绑</text>
   </view>
 
   <view class="form-card">
@@ -14,6 +14,7 @@
       </view>
       <view class="phone-hint" wx:if="{{targetReady}}">
         验证码将发送至绑定手机：<text>{{phoneMasked}}</text>
+        <text class="change-phone" bindtap="changePhone">手机号换绑</text>
       </view>
     </view>
 

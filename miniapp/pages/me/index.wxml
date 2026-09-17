@@ -81,7 +81,7 @@
     </view>
     <view class="menu-row" bindtap="goAccountSecurity">
       <image class="m-icon menu-vector" src="/assets/icons/security.svg" mode="aspectFit"/>
-      <text class="m-title">{{user.username ? '重置密码' : '设置账号和密码'}}</text>
+      <text class="m-title">{{user.username ? '重置密码/手机换绑' : '设置账号和密码'}}</text>
       <text class="m-arrow">›</text>
     </view>
     <view class="menu-row" wx:if="{{user.role === 'ENGINEER'}}" bindtap="goInvoices">

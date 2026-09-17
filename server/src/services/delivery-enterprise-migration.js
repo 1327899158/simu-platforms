@@ -1,6 +1,7 @@
 'use strict';
 async function migrate(query) {
   for (const sql of [
+    `CREATE TABLE IF NOT EXISTS enterprise_document_uploads (userId VARCHAR(32) NOT NULL, id VARCHAR(64) NOT NULL, total INT NOT NULL, nextIndex INT NOT NULL, payload MEDIUMTEXT NOT NULL, documentId VARCHAR(32), expiresAt DATETIME(3) NOT NULL, PRIMARY KEY(userId,id), INDEX(expiresAt)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
     `CREATE TABLE IF NOT EXISTS delivery_reminders (orderId VARCHAR(32) NOT NULL, deadline DATETIME(3) NOT NULL, kind VARCHAR(16) NOT NULL, createdAt DATETIME(3) NOT NULL, PRIMARY KEY(orderId,deadline,kind))`,
     `CREATE TABLE IF NOT EXISTS delivery_breaches (orderId VARCHAR(32) PRIMARY KEY, deadline DATETIME(3) NOT NULL, disputeId VARCHAR(32) NOT NULL UNIQUE, createdAt DATETIME(3) NOT NULL)`,
     `CREATE TABLE IF NOT EXISTS order_delivery_terms (orderId VARCHAR(32) PRIMARY KEY, deadline DATETIME(3) NOT NULL, updatedAt DATETIME(3) NOT NULL)`,

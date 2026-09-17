@@ -1,2 +1,2 @@
 <announcement-banner/>
-<service-desk/>
+<service-desk suggested-order-id="{{orderId}}"/>

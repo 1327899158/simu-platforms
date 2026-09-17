@@ -1,4 +1,10 @@
-<view class="delivery" wx:if="{{state.deadline || error}}">
+<view class="delivery acceptance" wx:if="{{state.orderStatus==='DELIVERED' && state.acceptanceDeadline}}">
+ <view class="title">等待客户验收 · 14天后自动收货</view>
+ <view class="clock">{{acceptanceClock}}</view>
+ <view class="muted">自动收货时间：{{state.acceptanceDeadlineText}}</view>
+ <view class="muted">从本次交付起计时。到期后系统将在约1分钟内确认收货；纠纷或退款处理中不自动确认。</view>
+</view>
+<view class="delivery" wx:if="{{(state.deadline && state.orderStatus!=='DELIVERED') || error}}">
  <view class="title">{{overdueVisible ? '订单已逾期未交付' : '交付期限'}}</view>
  <view wx:if="{{error}}" bindtap="refresh">{{error}} · 点击重试</view>
  <block wx:if="{{state.deadline}}">

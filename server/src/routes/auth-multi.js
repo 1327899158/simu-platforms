@@ -43,6 +43,7 @@ async function issueSession(user) {
 }
 
 function register(router) {
+  require('./phone-change').register(router);
   // ========== 微信一键登录由 routes/auth.js 处理（不重复注册） ==========
 
   // ========== 短信验证码相关 ==========

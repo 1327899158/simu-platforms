@@ -1,0 +1,22 @@
+<announcement-banner/>
+<view class="page">
+  <view class="header"><text class="title">手机号换绑</text></view>
+  <view class="steps">{{step === 1 ? '1. 验证原手机号' : '2. 绑定新手机号'}}</view>
+  <view class="form-card">
+    <view class="phone-hint" wx:if="{{step === 1}}">验证码将发送至原手机号：{{phoneMasked}}</view>
+    <view class="phone-hint" wx:else>原手机号已验证，请在10分钟内完成换绑。30天内只可更换一次。</view>
+    <view class="form-group" wx:if="{{step === 2}}">
+      <label>新手机号</label>
+      <input type="number" maxlength="11" placeholder="请输入新手机号" value="{{phone}}" bindinput="onPhone" disabled="{{busy}}"/>
+    </view>
+    <view class="form-group">
+      <label>{{step === 1 ? '原手机号验证码' : '新手机号验证码'}}</label>
+      <view class="sms-input">
+        <input type="number" maxlength="6" placeholder="请输入6位验证码" value="{{smsCode}}" bindinput="onCode" disabled="{{busy}}"/>
+        <button class="btn-sms" bindtap="sendCode" disabled="{{busy || !ready || countdown > 0}}">{{countdown > 0 ? countdown + 's' : '获取验证码'}}</button>
+      </view>
+    </view>
+    <button class="btn-primary" bindtap="submit" loading="{{busy}}" disabled="{{busy || !ready}}">{{step === 1 ? '验证并继续' : '确认绑定新手机号'}}</button>
+    <button wx:if="{{step === 2}}" bindtap="restart" disabled="{{busy}}">重新验证原手机号</button>
+  </view>
+</view>

@@ -94,6 +94,7 @@
   color: var(--neon-violet);
   font-weight: 600;
 }
+.change-phone { display: inline-block; margin-left: 20rpx; padding: 10rpx 0; text-decoration: underline; }
 
 .btn-primary {
   width: 100%;

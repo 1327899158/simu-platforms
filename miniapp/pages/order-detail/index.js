@@ -15,6 +15,18 @@ function fileSizeText(sizeBytes) {
 }
 
 Page({
+  openMoreMenu() {
+    wx.showActionSheet({ itemList: ['举报对方', '帮助与客服'], success: ({ tapIndex }) => {
+      if (tapIndex === 0) {
+        const order = this.data.order;
+        const target = this.data.role === 'ENGINEER' ? order?.customer?.id : order?.engineer?.id;
+        if (!target) return wx.showToast({ title: '当前订单暂无可举报的对方', icon: 'none' });
+        this.reportOrderPeer();
+      } else if (tapIndex === 1) {
+        wx.navigateTo({ url: '/pages/customer-service/index?orderId=' + encodeURIComponent(this.data.id) });
+      }
+    } });
+  },
   favoriteDemand(){require('../../utils/community').favorite('DEMAND',this.data.id);},
   reportOrderPeer(){const o=this.data.order;if(o)require('../../utils/community').report(this.data.role==='ENGINEER'?o.customer?.id:o.engineer?.id);},
   data: {

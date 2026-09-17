@@ -361,6 +361,8 @@ function register(router) {
 
     const boundAt = nowIso();
     await tx(async (conn) => {
+      const [[current]] = await conn.execute('SELECT phone FROM users WHERE id = ? FOR UPDATE', [user.id]);
+      if (current.phone && current.phone !== phoneNumber) throw err.conflict('请通过“重置密码/手机换绑”验证原手机号后换绑');
       await conn.execute(`UPDATE users SET phone = ?, updatedAt = ? WHERE id = ?`, [phoneNumber, boundAt, user.id]);
       await conn.execute(
         `UPDATE identity_verifications

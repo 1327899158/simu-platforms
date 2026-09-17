@@ -37,6 +37,19 @@ Page({
     if (this.countdownTimer) clearInterval(this.countdownTimer);
   },
 
+  changePhone() {
+    if (!this.data.targetReady) return;
+    const username = this.data.username;
+    wx.showModal({
+      title: '确认更换手机号？',
+      content: `更换后现手机号${this.data.phoneMasked}将不能用于登录，30天内只可更换一次。`,
+      confirmText: '确认更换', cancelText: '我再想想',
+      success: result => {
+        if (result.confirm) wx.navigateTo({ url: `/pages/change-phone/index?username=${encodeURIComponent(username)}` });
+      },
+    });
+  },
+
   async confirmAccount() {
     if (!/^\d{6,12}$/.test(this.data.username)) {
       wx.showToast({ title: '请输入6-12位数字用户名', icon: 'none' });

@@ -1,3 +1,5 @@
 @import "../../community.wxss";
 @import "../../theme.wxss";
 .service-icon{width:80rpx;height:80rpx;flex-shrink:0}.body{margin-top:18rpx}
+
+.linked-order{margin:24rpx 0;padding:24rpx;background:#edf5f7;border-radius:16rpx;word-break:break-all}.order-picker-mask{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.4);display:flex;align-items:flex-end}.order-picker-panel{background:#fff;width:100%;padding:28rpx 24rpx calc(28rpx + env(safe-area-inset-bottom));border-radius:28rpx 28rpx 0 0;box-sizing:border-box}.order-picker-list{height:55vh}.order-option{padding:24rpx 0;border-bottom:1rpx solid #e4e9eb;word-break:break-all}.order-picker-panel .row input{flex:1;min-width:0}.order-picker-panel .between{display:flex;justify-content:space-between;align-items:center}

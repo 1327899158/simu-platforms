@@ -19,6 +19,7 @@ module.exports = {
 };
 </wxs>
 <view class="page-container" wx:if="{{order}}">
+  <view class="order-tools"><button class="order-more" bindtap="openMoreMenu" aria-label="更多操作">•••</button></view>
 
   <view class="invoice-reminder" wx:if="{{invoiceNeedsAction}}">
     <view class="invoice-reminder-heading"><view class="invoice-reminder-dot"></view><text>{{invoiceRequest.status === 'REQUESTED' ? '客户已申请发票 · 待处理' : '发票待开具 · 请上传发票'}}</text></view>
@@ -29,7 +30,6 @@ module.exports = {
 
   <view wx:if="{{directDemand}}" style="padding:24rpx;background:#e6f3ec;">定向需求 · 仅指定工程师可查看和报价。合作折扣由最终报价体现，不额外自动扣减。</view>
   <button size="mini" wx:if="{{order.status==='QUOTING'&&!directDemand}}" bindtap="favoriteDemand">收藏需求</button>
-  <button size="mini" wx:if="{{order.customer.id||order.engineer.id}}" bindtap="reportOrderPeer">举报对方</button>
   <!-- 状态卡片 -->
   <view class="status-card illustrated-panel"><image class="panel-art order-art" src="/assets/order.png" mode="aspectFit" aria-hidden="true"/>
     <view class="ui-icon-copy status-icon"><ui-symbol value="{{u.statusIcon(order.status)}}"/></view>

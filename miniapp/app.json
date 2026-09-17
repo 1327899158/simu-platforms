@@ -37,6 +37,7 @@
     "pages/profile-edit/index",
     "pages/engineer-qualification/index",
     "pages/reset-password/index",
+    "pages/change-phone/index",
     "pages/account-security/index",
     "pages/invoice-request/index",
     "pages/invoices/index",

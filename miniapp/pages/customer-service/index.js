@@ -1,1 +1,1 @@
-const {ensureLogin}=require('../../utils/auth');Page({onShow(){ensureLogin();}});
+const {ensureLogin}=require('../../utils/auth');Page({data:{orderId:''},onLoad(q){this.setData({orderId:q.orderId||''});},onShow(){ensureLogin();}});

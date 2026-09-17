@@ -640,3 +640,5 @@
 @import "../../theme.wxss";
 @import "../../illustrations.wxss";
 .detail-view-badge{display:flex;justify-content:flex-end;align-items:center;gap:8rpx;font-size:23rpx;color:#617b88;margin:12rpx 28rpx}.detail-view-badge image{width:30rpx;height:30rpx}
+
+.order-tools{display:flex;justify-content:flex-end;margin-bottom:12rpx}.order-more{margin:0;padding:0 22rpx;min-width:88rpx;height:64rpx;line-height:56rpx;border-radius:32rpx;background:#fff;color:#405164;font-size:32rpx;letter-spacing:5rpx}.order-more::after{border:none}
