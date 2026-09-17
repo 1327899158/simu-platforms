@@ -34,7 +34,15 @@ function register(router){
       }catch(e){if(e.code==='ER_DUP_ENTRY')throw err.conflict('该企业已被其他账号提交');throw e;}
     });ok(res,{submitted:true});
   });
-  router.get('/api/admin/enterprise',async(req,res,p,q)=>{await requireAdmin(req,'IDENTITY_APPROVE');const offset=v.int(q.get('offset')||0,'页码',{min:0,max:1000000});const rows=await query(`SELECT e.*,u.nickname FROM enterprise_certifications e JOIN users u ON u.id=e.userId ORDER BY (e.status='PENDING') DESC,e.submittedAt DESC,e.userId LIMIT 21 OFFSET ${offset}`);ok(res,{items:rows.slice(0,20).map(r=>({...r,evidence:parseJson(r.evidence)})),hasMore:rows.length>20});});
+  router.get('/api/admin/enterprise',async(req,res,p,q)=>{
+    await requireAdmin(req,'IDENTITY_APPROVE');
+    const offset=v.int(q.get('offset')||0,'页码',{min:0,max:1000000});
+    // 后建的企业表可能与 users 使用不同默认排序规则，显式统一关联比较。
+    const rows=await query(`SELECT e.*,u.nickname FROM enterprise_certifications e
+      JOIN users u ON u.id COLLATE utf8mb4_unicode_ci = e.userId COLLATE utf8mb4_unicode_ci
+      ORDER BY (e.status='PENDING') DESC,e.submittedAt DESC,e.userId LIMIT 21 OFFSET ${offset}`);
+    ok(res,{items:rows.slice(0,20).map(r=>({...r,evidence:parseJson(r.evidence)})),hasMore:rows.length>20});
+  });
   router.get('/api/admin/enterprise/documents/:id',async(req,res,p)=>{const {admin}=await requireAdmin(req,'IDENTITY_APPROVE');const d=await documents.read(p.id,null,true);await writeAdminAudit(req,admin,'ENTERPRISE_DOCUMENT_READ','ENTERPRISE',p.id);ok(res,d);});
   router.post('/api/admin/enterprise/:id',async(req,res,p)=>{const {admin,user}=await requireAdmin(req,'IDENTITY_APPROVE'),b=await readJson(req);if(user.id===p.id)throw err.forbidden('不能审核自己的企业认证');const status=v.oneOf(b.status,'审核决定',['APPROVED','REJECTED']),result=v.str(b.result,'审核意见',{min:2,max:1000}),revision=v.int(b.revision,'申请版本',{min:1,max:1000000});
     await tx(async c=>{const [r]=await c.execute("UPDATE enterprise_certifications SET status=?,result=?,reviewedAt=UTC_TIMESTAMP(3) WHERE userId=? AND status='PENDING' AND revision=?",[status,result,p.id,revision]);if(!r.affectedRows)throw err.conflict('申请已处理或版本已变化，请刷新');await writeAdminAudit(req,admin,'ENTERPRISE_'+status,'ENTERPRISE',p.id,{result,revision},c);});ok(res,{reviewed:true});

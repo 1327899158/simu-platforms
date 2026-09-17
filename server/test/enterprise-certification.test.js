@@ -30,3 +30,28 @@ test('企业材料归属、重复提交、审核权限、自审禁止、版本�
  await call('/api/admin/enterprise/e',{id:'a'},decision,true);assert.equal((await badge('e')).label,'企业已认证');assert.equal(audits,1);
  await assert.rejects(call('/api/admin/enterprise/e',{id:'a'},decision,true),e=>e.status===409);
 });
+
+test('企业审核列表统一关联排序规则，并保留权限、分页和材料解析',async()=>{
+ const route=router.match('GET','/api/admin/enterprise');
+ let calls=0,lastSql;
+ const rows=Array.from({length:21},(_,i)=>({userId:`e${i}`,nickname:`工程师${i}`,evidence:'["owned"]'}));
+ const original=db.query;
+ // 路由在加载时解构 query；通过重新加载路由注入列表数据。
+ db.query=async sql=>{calls++;lastSql=sql;return rows;};
+ delete require.cache[require.resolve('../src/routes/delivery-enterprise')];
+ const listRouter=realHttp.createRouter();require('../src/routes/delivery-enterprise').register(listRouter);
+ const handler=listRouter.match('GET','/api/admin/enterprise').handler;
+ async function list(admin,offset='0'){
+  let data;await handler({user:{id:'a'},admin},{writeHead(){},end(s){data=JSON.parse(s).data;}},route.params,new URLSearchParams({offset}));return data;
+ }
+ try{
+  await assert.rejects(list(false),e=>e.status===403);assert.equal(calls,0);
+  const result=await list(true,'20');
+  assert.equal(result.hasMore,true);assert.equal(result.items.length,20);
+  assert.deepEqual(result.items[0],{userId:'e0',nickname:'工程师0',evidence:['owned']});
+  assert.match(lastSql,/u\.id COLLATE utf8mb4_unicode_ci\s*=\s*e\.userId COLLATE utf8mb4_unicode_ci/);
+  assert.match(lastSql,/LIMIT 21 OFFSET 20/);
+  await assert.rejects(list(true,'-1'),e=>e.status===400);assert.equal(calls,1);
+  rows.length=0;assert.deepEqual(await list(true),{items:[],hasMore:false});
+ }finally{db.query=original;}
+});

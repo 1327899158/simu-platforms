@@ -21,7 +21,7 @@ async function inspect(id,user=null,nudge=false){
   async function remind(kind,content){const [r]=await c.execute('INSERT IGNORE INTO delivery_reminders(orderId,deadline,kind,createdAt) VALUES(?,?,?,UTC_TIMESTAMP(3))',[id,term.deadline,kind]);if(r.affectedRows)await message(content);}
   if(nudge){if(!user||user.id!==o.customerId||user.role!=='CUSTOMER')throw err.forbidden('仅客户可催单');if(!isOverdue)throw err.conflict('当前订单无需逾期催单');await remind('NUDGE','客户已催单：订单逾期未交付，请工程师尽快交付或申请延期。');}
   if(isOverdue)await remind('OVERDUE','订单已逾期未交付。逾期不会自动延期，请工程师尽快交付或申请延期，客户可催单或申请售后。');
-  const [[existing]]=await c.execute('SELECT b.disputeId,d.refundStatus FROM delivery_breaches b JOIN disputes d ON d.id=b.disputeId WHERE b.orderId=?',[id]);
+  const [[existing]]=await c.execute('SELECT b.disputeId,d.refundStatus FROM delivery_breaches b JOIN disputes d ON d.id COLLATE utf8mb4_unicode_ci = b.disputeId COLLATE utf8mb4_unicode_ci WHERE b.orderId=?',[id]);
   let breach=existing||null;
   if(!breach&&eligible(o,term.deadline,!!pending)){
    const [[blocking]]=await c.execute("SELECT id FROM disputes WHERE orderId=? AND (status='OPEN' OR refundStatus IN ('PENDING','PROCESSED','FAILED')) LIMIT 1",[id]);
@@ -45,7 +45,7 @@ async function inspect(id,user=null,nudge=false){
 }
 let running=false,timer=null;
 async function sweep(){if(running)return;running=true;try{
- const rows=await query("SELECT o.id FROM orders o JOIN quotes q ON q.id=o.selectedQuoteId LEFT JOIN order_delivery_terms t ON t.orderId=o.id WHERE o.status='IN_PROGRESS' AND o.deletedAt IS NULL AND o.paidAt IS NOT NULL AND COALESCE(t.deadline,DATE_ADD(o.paidAt,INTERVAL q.days DAY))<UTC_TIMESTAMP(3)");
+ const rows=await query("SELECT o.id FROM orders o JOIN quotes q ON q.id=o.selectedQuoteId LEFT JOIN order_delivery_terms t ON t.orderId COLLATE utf8mb4_unicode_ci = o.id COLLATE utf8mb4_unicode_ci WHERE o.status='IN_PROGRESS' AND o.deletedAt IS NULL AND o.paidAt IS NOT NULL AND COALESCE(t.deadline,DATE_ADD(o.paidAt,INTERVAL q.days DAY))<UTC_TIMESTAMP(3)");
  for(const r of rows)try{await inspect(r.id);}catch(e){console.error('[overdue-order]',r.id,e.message);}
  }finally{running=false;}}
 function start(){if(timer)return;const run=()=>sweep().catch(e=>console.error('[overdue-sweep]',e.message));run();timer=setInterval(run,60000);timer.unref?.();}

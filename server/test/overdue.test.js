@@ -7,7 +7,7 @@ async function execute(s,a){
  if(s.startsWith('SELECT * FROM order_delivery_terms'))return [[term]];
  if(s.startsWith('SELECT id FROM delivery_extensions'))return [[pending].filter(Boolean)];
  if(s.startsWith('INSERT IGNORE INTO delivery_reminders')){const exists=reminders.some(x=>x.kind===a[2]);if(!exists)reminders.push({kind:a[2]});return [{affectedRows:exists?0:1}];}
- if(s.startsWith('SELECT b.disputeId'))return [[breach].filter(Boolean)];
+ if(s.startsWith('SELECT b.disputeId')){assert.match(s,/d\.id COLLATE utf8mb4_unicode_ci\s*=\s*b\.disputeId COLLATE utf8mb4_unicode_ci/);return [[breach].filter(Boolean)];}
  if(s.startsWith('SELECT id FROM disputes')||s.startsWith('SELECT id FROM refund_requests'))return [[blocking?{id:'other'}:null].filter(Boolean)];
  if(s.startsWith('SELECT id FROM payments'))return [[payment?{id:'p'}:null].filter(Boolean)];
  if(s.startsWith('INSERT INTO disputes')){refunds++;assert.equal(a[4],12345);return [{affectedRows:1}];}
@@ -16,9 +16,14 @@ async function execute(s,a){
  if(s.startsWith('SELECT kind'))return [reminders];
  throw Error(s);
 }
-require.cache[require.resolve('../src/db')]={exports:{tx:fn=>fn({execute}),query:async()=>[]}};
+let sweepSql;
+require.cache[require.resolve('../src/db')]={exports:{tx:fn=>fn({execute}),query:async sql=>{sweepSql=sql;return [];}}};
 require.cache[require.resolve('../src/services/chat-svc')]={exports:{ensureConversation:async()=>({id:'conv'}),systemMessage:async(id,text)=>{messages.push(text);return {msgId:messages.length};},publishSystemMessage(){}}};
-const {inspect,eligible}=require('../src/services/overdue-svc');
+const {inspect,eligible,sweep}=require('../src/services/overdue-svc');
+test('逾期扫描兼容交付期限表与订单表排序规则不同',async()=>{
+ await sweep();
+ assert.match(sweepSql,/t\.orderId COLLATE utf8mb4_unicode_ci\s*=\s*o\.id COLLATE utf8mb4_unicode_ci/);
+});
 test('48小时边界、待审批暂停、交付和非履约状态不自动判定',()=>{
  const now=Date.now(),o={status:'IN_PROGRESS'};
  assert.equal(eligible(o,now-48*3600000,false,now),true);
