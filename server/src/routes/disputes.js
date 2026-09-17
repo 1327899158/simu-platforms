@@ -103,7 +103,7 @@ async function disputeDetail(d) {
   }
   const evidence = await query(
     `SELECT f.id, f.fileID, f.name, f.kind, f.mime, f.sizeBytes,
-            ev.uploaderId, ev.createdAt, u.nickname AS uploaderName, u.role AS uploaderRole
+            ev.uploaderId, ev.createdAt, ev.description, u.nickname AS uploaderName, u.role AS uploaderRole
        FROM dispute_evidence ev
        JOIN uploaded_files f ON f.id = ev.fileId
        JOIN users u ON u.id = ev.uploaderId
@@ -146,6 +146,7 @@ async function disputeDetail(d) {
       mime: f.mime || '', sizeBytes: Number(f.sizeBytes || 0), uploaderId: f.uploaderId, createdAt: f.createdAt,
       uploaderName: f.uploaderName || (f.uploaderRole === 'ENGINEER' ? '工程师' : '客户'),
       uploaderRole: f.uploaderRole,
+      description: f.description || '',
     })),
     messages: messages.map((m) => ({
       id: Number(m.id),
@@ -236,10 +237,11 @@ function register(router) {
     ok(res, { ...detail, myRole: d.initiatorId === user.id ? 'INITIATOR' : 'OPPOSITE' });
   });
 
-  // POST /api/disputes/:id/evidence { fileIds } —— 48 小时内补充证据。
+  // POST /api/disputes/:id/evidence { fileIds, description? } —— 48 小时内补充证据。
   router.post('/api/disputes/:id/evidence', async (req, res, params) => {
     const user = await requireUser(req);
     const b = await readJson(req);
+    const description = v.str(b.description, '材料说明', { max: 1000, optional: true }) || null;
     const fileIds = v.arr(b.fileIds, '证据文件', { minLen: 1, maxLen: 5 })
       .map((id) => v.str(id, '文件ID', { min: 1, max: 32 }));
     if (new Set(fileIds).size !== fileIds.length) throw err.bad('证据文件不能重复');
@@ -272,9 +274,9 @@ function register(router) {
       let added = 0;
       for (const fileId of fileIds) {
         const [inserted] = await conn.execute(
-          `INSERT IGNORE INTO dispute_evidence(disputeId, fileId, uploaderId, createdAt)
-           VALUES(?, ?, ?, ?)`,
-          [d.id, fileId, user.id, now]
+          `INSERT IGNORE INTO dispute_evidence(disputeId, fileId, uploaderId, createdAt, description)
+           VALUES(?, ?, ?, ?, ?)`,
+          [d.id, fileId, user.id, now, description]
         );
         added += Number(inserted.affectedRows || 0);
       }

@@ -12,14 +12,18 @@ Page({
   openPeer(e){wx.navigateTo({url:'/pages/peer-profile/index?convId='+encodeURIComponent(e.currentTarget.dataset.id)});},
   data: { items: [], role: '', unreadTotal: 0 },
   onShow() {
+    clearInterval(this._refreshTimer);
     const user = ensureLogin();
     if (user) {
       this.setData({ role: user.role });
       const tabBar = this.getTabBar && this.getTabBar();
       if (tabBar && tabBar.syncTabBar) tabBar.syncTabBar(user.role, '/pages/chat-list/index');
       this.load();
+      this._refreshTimer = setInterval(() => this.load(), 10000);
     }
   },
+  onHide() { clearInterval(this._refreshTimer); },
+  onUnload() { clearInterval(this._refreshTimer); },
   onPullDownRefresh() { this.load().finally(() => wx.stopPullDownRefresh()); },
   async load() {
     let data;

@@ -40,7 +40,12 @@
     </view>
 
     <view class="evidence-notice">
-      支持上传文件作为证据。举证截止后不可再补充，平台管理员将依据全部材料进行仲裁。
+      可先填写本次材料说明，再点击“补充证据”选择文件。同一次上传的文件共用说明。举证截止后不可再补充。
+    </view>
+    <view class="evidence-description-form" wx:if="{{dispute.evidenceOpen}}">
+      <text>材料说明（选填）</text>
+      <textarea value="{{evidenceDescription}}" bindinput="inputEvidenceDescription" maxlength="1000" disabled="{{uploading}}" placeholder="说明本次材料的内容及证明事项，最多1000字" auto-height/>
+      <text class="evid-meta">{{evidenceDescription.length}} / 1000</text>
     </view>
 
     <view class="evid-item" wx:for="{{dispute.evidence}}" wx:key="fileId"
@@ -48,6 +53,7 @@
       <view class="evid-icon">{{item.kind === 'IMAGE' ? '图' : '文'}}</view>
       <view class="evid-copy">
         <text class="evid-name">{{item.name}}</text>
+        <text class="evidence-description" wx:if="{{item.description}}">材料说明：{{item.description}}</text>
         <text class="evid-meta">{{item.uploaderText}} · {{item.timeText}} · {{item.sizeText}}</text>
       </view>
       <text class="evid-arrow">›</text>

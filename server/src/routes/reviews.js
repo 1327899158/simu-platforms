@@ -9,6 +9,20 @@ const { requireAdmin } = require('../lib/admin-mw');
 const { getLevel, refreshLevelSafe } = require('../services/engineer-level');
 const { publicCases } = require('../services/engineer-case-svc');
 const { saveReview } = require('../services/customer-review-svc');
+const { ensureConversation, systemMessage, publishConversationDoc, publishSystemMessage } = require('../services/chat-svc');
+
+async function reviewNotice(conn, orderId, customerId, revised = false) {
+  const conv = await ensureConversation(orderId, conn);
+  const content = revised ? '客户已更新对你的评价，请到“我的评价”查看。' : '客户已对你完成评价，请到“我的评价”查看。';
+  // 使用客户身份计入工程师未读数，沿用 SYSTEM 消息的订单跳转展示。
+  const meta = { senderId: customerId, actionOrderId: orderId };
+  const message = await systemMessage(conv.id, content, conn, meta);
+  return { conv, content, meta, msgId: message.msgId };
+}
+function publishReviewNotice(notice) {
+  if (notice.conv._isNew) publishConversationDoc(notice.conv);
+  publishSystemMessage(notice.conv.id, notice.content, notice.msgId, notice.meta);
+}
 
 function score(value, label) {
   return v.int(value, label, { min: 1, max: 5 });
@@ -83,6 +97,7 @@ function register(router) {
     const professionalScore = score(body.professionalScore, '专业能力评分');
     const communicationScore = score(body.communicationScore, '沟通评分');
     const content = v.str(body.content, '评价内容', { max: 100, optional: true }) || null;
+    let notice;
     const saved = await tx(async (conn) => {
       const order = await ensureReviewableOrder(conn, params.id, user.id);
       const [[existing]] = await conn.execute(
@@ -97,8 +112,10 @@ function register(router) {
         [id, order.id, user.id, order.engineerId, qualityScore, attitudeScore, speedScore, professionalScore, communicationScore, content, now, now]
       );
       const [[row]] = await conn.execute(`SELECT * FROM engineer_reviews WHERE id=?`, [id]);
+      notice = await reviewNotice(conn, order.id, user.id);
       return row;
     });
+    publishReviewNotice(notice);
     await refreshLevelSafe(saved.engineerId);
     ok(res, reviewView(saved));
   });
@@ -113,6 +130,7 @@ function register(router) {
     const professionalScore = score(body.professionalScore, '专业能力评分');
     const communicationScore = score(body.communicationScore, '沟通评分');
     const content = v.str(body.content, '评价内容', { max: 100, optional: true }) || null;
+    let notice;
     const saved = await tx(async (conn) => {
       await ensureReviewableOrder(conn, params.id, user.id);
       const [[existing]] = await conn.execute(
@@ -130,8 +148,10 @@ function register(router) {
         [qualityScore, attitudeScore, speedScore, professionalScore, communicationScore, content, now, now, existing.id]
       );
       const [[row]] = await conn.execute(`SELECT * FROM engineer_reviews WHERE id=?`, [existing.id]);
+      notice = await reviewNotice(conn, params.id, user.id, true);
       return row;
     });
+    publishReviewNotice(notice);
     ok(res, reviewView(saved));
   });
 

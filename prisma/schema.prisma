@@ -490,6 +490,7 @@ model Dispute {
 }
 
 model DisputeEvidence {
+  description String? @db.VarChar(1000)
   disputeId String
   fileId    String
   uploaderId String

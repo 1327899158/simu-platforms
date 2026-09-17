@@ -42,6 +42,7 @@
       <text class="file-icon">{{item.kind === 'IMAGE' ? '图' : '文'}}</text>
       <view class="admin-grow">
         <text class="file-name">{{item.name}}</text>
+        <text class="evidence-description" wx:if="{{item.description}}">材料说明：{{item.description}}</text>
         <text class="admin-small">{{item.uploaderText}}提交 · {{item.uploaderName}} · {{item.submittedText}} · {{item.sizeText}}</text>
       </view>
       <text class="file-arrow">›</text>

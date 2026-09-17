@@ -517,6 +517,7 @@ async function init() {
 
   // 增量迁移：为旧表补充新字段（CREATE TABLE IF NOT EXISTS 不会改已存在的表）
   const migrations = [
+    { table: 'dispute_evidence', sql: `ALTER TABLE dispute_evidence ADD COLUMN description VARCHAR(1000) NULL`, check: 'description' },
     { table: 'quotes', sql: `ALTER TABLE quotes ADD COLUMN selectedUnread TINYINT(1) NOT NULL DEFAULT 0`, check: 'selectedUnread' },
     // users 表补充字段
     { table: 'engineer_cases', sql: `ALTER TABLE engineer_cases ADD COLUMN imageIds JSON NULL`, check: "imageIds" },

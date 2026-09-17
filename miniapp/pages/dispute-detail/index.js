@@ -12,7 +12,7 @@ function pad2(value) { return String(value).padStart(2, '0'); }
 Page({
   data: {
     id: '', myId: '', dispute: null,
-    uploading: false, evidenceCountdown: '',
+    uploading: false, evidenceCountdown: '', evidenceDescription: '',
   },
   _countdownTimer: null,
   _deadlineMs: 0,
@@ -107,6 +107,7 @@ Page({
   async addEvidence() {
     const dispute = this.data.dispute;
     if (!dispute || !dispute.evidenceOpen || this.data.uploading) return;
+    const description = this.data.evidenceDescription.trim();
     const remainingSlots = MAX_EVIDENCE_PER_PARTY - Number(dispute.myEvidenceCount || 0);
     if (remainingSlots <= 0) {
       wx.showToast({ title: `每人最多提交${MAX_EVIDENCE_PER_PARTY}份证据`, icon: 'none' });
@@ -130,7 +131,8 @@ Page({
             });
             fileIds.push(saved.id || saved.fileId);
           }
-          await request('POST', `/disputes/${this.data.id}/evidence`, { fileIds }, { silent: true });
+          await request('POST', `/disputes/${this.data.id}/evidence`, { fileIds, description }, { silent: true });
+          this.setData({ evidenceDescription: '' });
           wx.showToast({ title: `已提交${fileIds.length}份证据`, icon: 'success' });
           await this.load();
         } catch (e) {
@@ -143,6 +145,8 @@ Page({
       },
     });
   },
+
+  inputEvidenceDescription(e) { this.setData({ evidenceDescription: e.detail.value }); },
 
   async openEvidence(e) {
     const file = this.data.dispute.evidence[e.currentTarget.dataset.index];
