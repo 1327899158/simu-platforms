@@ -375,6 +375,10 @@ function register(router) {
     );
     if (!file) throw err.notFound('文件不存在');
     if (!(await canReadFile(user, file))) throw err.forbidden('无权下载该文件');
+    if (search?.get('adminPreview') === '1') {
+      await require('../lib/admin-mw').requireAdmin(req);
+      return ok(res, await require('../services/admin-file-url').adminFileUrl({ fileID:file.fileID, name:file.name, mime:file.mime || '', sizeBytes:Number(file.sizeBytes) }));
+    }
     let url;
     if (search?.get('preview') === '1' && file.kind === 'IMAGE') {
       // 先验证业务可见性，再由服务端签发短期预览链接，兼容云存储仅上传者可读的规则。

@@ -1,8 +1,21 @@
 'use strict';
 const {query,queryOne,tx,parseJson}=require('../db');
-const {v,newId}=require('../lib/util');
+const {v,newId,nowIso}=require('../lib/util');
 const {err}=require('../lib/http');
 const {assertContact}=require('./blacklist-svc');
+const {systemMessage,publishConversationDoc,publishSystemMessage}=require('./chat-svc');
+async function notice(conn,customerId,engineerId,senderId,content,action={actionCooperation:true}) {
+  const key=`${customerId}:${engineerId}`,now=nowIso();
+  const [inserted]=await conn.execute('INSERT IGNORE INTO conversations(id,orderId,customerId,engineerId,lastMsgAt,createdAt,directKey) VALUES(?,NULL,?,?,?,?,?)',[newId(),customerId,engineerId,now,now,key]);
+  const [[conv]]=await conn.execute('SELECT * FROM conversations WHERE directKey=?',[key]);
+  const meta={senderId,...action};
+  const {msgId}=await systemMessage(conv.id,content,conn,meta);
+  return {conv,isNew:!!inserted.affectedRows,content,meta,msgId};
+}
+function publish(n) {
+  if(n.isNew)publishConversationDoc(n.conv);
+  publishSystemMessage(n.conv.id,n.content,n.msgId,n.meta);
+}
 const defaults={enabled:0,discountBps:10000,responseHours:24,scheduleNote:'',revisionCount:2,minAmountFen:100};
 async function settings(id) {return await queryOne('SELECT * FROM cooperation_settings WHERE engineerId=?',[id])||{...defaults,engineerId:id};}
 async function saveSettings(id,b) {
@@ -13,7 +26,7 @@ async function saveSettings(id,b) {
 async function invite(user,id,b) {
   if(user.role!=='CUSTOMER'||user.id===id) throw err.forbidden('仅客户可发起合作');
   await assertContact(user.id,id);
-  return tx(async conn=>{
+  const result=await tx(async conn=>{
     const [[u]]=await conn.execute("SELECT u.id FROM users u JOIN identity_verifications iv ON iv.userId=u.id WHERE u.id=? AND u.role='ENGINEER' AND u.status='ACTIVE' AND u.deletedAt IS NULL AND iv.verifyStatus='APPROVED' FOR UPDATE",[id]);
     if(!u) throw err.notFound('工程师不可用');
     const [[s]]=await conn.execute('SELECT * FROM cooperation_settings WHERE engineerId=? FOR UPDATE',[id]);
@@ -23,12 +36,15 @@ async function invite(user,id,b) {
     if(old&&['PENDING','ACTIVE'].includes(old.status)) throw err.conflict('已有合作申请或合作关系');
     const key=old?.id||newId();
     await conn.execute("INSERT INTO cooperation_relations(id,customerId,engineerId,status,terms,message,createdAt,updatedAt) VALUES(?,?,?,'PENDING',?,?,UTC_TIMESTAMP(3),UTC_TIMESTAMP(3)) ON DUPLICATE KEY UPDATE status='PENDING',terms=VALUES(terms),message=VALUES(message),updatedAt=VALUES(updatedAt)",[key,user.id,id,JSON.stringify(s),v.str(b.message,'合作说明',{max:1000,optional:true})||'']);
-    return {id:key};
+    const notification=await notice(conn,user.id,id,user.id,'客户向你发起了常驻合作申请，请查看合作条件并选择同意或拒绝。');
+    return {id:key,notification};
   });
+  publish(result.notification);
+  return {id:result.id};
 }
 async function respond(user,id,action) {
   v.oneOf(action,'操作',['ACCEPT','REJECT','END','CANCEL']);
-  return tx(async conn=>{
+  const result=await tx(async conn=>{
     const [[r]]=await conn.execute('SELECT * FROM cooperation_relations WHERE id=? FOR UPDATE',[id]);
     if(!r||![r.customerId,r.engineerId].includes(user.id)) throw err.notFound();
     const allowed=action==='END'?r.status==='ACTIVE':action==='CANCEL'?r.status==='PENDING'&&r.customerId===user.id:r.status==='PENDING'&&r.engineerId===user.id;
@@ -38,10 +54,15 @@ async function respond(user,id,action) {
       await assertContact(r.customerId,r.engineerId);
     }
     const status={ACCEPT:'ACTIVE',REJECT:'REJECTED',END:'ENDED',CANCEL:'CANCELLED'}[action];
-    await conn.execute('UPDATE cooperation_relations SET status=?,updatedAt=UTC_TIMESTAMP(3) WHERE id=?',[status,id]);return {status};
+    await conn.execute('UPDATE cooperation_relations SET status=?,updatedAt=UTC_TIMESTAMP(3) WHERE id=?',[status,id]);
+    const content={ACCEPT:'工程师已同意你的常驻合作申请，双方已建立合作关系。',REJECT:'工程师已拒绝你的常驻合作申请。',CANCEL:'客户已撤销常驻合作申请。',END:'对方已结束常驻合作，已有订单仍需继续履约。'}[action];
+    const notification=await notice(conn,r.customerId,r.engineerId,user.id,content);
+    return {status,notification};
   });
+  publish(result.notification);
+  return {status:result.status};
 }
-async function attachDirect(conn,customerId,orderId,engineerId,budgetFen) {
+async function attachDirect(conn,customerId,orderId,engineerId,budgetFen,projectName='') {
   if(!engineerId)return;
   if(await queryOne("SELECT userId FROM account_closures WHERE userId=? AND status='PENDING'",[engineerId]))throw err.conflict('工程师正在注销账号');
   v.str(engineerId,'指定工程师',{min:1,max:32});await assertContact(customerId,engineerId);
@@ -50,9 +71,10 @@ async function attachDirect(conn,customerId,orderId,engineerId,budgetFen) {
   const terms=parseJson(r.terms);
   if(!budgetFen||budgetFen<Number(terms.minAmountFen)) throw err.bad('定向需求预算不能低于双方确认的最低金额');
   await conn.execute('INSERT INTO direct_demands(orderId,customerId,engineerId,relationId,terms,createdAt) VALUES(?,?,?,?,?,UTC_TIMESTAMP(3))',[orderId,customerId,engineerId,r.id,JSON.stringify(terms)]);
+  return notice(conn,customerId,engineerId,customerId,`客户向你发布了定向需求${projectName?'“'+projectName+'”':''}，请查看需求详情并报价。`,{actionOrderId:orderId});
 }
 async function assertScope(orderId,userId) {
   const d=await queryOne('SELECT customerId,engineerId FROM direct_demands WHERE orderId=?',[orderId]);
   if(d&&d.customerId!==userId&&d.engineerId!==userId)throw err.notFound('需求不存在或不可访问');
 }
-module.exports={settings,saveSettings,invite,respond,attachDirect,assertScope};
+module.exports={settings,saveSettings,invite,respond,attachDirect,assertScope,publishDirectNotice:publish};

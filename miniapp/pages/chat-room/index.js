@@ -346,6 +346,10 @@ Page({
   },
 
   openSystemAction(e) {
+    if (e.currentTarget.dataset.cooperation) {
+      wx.navigateTo({ url: '/pages/cooperation/index' });
+      return;
+    }
     const orderId = e.currentTarget.dataset.oid;
     if (!orderId) return;
     const mode = this.data.role === 'ENGINEER' ? 'market' : 'customer';

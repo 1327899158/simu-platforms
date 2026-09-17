@@ -16,13 +16,18 @@ function fileSizeText(sizeBytes) {
 
 Page({
   openMoreMenu() {
-    wx.showActionSheet({ itemList: ['举报对方', '帮助与客服'], success: ({ tapIndex }) => {
-      if (tapIndex === 0) {
+    const itemList = ['举报对方', '帮助与客服'];
+    if (this.data.order?.status === 'QUOTING' && !this.data.directDemand) itemList.unshift('收藏需求');
+    wx.showActionSheet({ itemList, success: ({ tapIndex }) => {
+      const action = itemList[tapIndex];
+      if (action === '收藏需求') {
+        this.favoriteDemand();
+      } else if (action === '举报对方') {
         const order = this.data.order;
         const target = this.data.role === 'ENGINEER' ? order?.customer?.id : order?.engineer?.id;
         if (!target) return wx.showToast({ title: '当前订单暂无可举报的对方', icon: 'none' });
         this.reportOrderPeer();
-      } else if (tapIndex === 1) {
+      } else if (action === '帮助与客服') {
         wx.navigateTo({ url: '/pages/customer-service/index?orderId=' + encodeURIComponent(this.data.id) });
       }
     } });

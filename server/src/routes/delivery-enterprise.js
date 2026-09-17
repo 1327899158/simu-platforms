@@ -1,4 +1,5 @@
 'use strict';
+const {imageChunk}=require('../services/image-chunks');
 const {query,queryOne,tx,parseJson}=require('../db');
 const {requireUser}=require('../lib/auth-mw');
 const {requireAdmin,writeAdminAudit}=require('../lib/admin-mw');
@@ -17,7 +18,7 @@ function register(router){
     await require('../services/chat-svc').systemMessageForOrder(p.id,action==='apply'?'工程师提交了延期申请，请客户进入订单详情审批。':'客户已处理延期申请，请进入订单详情查看结果。').catch(e=>console.error('[extension-message]',e.message));ok(res,result);
   });
   router.post('/api/enterprise/documents',async(req,res)=>ok(res,await documents.upload((await engineer(req)).id,await readJson(req))));
-  router.get('/api/enterprise/documents/:id',async(req,res,p)=>ok(res,await documents.read(p.id,(await engineer(req)).id)));
+  router.get('/api/enterprise/documents/:id',async(req,res,p,q)=>ok(res,imageChunk(await documents.read(p.id,(await engineer(req)).id),q)));
   router.get('/api/enterprise',async(req,res)=>{const r=await queryOne('SELECT * FROM enterprise_certifications WHERE userId=?',[(await engineer(req)).id]);ok(res,r?{...r,evidence:parseJson(r.evidence)}:null);});
   router.post('/api/enterprise',async(req,res)=>{
     const u=await engineer(req),b=await readJson(req),name=v.str(b.companyName,'企业名称',{min:2,max:120}),code=v.str(b.creditCode,'统一社会信用代码',{min:18,max:18}).toUpperCase();
@@ -43,7 +44,7 @@ function register(router){
       ORDER BY (e.status='PENDING') DESC,e.submittedAt DESC,e.userId LIMIT 21 OFFSET ${offset}`);
     ok(res,{items:rows.slice(0,20).map(r=>({...r,evidence:parseJson(r.evidence)})),hasMore:rows.length>20});
   });
-  router.get('/api/admin/enterprise/documents/:id',async(req,res,p)=>{const {admin}=await requireAdmin(req,'IDENTITY_APPROVE');const d=await documents.read(p.id,null,true);await writeAdminAudit(req,admin,'ENTERPRISE_DOCUMENT_READ','ENTERPRISE',p.id);ok(res,d);});
+  router.get('/api/admin/enterprise/documents/:id',async(req,res,p,q)=>{const {admin}=await requireAdmin(req,'IDENTITY_APPROVE');const d=imageChunk(await documents.read(p.id,null,true),q);await writeAdminAudit(req,admin,'ENTERPRISE_DOCUMENT_READ','ENTERPRISE',p.id);ok(res,d);});
   router.post('/api/admin/enterprise/:id',async(req,res,p)=>{const {admin,user}=await requireAdmin(req,'IDENTITY_APPROVE'),b=await readJson(req);if(user.id===p.id)throw err.forbidden('不能审核自己的企业认证');const status=v.oneOf(b.status,'审核决定',['APPROVED','REJECTED']),result=v.str(b.result,'审核意见',{min:2,max:1000}),revision=v.int(b.revision,'申请版本',{min:1,max:1000000});
     await tx(async c=>{const [r]=await c.execute("UPDATE enterprise_certifications SET status=?,result=?,reviewedAt=UTC_TIMESTAMP(3) WHERE userId=? AND status='PENDING' AND revision=?",[status,result,p.id,revision]);if(!r.affectedRows)throw err.conflict('申请已处理或版本已变化，请刷新');await writeAdminAudit(req,admin,'ENTERPRISE_'+status,'ENTERPRISE',p.id,{result,revision},c);});ok(res,{reviewed:true});
   });

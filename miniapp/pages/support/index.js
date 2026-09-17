@@ -18,7 +18,7 @@ Page({
     const fs=wx.getFileSystemManager();
     const data=await new Promise((resolve,reject)=>fs.readFile({filePath:compressed.tempFilePath,encoding:'base64',success:resolve,fail:reject}));
     if(data.data.length>546136)throw Error('截图较大，请裁剪后重试（压缩后400KB以内）');
-    const r=await request('POST','/support/evidence',{base64:data.data});
+    const r=await require('../../utils/private-image').uploadBase64('/support/evidence',data.data);
     this.setData({evidence:this.data.evidence.concat(r)});
   }catch(e){if(!String(e.errMsg||'').includes('cancel'))wx.showToast({title:e.message||'截图上传失败',icon:'none'});}
   finally{this.setData({uploading:false});}

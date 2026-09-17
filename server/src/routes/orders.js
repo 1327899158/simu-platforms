@@ -121,6 +121,7 @@ function register(router) {
     const fileIds = rawFileIds.map((fid) => v.str(fid, '文件ID', { min: 1, max: 32 }));
     if (new Set(fileIds).size !== fileIds.length) throw err.bad('附件列表包含重复文件');
 
+    let directNotice;
     const order = await tx(async (conn) => {
       let attachmentFiles = [];
       if (fileIds.length) {
@@ -152,7 +153,7 @@ function register(router) {
           budgetFen ?? null, v.bool(b.budgetFlexible, true) ? 1 : 0,
           deliveryDays, specialNote ?? null, now, now]
       );
-      await require('../services/cooperation-svc').attachDirect(conn,user.id,id,b.directEngineerId,budgetFen);
+      directNotice = await require('../services/cooperation-svc').attachDirect(conn,user.id,id,b.directEngineerId,budgetFen,projectName);
       for (const file of attachmentFiles) {
         const [linked] = await conn.execute(
           `UPDATE uploaded_files SET orderId = ? WHERE id = ? AND uploaderId = ? AND orderId IS NULL`,
@@ -167,6 +168,7 @@ function register(router) {
       const [rows] = await conn.execute(`SELECT * FROM orders WHERE id = ?`, [id]);
       return rows[0];
     });
+    if (directNotice) require('../services/cooperation-svc').publishDirectNotice(directNotice);
     ok(res, orderView(order, { quoteCount: 0 }));
   });
 

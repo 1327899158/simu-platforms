@@ -126,7 +126,7 @@ Page({
     if (!file) return;
     wx.showLoading({ title: '正在打开…', mask: true });
     try {
-      const info = await request('GET', `/files/${file.fileId}/url`, null, { silent: true });
+      const info = await request('GET', `/files/${file.fileId}/url`, { adminPreview: 1 }, { silent: true });
       await downloadAndOpen(info);
     } catch (error) {
       wx.showModal({ title: '文件打开失败', content: formatDownloadError(error), showCancel: false });

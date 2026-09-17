@@ -3,10 +3,18 @@ const { loadAdmin, hasPermission, exitAdmin, denyAndExit } = require('../../util
 
 Page({
   data: { admin: null, stats: null, loading: true, menus: [] },
-  onLoad() { this.load(); },
+  onShow() {
+    this.load();
+    clearInterval(this._timer);
+    this._timer = setInterval(() => this.load(true), 15000);
+  },
+  onHide() { clearInterval(this._timer); },
+  onUnload() { clearInterval(this._timer); },
   onPullDownRefresh() { this.load().finally(() => wx.stopPullDownRefresh()); },
-  async load() {
-    this.setData({ loading: true });
+  async load(silent = false) {
+    if (this._loading) return;
+    this._loading = true;
+    if (!silent) this.setData({ loading: true });
     try {
       const admin = await loadAdmin();
       const stats = await request('GET', '/admin/dashboard', null, { silent: true });
@@ -26,11 +34,12 @@ Page({
         { key: 'preview', title: '数据预览', desc: '查看趋势、分布与评分', path: '/admin/pages/data-preview/index', permission: 'DASHBOARD_READ' },
         { key: 'audit', title: '操作日志', desc: '追踪敏感管理操作', path: '/admin/pages/audit-logs/index', permission: 'AUDIT_READ' },
       ];
-      this.setData({ admin, stats, menus: definitions.filter((item) => hasPermission(admin, item.permission)) });
+      this.setData({ admin, stats, menus: definitions.filter((item) => hasPermission(admin, item.permission)).map(item => ({ ...item, count: item.count || stats.pendingTasks?.[item.key] || 0 })) });
     } catch (error) {
-      denyAndExit(error.message);
+      if (!silent) denyAndExit(error.message);
     } finally {
       this.setData({ loading: false });
+      this._loading = false;
     }
   },
   open(e) { wx.navigateTo({ url: e.currentTarget.dataset.path }); },

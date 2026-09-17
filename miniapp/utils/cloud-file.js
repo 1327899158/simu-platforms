@@ -130,6 +130,12 @@ async function downloadAndOpen(info) {
   }
   let result;
   let source = '';
+  let signedError;
+  if (info.url) {
+    try { result = await httpDownload(info.url); source = 'http-url'; }
+    catch (e) { signedError = e; }
+  }
+  if (!result) {
   if (info.fileID && wx.cloud && typeof wx.cloud.downloadFile === 'function') {
     try {
       // wx.cloud 已在 app 启动时绑定 ENV_ID；官方下载参数只需 fileID。
@@ -158,15 +164,11 @@ async function downloadAndOpen(info) {
       }
     }
   } else if (info.url) {
-    try {
-      result = await httpDownload(info.url);
-      source = 'http-url';
-    } catch (httpError) {
-      throw stageError('TEMP_URL', '临时地址下载失败', errorMessage(httpError), traceId);
-    }
+    throw stageError('TEMP_URL', '临时地址下载失败', errorMessage(signedError), traceId);
   } else {
     throw stageError(
       'CLOUD_READ', '当前微信版本不支持云文件下载', 'wx.cloud.downloadFile 不可用', traceId);
+  }
   }
 
   const filePath = result.tempFilePath;

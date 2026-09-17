@@ -9,7 +9,7 @@
   <view>统一社会信用代码</view><input value="{{creditCode}}" placeholder="18位统一社会信用代码" maxlength="18" disabled="{{!editable || busy}}" data-key="creditCode" bindinput="input"/>
   <view>营业执照及相关资质（1—5张）</view>
   <view class="document" wx:for="{{evidence}}" wx:key="*this"><text data-id="{{item}}" bindtap="preview">查看资质图片 {{index+1}} ›</text><button wx:if="{{editable}}" data-id="{{item}}" bindtap="remove" disabled="{{busy || uploading}}">移除</button></view>
-  <button wx:if="{{editable && evidence.length<5}}" bindtap="add" loading="{{uploading}}" disabled="{{uploading || busy}}">上传资质图片</button>
+  <button wx:if="{{editable && evidence.length<5}}" bindtap="add" loading="{{uploading}}" disabled="{{uploading || busy}}">上传资质图片（已上传 {{evidence.length}}/5 张）</button>
   <button class="primary" wx:if="{{editable}}" bindtap="submit" loading="{{busy}}" disabled="{{busy || uploading}}">提交审核</button>
  </view>
 </view>

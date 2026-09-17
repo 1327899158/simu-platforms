@@ -18,7 +18,11 @@
   "miniprogramRoot": "miniapp/",
   "simulatorPluginLibVersion": {},
   "packOptions": {
-    "ignore": [],
+    "ignore": [
+      { "type": "file", "value": "assets/brand-logo.png" },
+      { "type": "file", "value": "assets/hero-wrench.png" },
+      { "type": "file", "value": "images/logo.jpg" }
+    ],
     "include": []
   },
   "appid": "touristappid",

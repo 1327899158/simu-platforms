@@ -11,10 +11,11 @@
   <scroll-view class="message-list" scroll-y scroll-top="{{scrollTop}}" scroll-with-animation>
     <view wx:for="{{msgs}}" wx:key="id" id="{{item.anchor}}">
       <!-- 系统消息 -->
-      <view class="sys-msg {{item.actionOrderId ? 'sys-msg-action' : ''}}" wx:if="{{item.sys}}"
-        bindtap="openSystemAction" data-oid="{{item.actionOrderId}}">
+      <view class="sys-msg {{item.actionOrderId || item.actionCooperation ? 'sys-msg-action' : ''}}" wx:if="{{item.sys}}"
+        bindtap="openSystemAction" data-oid="{{item.actionOrderId}}" data-cooperation="{{item.actionCooperation}}">
         <text>{{item.content}}</text>
         <text class="sys-msg-link" wx:if="{{item.actionOrderId}}">查看订单 ›</text>
+        <text class="sys-msg-link" wx:if="{{item.actionCooperation}}">查看常驻合作 ›</text>
       </view>
 
       <!-- 普通消息 -->

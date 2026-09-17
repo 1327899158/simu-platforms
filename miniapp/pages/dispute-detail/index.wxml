@@ -47,8 +47,8 @@
         </view>
         <button class="evidence-add" bindtap="addEvidence" disabled="{{uploading}}" wx:if="{{pendingEvidence.length < 10 && pendingEvidence.length + dispute.myEvidenceCount < 20}}"><text class="evidence-plus">＋</text><text>添加图片</text></button>
       </view>
-      <text class="evid-meta">本次已选 {{pendingEvidence.length}} / 10 张</text>
-      <text>材料说明（选填）</text>
+      <view class="evid-meta evidence-selection-count">本次已选 {{pendingEvidence.length}} / 10 张</view>
+      <view class="evidence-description-label">材料说明（选填）</view>
       <textarea value="{{evidenceDescription}}" bindinput="inputEvidenceDescription" maxlength="1000" disabled="{{uploading}}" placeholder="说明本次材料的内容及证明事项，最多1000字" auto-height/>
       <text class="evid-meta">{{evidenceDescription.length}} / 1000</text>
       <button class="evidence-submit" bindtap="submitEvidence" loading="{{uploading}}" disabled="{{uploading || !pendingEvidence.length}}">{{uploading ? '上传中…' : '上传证据'}}</button>

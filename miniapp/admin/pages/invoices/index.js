@@ -59,7 +59,7 @@ Page({
     if (this.data.downloading) return;
     this.setData({ downloading: true });
     try {
-      const info = await request('GET', `/files/${e.currentTarget.dataset.id}/url`);
+      const info = await request('GET', `/files/${e.currentTarget.dataset.id}/url`, { adminPreview: 1 });
       const result = await downloadAndOpen(info);
       if (result && result.notice) wx.showModal({ title: '文件已下载', content: result.notice, showCancel: false });
     } catch (error) { wx.showModal({ title: '打开失败', content: formatDownloadError(error), showCancel: false }); }

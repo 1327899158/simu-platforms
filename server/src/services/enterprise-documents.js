@@ -30,8 +30,9 @@ function unseal(payload) {
   const decipher=crypto.createDecipheriv('aes-256-gcm',key(),iv);decipher.setAuthTag(tag);
   return Buffer.concat([decipher.update(bytes),decipher.final()]).toString('utf8');
 }
-async function uploadChunk(userId,b) {
-  const id=v.str(b.uploadId,'上传编号',{min:1,max:64});
+async function uploadChunk(userId,b,save=upload,namespace='enterprise') {
+  const rawId=v.str(b.uploadId,'上传编号',{min:1,max:50});
+  const id=namespace+'_'+rawId;
   if(!/^[a-zA-Z0-9_-]+$/.test(id))throw err.bad('上传编号格式错误');
   const total=v.int(b.total,'分段数量',{min:1,max:10});
   const index=v.int(b.index,'分段序号',{min:0,max:total-1});
@@ -58,7 +59,7 @@ async function uploadChunk(userId,b) {
     }
     accumulated+=chunk;
     if(accumulated.length>546136)throw err.bad('压缩后资质图片不能超过400KB');
-    const document=index===total-1?await upload(userId,{base64:accumulated},db):null;
+    const document=index===total-1?await save(userId,{base64:accumulated},db):null;
     await c.execute('UPDATE enterprise_document_uploads SET nextIndex=?,payload=?,documentId=? WHERE userId=? AND id=?',[index+1,seal(accumulated),document?.id||null,userId,id]);
     return document?{...document,complete:true}:{complete:false,nextIndex:index+1};
   });
@@ -68,4 +69,4 @@ async function read(id,userId,admin=false){
   const [iv,tag,bytes]=row.payload.split('.').map(x=>Buffer.from(x,'base64'));const decipher=crypto.createDecipheriv('aes-256-gcm',key(),iv);decipher.setAuthTag(tag);
   return {mime:row.mime,base64:Buffer.concat([decipher.update(bytes),decipher.final()]).toString('base64')};
 }
-module.exports={upload,read};
+module.exports={upload,read,uploadChunk};

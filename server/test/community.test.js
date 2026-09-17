@@ -2,10 +2,11 @@
 const {test,beforeEach}=require('node:test');const assert=require('node:assert/strict');
 const mock=(p,exports)=>{require.cache[require.resolve(p)]={exports,loaded:true};};
 let sqls,one,run,execute;
-mock('../src/db',{query:async(s,p=[])=>{sqls.push([s,p]);return run(s,p);},queryOne:async(s,p=[])=>{sqls.push([s,p]);return one(s,p);},tx:async fn=>fn({execute:async(s,p=[])=>{sqls.push([s,p]);return [await execute(s,p)];}}),parseJson:x=>typeof x==='string'?JSON.parse(x):x});
+mock('../src/db',{query:async(s,p=[])=>{sqls.push([s,p]);return run(s,p);},queryOne:async(s,p=[])=>{sqls.push([s,p]);return one(s,p);},tx:async fn=>fn({execute:async(s,p=[])=>{sqls.push([s,p]);if(s.startsWith('SELECT * FROM conversations'))return [[{id:'conv'}]];if(s.startsWith('INSERT IGNORE INTO conversations'))return [{affectedRows:0}];return [await execute(s,p)];}}),parseJson:x=>typeof x==='string'?JSON.parse(x):x});
 mock('../src/config',{config:{identityDataKey:'test-key-only',cloudbaseEnv:'test'}});
 let audits;mock('../src/lib/admin-mw',{writeAdminAudit:async(...args)=>audits.push(args)});
 mock('../src/services/blacklist-svc',{assertContact:async()=>{}});
+mock('../src/services/chat-svc',{systemMessage:async()=>({msgId:1}),publishConversationDoc(){},publishSystemMessage(){}});
 const fav=require('../src/services/favorites-svc'),sup=require('../src/services/support-svc'),coop=require('../src/services/cooperation-svc'),close=require('../src/services/account-closure-svc'),inc=require('../src/services/incentives-svc'),evidence=require('../src/services/support-evidence-svc');
 beforeEach(()=>{sqls=[];audits=[];one=async()=>null;run=async()=>[];execute=async()=>[];});
 test('收藏：新增限制为有效公开内容，重复新增使用唯一键',async()=>{

@@ -1,4 +1,5 @@
 'use strict';
+const {imageChunk}=require('../services/image-chunks');
 const {query,queryOne,tx,parseJson}=require('../db');
 const {ok,readJson,err}=require('../lib/http');
 const {v,newId}=require('../lib/util');
@@ -16,8 +17,8 @@ const offset=q=>v.int(q.get('offset')||0,'offset',{min:0,max:1000000});
 const page=rows=>({items:rows.slice(0,20),hasMore:rows.length>20});
 function register(router){
   router.post('/api/support/evidence',async(req,res)=>{const u=await member(req);ok(res,await require('../services/support-evidence-svc').upload(u.id,await readJson(req)));});
-  router.get('/api/support/evidence/:id',async(req,res,p)=>{const u=await member(req);ok(res,await require('../services/support-evidence-svc').read(p.id,u.id));});
-  router.get('/api/admin/support/evidence/:id',async(req,res,p)=>{const {admin}=await requireAdmin(req,'SUPPORT_MANAGE');const result=await require('../services/support-evidence-svc').read(p.id,null,true);await writeAdminAudit(req,admin,'SUPPORT_EVIDENCE_READ','EVIDENCE',p.id);ok(res,result);});
+  router.get('/api/support/evidence/:id',async(req,res,p,q)=>{const u=await member(req);ok(res,imageChunk(await require('../services/support-evidence-svc').read(p.id,u.id),q));});
+  router.get('/api/admin/support/evidence/:id',async(req,res,p,q)=>{const {admin}=await requireAdmin(req,'SUPPORT_MANAGE');const result=imageChunk(await require('../services/support-evidence-svc').read(p.id,null,true),q);await writeAdminAudit(req,admin,'SUPPORT_EVIDENCE_READ','EVIDENCE',p.id);ok(res,result);});
   router.get('/api/public-cases/:id',async(req,res,p)=>{await member(req);const s=favorites.source('CASE');const row=await queryOne(`SELECT t.id,t.title,t.summary,t.engineerId FROM ${s.from} WHERE t.id=? AND ${s.where}`,[p.id]);if(!row)throw err.notFound('案例不存在或已停止展示');ok(res,row);});
   router.get('/api/favorites',async(req,res,p,q)=>ok(res,await favorites.list((await member(req)).id,q.get('kind')||'ENGINEER',offset(q))));
   router.post('/api/favorites',async(req,res)=>{const u=await member(req),b=await readJson(req);ok(res,await favorites.add(u.id,b.kind,b.id));});

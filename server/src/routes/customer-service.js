@@ -24,6 +24,14 @@ function register(router){
   else await c.execute('INSERT INTO announcements(id,title,content,targetRole,startsAt,endsAt,enabled,updatedAt) VALUES(?,?,?,?,?,?,?,UTC_TIMESTAMP(3))',[id,a.title,a.content,a.targetRole,a.startsAt,a.endsAt,b.enabled?1:0]);
   await writeAdminAudit(req,admin,'ANNOUNCEMENT_SAVE','ANNOUNCEMENT',id,{...a,enabled:b.enabled},c);
  });ok(res,{id});});
+ router.get('/api/admin/service-ticket-evidence/:id',async(req,res,p,q)=>{
+  const {admin}=await requireAdmin(req,'CUSTOMER_SERVICE');
+  const ticket=await queryOne('SELECT id FROM service_tickets WHERE JSON_CONTAINS(evidence, JSON_QUOTE(?)) LIMIT 1',[p.id]);
+  if(!ticket)throw err.notFound('工单截图不存在');
+  const image=await require('../services/support-evidence-svc').read(p.id,null,true);
+  await writeAdminAudit(req,admin,'SERVICE_TICKET_EVIDENCE_READ','EVIDENCE',p.id);
+  ok(res,require('../services/image-chunks').imageChunk(image,q));
+ });
  router.post('/api/service-tickets',async(req,res)=>{const u=await member(req),b=await readJson(req),category=v.oneOf(b.category,'问题类型',CATEGORIES),title=v.str(b.title,'标题',{min:2,max:120}),content=v.str(b.content,'问题描述',{min:5,max:3000});const ids=v.arr(b.evidence||[],'截图',{maxLen:5}).map(id=>v.str(id,'图片ID',{min:1,max:32})),id=newId();await tx(async c=>{
   await c.execute('SELECT id FROM users WHERE id=? FOR UPDATE',[u.id]);const [[count]]=await c.execute('SELECT COUNT(*) n FROM service_tickets WHERE userId=? AND createdAt>=DATE_SUB(UTC_TIMESTAMP(3),INTERVAL 1 DAY)',[u.id]);if(Number(count.n)>=10)throw err.tooMany('每天最多提交10个工单');
   for(const fid of ids){const [[f]]=await c.execute('SELECT id FROM support_evidence_blobs WHERE id=? AND userId=?',[fid,u.id]);if(!f)throw err.forbidden('只能使用自己的截图');}

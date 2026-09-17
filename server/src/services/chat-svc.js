@@ -159,7 +159,7 @@ async function systemMessage(convId, content, conn, meta = {}) {
       };
   const now = nowIso();
   const senderId = meta.senderId || 'SYSTEM';
-  const actionOrderId = meta.actionOrderId || null;
+  const actionOrderId = meta.actionCooperation ? '__COOP__' : meta.actionOrderId || null;
   const [r] = await exec(
     `INSERT INTO messages(convId, senderId, type, content, fileId, createdAt) VALUES(?,?,?,?,?,?)`,
     [convId, senderId, 'SYSTEM', content, actionOrderId, now]
@@ -179,7 +179,7 @@ function publishSystemMessage(convId, content, sqlMsgId, meta = {}) {
     senderUserId: meta.senderId || null,
     type: 'SYSTEM',
     content,
-    fileId: meta.actionOrderId || null,
+    fileId: meta.actionCooperation ? '__COOP__' : meta.actionOrderId || null,
     sqlMsgId,
   });
 }

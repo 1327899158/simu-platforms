@@ -75,7 +75,7 @@ function register(router) {
   });
 
   router.get('/api/admin/dashboard', async (req, res) => {
-    await requireAdmin(req, 'DASHBOARD_READ');
+    const { admin } = await requireAdmin(req, 'DASHBOARD_READ');
     const [users, engineers, orders, quotes, recentUsers, recentOrders] = await Promise.all([
       queryOne(`SELECT COUNT(*) AS total,
         SUM(status = 'ACTIVE') AS activeCount,
@@ -109,6 +109,7 @@ function register(router) {
       },
       orders: { ...orderCounts, recent7d: Number(recentOrders.count || 0) },
       quotes: { total: Number(quotes.total || 0) },
+      pendingTasks: await require('../services/admin-tasks').pendingTasks(admin),
     });
   });
 
@@ -373,7 +374,7 @@ function register(router) {
        WHERE f.id = ? AND ivf.purpose='SUPPORTING'`, [params.id]
     );
     if (!file) throw err.notFound('身份认证材料不存在');
-    return ok(res, { ...file, sizeBytes: Number(file.sizeBytes || 0) });
+    return ok(res, await require('../services/admin-file-url').adminFileUrl({ ...file, sizeBytes: Number(file.sizeBytes || 0) }));
   });
 
   router.post('/api/admin/engineers/:id/review', async (req, res, params) => {
