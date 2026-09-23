@@ -37,6 +37,7 @@ function refundRequestView(row, files = []) {
     status: row.status,
     statusText: row.status === 'PENDING' ? '待工程师确认' : row.status === 'REJECTED' ? '工程师已拒绝' : row.status,
     reason: row.reason || '历史退款申请未填写理由',
+    attemptCount: Number(row.attemptCount || 1), remainingAttempts: Math.max(0, 3-Number(row.attemptCount || 1)),
     files: files.map(refundFileView),
     disputeId: row.disputeId || null,
     createdAt: row.createdAt,
@@ -300,6 +301,7 @@ function register(router) {
       [params.id]
     );
     const files = refundRequest ? await refundFilesOf(refundRequest.id) : [];
+    if(refundRequest){const count=await queryOne('SELECT COUNT(*) n FROM refund_requests WHERE orderId=?',[params.id]);refundRequest.attemptCount=Number(count.n);}
     ok(res, refundRequestView(refundRequest, files));
   });
 
@@ -307,7 +309,9 @@ function register(router) {
   router.post('/api/orders/:id/refund-request', async (req, res, params) => {
     const customer = await requireCustomer(req);
     const body = await readJson(req);
-    const reason = v.str(body.reason, '退款理由', { min: 1, max: 1000 });
+    const reasonText = v.str(body.reason, '退款理由', { min: 1, max: 1000 });
+    const reasonType = body.reasonType ? v.oneOf(body.reasonType,'退款类型',['未按约定交付','交付成果不符合需求','工程师无法继续服务','双方协商退款','其他']) : null;
+    const reason = reasonType && reasonType !== reasonText ? reasonType+'：'+reasonText : reasonText;
     const rawFileIds = v.arr(body.fileIds, '退款附件', { maxLen: 5, optional: true }) || [];
     const fileIds = rawFileIds.map((fileId) => v.str(fileId, '文件ID', { min: 1, max: 32 }));
     if (new Set(fileIds).size !== fileIds.length) throw err.bad('退款附件包含重复文件');
@@ -327,11 +331,13 @@ function register(router) {
       }
       const [[pending]] = await conn.execute(
         `SELECT id FROM refund_requests
-          WHERE orderId = ? AND status IN ('PENDING', 'REJECTED')
+          WHERE orderId = ? AND status IN ('PENDING', 'AGREED')
           FOR UPDATE`,
         [order.id]
       );
-      if (pending) throw err.conflict('该订单已有退款申请；若已被拒绝，请申请客服介入处理');
+      if (pending) throw err.conflict('该订单已有待处理退款申请');
+      const [[attempts]]=await conn.execute('SELECT COUNT(*) n FROM refund_requests WHERE orderId=?',[order.id]);
+      if(Number(attempts.n)>=3)throw err.conflict('退款申请已达3次，请申请客服介入');
       const [[dispute]] = await conn.execute(
         `SELECT id FROM disputes WHERE orderId = ? AND status = 'OPEN' FOR UPDATE`,
         [order.id]
@@ -384,7 +390,7 @@ function register(router) {
           [id, file.fileId, customer.id, now]
         );
       }
-      return { id, orderId: order.id, status: 'PENDING', reason, createdAt: now, files: refundFiles };
+      return { id, orderId: order.id, status: 'PENDING', reason, attemptCount: Number(attempts.n) + 1, createdAt: now, files: refundFiles };
     });
     systemMessageForOrder(
       params.id,

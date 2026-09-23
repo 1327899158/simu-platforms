@@ -230,6 +230,8 @@ module.exports = {
           <text class="refund-file-action">{{downloadingFileId === item.fileId ? '打开中…' : '查看'}}</text>
         </view>
       </view>
+<view>已申请 {{refundRequest.attemptCount}} / 3 次；剩余 {{refundRequest.remainingAttempts}} 次</view>
+      <button wx:if="{{refundRequest.remainingAttempts > 0 && !refundFormOpen}}" bindtap="requestRefund">再次申请退款</button>
       <button class="btn-refund-escalate" bindtap="escalateRefund">申请客服介入</button>
     </view>
 
@@ -255,10 +257,12 @@ module.exports = {
         <text class="refund-form-required">理由必填</text>
       </view>
       <view class="refund-field-title">退款理由 <text class="required-mark">*</text></view>
+      <picker range="{{refundReasons}}" bindchange="chooseRefundReason"><view style="padding:20rpx;border:1rpx solid #ddd">{{refundCategory || '请选择退款理由'}} ›</view></picker>
       <textarea class="refund-reason-input" value="{{refundReason}}" bindinput="onRefundReason"
         maxlength="1000" placeholder="请清楚描述申请退款的原因" placeholder-class="refund-placeholder" />
       <view class="refund-word-count">{{refundReason.length}} / 1000</view>
 
+      <netdisk-input bind:added="netdiskRefund" disabled="{{refundUploading || refundSubmitting || refundUploads.length >= 5}}"/>
       <view class="refund-upload-head">
         <view>
           <text class="refund-field-title">补充材料</text>
@@ -381,7 +385,8 @@ module.exports = {
       <button class="btn-primary-block" wx:if="{{order.status === 'QUOTING'}}" bindtap="goQuote">
         <ui-symbol value="{{order.myQuote ? '✏️ 修改报价' : '💰 我要报价'}}"/>
       </button>
-      <button class="btn-deliver {{delivering ? 'disabled' : ''}}"
+      <netdisk-input wx:if="{{order.iAmSelected && order.status === 'IN_PROGRESS'}}" kind="RESULT" order-id="{{id}}" submit-text="通过网盘交付成果" bind:added="netdiskDeliver" disabled="{{delivering}}"/>
+<button class="btn-deliver {{delivering ? 'disabled' : ''}}"
         wx:if="{{order.iAmSelected && order.status === 'IN_PROGRESS'}}" bindtap="deliver">
         <ui-symbol value="{{delivering ? '上传中…' : '📦 上传成果并交付'}}"/>
       </button>

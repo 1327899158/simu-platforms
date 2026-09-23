@@ -19,7 +19,7 @@
     <block wx:else>
     <view class="row"><text class="title">{{item.invoiceTitle}}</text><text class="status">{{item.statusText}}</text></view>
     <text class="desc">订单：{{item.projectName}} · 客户：{{item.customerName}}</text>
-    <text class="desc" wx:if="{{item.taxNumber}}">税号：{{item.taxNumber}}</text><text class="desc" wx:if="{{item.email}}">邮箱：{{item.email}}</text><text class="desc" wx:if="{{item.customerNote}}">客户备注：{{item.customerNote}}</text><text class="desc" wx:if="{{item.engineerNote}}">处理说明：{{item.engineerNote}}</text>
+    <view wx:if="{{item.invoiceDetails}}"><view>{{item.invoiceDetails.type==='SPECIAL'?'增值税专用发票':'增值税普通发票'}} · {{item.invoiceDetails.format==='TRADITIONAL'?'传统发票':'数电发票'}}</view><view wx:if="{{item.invoiceDetails.address}}">地址：{{item.invoiceDetails.address}}</view><view wx:if="{{item.invoiceDetails.phone}}">电话：{{item.invoiceDetails.phone}}</view><view wx:if="{{item.invoiceDetails.bank}}">开户行：{{item.invoiceDetails.bank}}</view><view wx:if="{{item.invoiceDetails.account}}">账号：{{item.invoiceDetails.account}}</view></view><text class="desc" wx:if="{{item.taxNumber}}">税号：{{item.taxNumber}}</text><text class="desc" wx:if="{{item.email}}">邮箱：{{item.email}}</text><text class="desc" wx:if="{{item.customerNote}}">客户备注：{{item.customerNote}}</text><text class="desc" wx:if="{{item.engineerNote}}">处理说明：{{item.engineerNote}}</text>
     <view class="actions" wx:if="{{item.status === 'REQUESTED'}}"><button class="outline" data-id="{{item.id}}" data-action="SELF_ISSUE" bindtap="process">自行开票</button><button class="primary" data-id="{{item.id}}" data-action="PLATFORM_REQUESTED" bindtap="process">申请平台开票</button><button class="minor" data-id="{{item.id}}" data-action="REJECTED" bindtap="process">暂不支持</button></view>
     <button class="primary" wx:if="{{item.status === 'SELF_ISSUE'}}" data-id="{{item.id}}" bindtap="openUpload">上传发票文件</button>
     <text class="desc" wx:if="{{item.status === 'PLATFORM_REQUESTED'}}">已转交平台，等待平台处理</text>
@@ -34,13 +34,23 @@
   </view>
 
   <text class="desc" wx:if="{{role === 'CUSTOMER' && hasMore}}">{{loading ? '加载中…' : '上拉加载更多订单'}}</text>
-  <view class="upload-mask" wx:if="{{batchOpen}}" catchtouchmove="noop"><view class="upload-dialog"><text class="dialog-title">批量申请开票</text><text class="dialog-desc">本批可选 {{batchCandidates.length}} 笔，已选 {{batchIds.length}} 笔。每批最多 50 笔，提交后可继续申请剩余订单。</text>
-    <scroll-view scroll-y style="max-height: 300rpx;"><checkbox-group bindchange="batchSelection"><label class="batch-order" wx:for="{{batchCandidates}}" wx:key="orderId"><checkbox value="{{item.orderId}}" checked="{{item.checked}}"/><text>{{item.projectName}} · ¥{{item.amountText}}</text></label></checkbox-group></scroll-view><input class="input" data-key="Title" bindinput="batchField" placeholder="发票抬头（必填）"/><input class="input" data-key="TaxNumber" bindinput="batchField" placeholder="纳税人识别号（选填）"/><input class="input" data-key="Email" bindinput="batchField" placeholder="接收邮箱（选填）"/><view class="dialog-actions"><button class="dialog-cancel" bindtap="closeBatch">取消</button><button class="dialog-submit" loading="{{batchSubmitting}}" disabled="{{batchSubmitting || !batchIds.length}}" bindtap="submitBatch">提交申请</button></view></view></view>
+  <view class="upload-mask" wx:if="{{batchOpen}}" catchtouchmove="noop"><scroll-view scroll-y class="upload-dialog"><text class="dialog-title">批量申请开票</text><text class="dialog-desc">本批可选 {{batchCandidates.length}} 笔，已选 {{batchIds.length}} 笔。每批最多 50 笔，提交后可继续申请剩余订单。</text>
+    <scroll-view scroll-y style="max-height: 300rpx;"><checkbox-group bindchange="batchSelection"><label class="batch-order" wx:for="{{batchCandidates}}" wx:key="orderId"><checkbox value="{{item.orderId}}" checked="{{item.checked}}"/><text>{{item.projectName}} · ¥{{item.amountText}}</text></label></checkbox-group></scroll-view>    <picker range="{{['增值税普通发票','增值税专用发票']}}" bindchange="chooseType"><view class="input">{{invoiceType==='SPECIAL'?'增值税专用发票':'增值税普通发票'}} ›</view></picker>
+    <picker wx:if="{{invoiceType==='NORMAL'}}" range="{{['个人','单位']}}" bindchange="chooseBuyer"><view class="input">抬头类型：{{buyerType==='BUSINESS'?'单位':'个人'}} ›</view></picker>
+    <picker range="{{['数电发票','传统发票']}}" bindchange="chooseFormat"><view class="input">{{invoiceFormat==='DIGITAL'?'数电发票':'传统发票'}} ›</view></picker>
+    <view wx:if="{{invoiceType==='SPECIAL'}}"><view>专票仅支持单位抬头。传统专票需补全地址、电话及银行信息；数电票这些信息选填。</view>
+      <input class="input" value="{{address}}" data-field="address" bindinput="onField" placeholder="注册地址" maxlength="200"/>
+      <input class="input" value="{{phone}}" data-field="phone" bindinput="onField" placeholder="注册电话" maxlength="40"/>
+      <input class="input" value="{{bank}}" data-field="bank" bindinput="onField" placeholder="开户银行" maxlength="120"/>
+      <input class="input" value="{{account}}" data-field="account" bindinput="onField" placeholder="银行账号" maxlength="50"/>
+    </view>
+<input class="input" data-key="Title" bindinput="batchField" placeholder="发票抬头（必填）"/><input class="input" data-key="TaxNumber" bindinput="batchField" placeholder="{{buyerType==='BUSINESS'?'纳税人识别号（必填）':'纳税人识别号（选填）'}}"/><input class="input" data-key="Email" bindinput="batchField" placeholder="接收邮箱（选填）"/><view class="dialog-actions"><button class="dialog-cancel" bindtap="closeBatch">取消</button><button class="dialog-submit" loading="{{batchSubmitting}}" disabled="{{batchSubmitting || !batchIds.length}}" bindtap="submitBatch">提交申请</button></view></scroll-view></view>
 
   <view class="upload-mask" wx:if="{{uploadOpen}}" catchtouchmove="noop">
-    <view class="upload-dialog">
+    <scroll-view scroll-y class="upload-dialog">
       <view class="dialog-head"><text class="dialog-title">上传电子发票</text><text class="dialog-tag">自行开票</text></view>
       <text class="dialog-desc">支持图片、PDF、Word（.doc/.docx），最多上传 5 个文件。提交后客户即可查看。</text>
+<netdisk-input bind:added="netdiskAdded" disabled="{{uploading || submittingFiles || invoiceUploads.length >= 5}}"/>
       <button class="pick-file" bindtap="chooseInvoiceFiles" disabled="{{uploading || submittingFiles || invoiceUploads.length >= 5}}">{{uploading ? '上传中…' : '+ 选择发票文件'}}</button>
       <view class="pending-files" wx:if="{{invoiceUploads.length}}">
         <view class="pending-row" wx:for="{{invoiceUploads}}" wx:key="fileId">
@@ -52,6 +62,6 @@
         <button class="dialog-cancel" bindtap="closeUpload" disabled="{{uploading || submittingFiles}}">稍后上传</button>
         <button class="dialog-submit" bindtap="submitInvoiceFiles" disabled="{{uploading || submittingFiles || !invoiceUploads.length}}">{{submittingFiles ? '提交中…' : '提交给客户'}}</button>
       </view>
-    </view>
+    </scroll-view>
   </view>
 </view>

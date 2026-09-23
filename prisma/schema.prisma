@@ -220,6 +220,8 @@ model Quote {
 }
 
 model UploadedFile {
+  netdiskUrl String? @db.VarChar(1500)
+  netdiskPassword String? @db.VarChar(100)
   id         String   @id @default(cuid())
   orderId    String?
   uploaderId String
@@ -420,6 +422,7 @@ model RefundRequestFile {
 }
 
 model InvoiceRequest {
+  invoiceDetails Json?
   id             String   @id @default(cuid())
   orderId        String   @unique
   customerId     String

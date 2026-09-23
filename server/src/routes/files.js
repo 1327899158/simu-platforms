@@ -108,6 +108,8 @@ async function orderFileAccess(user, order) {
 async function canReadFile(user, file) {
   if (!user) return false;
   if (file.uploaderId === user.id) return true;
+  const evidenceAccess=await canReadDisputeEvidence(user,file);
+  if(evidenceAccess!==null)return evidenceAccess;
 
   // 无订单关联的文件：先判断是否为纠纷证据（仅当事人/管理员可读），
   // 避免通用 IMAGE 规则把纠纷证据泄漏给所有登录用户。
@@ -116,8 +118,6 @@ async function canReadFile(user, file) {
       'SELECT fileId FROM identity_verification_files WHERE fileId=? UNION SELECT fileId FROM engineer_verification_files WHERE fileId=? LIMIT 1',
       [file.id, file.id]);
     if (identity) return false; // 审核人员通过专用审核接口获取材料。
-    const disputeAccess = await canReadDisputeEvidence(user, file);
-    if (disputeAccess !== null) return disputeAccess;
     const refundAccess = await refundRequestFileAccess(user, file);
     if (refundAccess !== null) return refundAccess;
     const invoiceAccess = await invoiceRequestFileAccess(user, file);
@@ -223,6 +223,19 @@ async function requireEngineerIdentity(req) {
 }
 
 function register(router) {
+  router.post('/api/files/netdisk',async(req,res)=>{
+    const user=await requireUser(req),b=await readJson(req);
+    const link=require('../services/netdisk').validateLink(b);
+    const kind=v.oneOf(b.kind||'DOC','资料类型',['DOC','MODEL','RESULT']);
+    const orderId=v.str(b.orderId,'订单',{max:32,optional:true})||null;
+    await assertOrderUploadAccess(user,orderId);
+    const id=newId(),now=nowIso(),name='网盘资料',fileID='netdisk:'+id,mime='application/x-netdisk';
+    await tx(async c=>{
+      await c.execute('INSERT INTO uploaded_files(id,orderId,uploaderId,kind,name,fileID,sizeBytes,mime,createdAt,netdiskUrl,netdiskPassword) VALUES(?,?,?,?,?,?,0,?,?,?,?)',[id,orderId,user.id,kind,name,fileID,mime,now,link.url,link.password]);
+      if(orderId)await c.execute('INSERT INTO order_attachments(orderId,fileId,uploaderId,purpose,createdAt) VALUES(?,?,?,?,?)',[orderId,id,user.id,kind==='RESULT'?'RESULT':'REQUIREMENT',now]);
+    });
+    ok(res,{id,fileId:id,name,kind,mime,sizeBytes:0});
+  });
   // Local wx.uploadFile fallback. CloudBase deployments normally use
   // wx.cloud.uploadFile followed by /commit, but local mode also needs a real
   // endpoint instead of a 404.
@@ -375,10 +388,12 @@ function register(router) {
     );
     if (!file) throw err.notFound('文件不存在');
     if (!(await canReadFile(user, file))) throw err.forbidden('无权下载该文件');
+    if(file.netdiskUrl)return ok(res,require('../services/netdisk').linkView(file));
     if (search?.get('adminPreview') === '1') {
       await require('../lib/admin-mw').requireAdmin(req);
       return ok(res, await require('../services/admin-file-url').adminFileUrl({ fileID:file.fileID, name:file.name, mime:file.mime || '', sizeBytes:Number(file.sizeBytes) }));
     }
+    if(await canReadDisputeEvidence(user,file)){return ok(res,await require('../services/admin-file-url').adminFileUrl({fileID:file.fileID,name:file.name,mime:file.mime||'',sizeBytes:Number(file.sizeBytes)}));}
     let url;
     if (search?.get('preview') === '1' && file.kind === 'IMAGE') {
       // 先验证业务可见性，再由服务端签发短期预览链接，兼容云存储仅上传者可读的规则。
@@ -455,7 +470,7 @@ function register(router) {
       await conn.execute('DELETE FROM uploaded_files WHERE id=?', [current.id]);
       return current;
     });
-    if (config.env !== 'production') {
+    if (config.env !== 'production' && file.fileID?.startsWith('cloud://')) {
       try { await getStorage().deleteFile({ fileList: [file.fileID] }); } catch (e) {
         console.error('[files] cloud delete failed', e.message);
       }

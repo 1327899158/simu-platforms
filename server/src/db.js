@@ -517,6 +517,9 @@ async function init() {
 
   // 增量迁移：为旧表补充新字段（CREATE TABLE IF NOT EXISTS 不会改已存在的表）
   const migrations = [
+    {table:'uploaded_files',check:'netdiskUrl',sql:'ALTER TABLE uploaded_files ADD COLUMN netdiskUrl VARCHAR(1500) NULL'},
+    {table:'uploaded_files',check:'netdiskPassword',sql:'ALTER TABLE uploaded_files ADD COLUMN netdiskPassword VARCHAR(100) NULL'},
+    {table:'invoice_requests',check:'invoiceDetails',sql:'ALTER TABLE invoice_requests ADD COLUMN invoiceDetails JSON NULL'},
     { table: 'users', sql: `ALTER TABLE users ADD COLUMN phoneChangedAt DATETIME(3)`, check: 'phoneChangedAt' },
     { table: 'users', sql: `ALTER TABLE users ADD COLUMN phoneChangeToken VARCHAR(64)`, check: 'phoneChangeToken' },
     { table: 'users', sql: `ALTER TABLE users ADD COLUMN phoneChangeExpiresAt DATETIME(3)`, check: 'phoneChangeExpiresAt' },
@@ -687,7 +690,7 @@ async function init() {
   console.log(JSON.stringify({ t: new Date().toISOString(), evt: 'db-init-ok' }));
 }
 
-/** 订单编号：SIM + yyyymmdd + 4位序号 */
+/** 订单编号：SIM + UTC yyyymmdd + 8位随机十六进制字符，唯一索引兜底。 */
 async function nextOrderNo() {
   const d = new Date();
   const ymd = `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, '0')}${String(d.getUTCDate()).padStart(2, '0')}`;

@@ -7,8 +7,8 @@ const {ok,readJson,err}=require('../lib/http');
 const {v}=require('../lib/util');
 const delivery=require('../services/delivery-svc');
 const documents=require('../services/enterprise-documents');
-async function engineer(req){const u=await requireUser(req);if(u.role!=='ENGINEER')throw err.forbidden('仅工程师可申请企业认证');return u;}
-async function badge(id){const r=await queryOne("SELECT companyName FROM enterprise_certifications WHERE userId=? AND status='APPROVED'",[id]);return r?{companyName:r.companyName,label:'企业已认证'}:null;}
+async function engineer(req){const u=await requireUser(req);if(u.role!=='ENGINEER')throw err.forbidden('仅工程师可申请企业/机构认证');return u;}
+async function badge(id){const r=await queryOne("SELECT companyName,displayLabel,certificationType FROM enterprise_certifications WHERE userId=? AND status='APPROVED'",[id]);return r?{companyName:r.companyName,label:r.displayLabel||'企业已认证',certificationType:r.certificationType||'COMPANY'}:null;}
 function register(router){
   router.get('/api/orders/:id/delivery',async(req,res,p)=>{const u=await requireUser(req),overdue=await require('../services/overdue-svc').inspect(p.id,u);ok(res,{...await delivery.run(u,p.id),overdue});});
   router.post('/api/orders/:id/delivery/nudge',async(req,res,p)=>ok(res,await require('../services/overdue-svc').inspect(p.id,await requireUser(req),true)));
@@ -21,17 +21,18 @@ function register(router){
   router.get('/api/enterprise/documents/:id',async(req,res,p,q)=>ok(res,imageChunk(await documents.read(p.id,(await engineer(req)).id),q)));
   router.get('/api/enterprise',async(req,res)=>{const r=await queryOne('SELECT * FROM enterprise_certifications WHERE userId=?',[(await engineer(req)).id]);ok(res,r?{...r,evidence:parseJson(r.evidence)}:null);});
   router.post('/api/enterprise',async(req,res)=>{
-    const u=await engineer(req),b=await readJson(req),name=v.str(b.companyName,'企业名称',{min:2,max:120}),code=v.str(b.creditCode,'统一社会信用代码',{min:18,max:18}).toUpperCase();
-    if(!/^[0-9A-HJ-NPQRTUWXY]{18}$/.test(code))throw err.bad('统一社会信用代码格式不正确');
-    if(!Array.isArray(b.evidence)||b.evidence.length<1||b.evidence.length>5)throw err.bad('请上传1至5张营业执照或资质图片');
+    const u=await engineer(req),b=await readJson(req),name=v.str(b.companyName,'企业、机构或毕业院校名称',{min:2,max:120}),type=v.oneOf(b.certificationType||'COMPANY','认证类型',['COMPANY','INSTITUTION','SCHOOL']),note=v.str(b.applicationNote,'相关信息',{max:1000,optional:true})||null;
+    const code=type==='SCHOOL'?null:(v.str(b.creditCode,'统一社会信用代码',{max:18,optional:true})||'').toUpperCase()||null;
+    if((type==='COMPANY'&&!code)||(code&&!/^[0-9A-HJ-NPQRTUWXY]{18}$/.test(code)))throw err.bad('统一社会信用代码格式不正确');
+    if(!Array.isArray(b.evidence)||b.evidence.length<1||b.evidence.length>5)throw err.bad('请上传1至5张企业、机构或毕业院校相关证明图片');
     const ids=[...new Set(b.evidence.map(x=>v.str(x,'材料ID',{min:1,max:32})))];
     await tx(async c=>{
       await c.execute('SELECT id FROM users WHERE id=? FOR UPDATE',[u.id]);
       const [[old]]=await c.execute('SELECT status FROM enterprise_certifications WHERE userId=? FOR UPDATE',[u.id]);
       if(old&&['PENDING','APPROVED'].includes(old.status))throw err.conflict('审核中或已通过的认证不能重复提交');
       for(const id of ids){const [[f]]=await c.execute('SELECT id FROM enterprise_documents WHERE id=? AND userId=?',[id,u.id]);if(!f)throw err.forbidden('认证材料不属于当前账号');}
-      try{if(old)await c.execute("UPDATE enterprise_certifications SET companyName=?,creditCode=?,evidence=?,status='PENDING',result=NULL,reviewedAt=NULL,submittedAt=UTC_TIMESTAMP(3),revision=revision+1 WHERE userId=?",[name,code,JSON.stringify(ids),u.id]);
-      else await c.execute("INSERT INTO enterprise_certifications(userId,companyName,creditCode,evidence,status,submittedAt) VALUES(?,?,?,?,'PENDING',UTC_TIMESTAMP(3))",[u.id,name,code,JSON.stringify(ids)]);
+      try{if(old)await c.execute("UPDATE enterprise_certifications SET companyName=?,creditCode=?,evidence=?,certificationType=?,applicationNote=?,displayLabel=NULL,status='PENDING',result=NULL,reviewedAt=NULL,submittedAt=UTC_TIMESTAMP(3),revision=revision+1 WHERE userId=?",[name,code,JSON.stringify(ids),type,note,u.id]);
+      else await c.execute("INSERT INTO enterprise_certifications(userId,companyName,creditCode,evidence,certificationType,applicationNote,status,submittedAt) VALUES(?,?,?,?,?,?,'PENDING',UTC_TIMESTAMP(3))",[u.id,name,code,JSON.stringify(ids),type,note]);
       }catch(e){if(e.code==='ER_DUP_ENTRY')throw err.conflict('该企业已被其他账号提交');throw e;}
     });ok(res,{submitted:true});
   });
@@ -45,8 +46,9 @@ function register(router){
     ok(res,{items:rows.slice(0,20).map(r=>({...r,evidence:parseJson(r.evidence)})),hasMore:rows.length>20});
   });
   router.get('/api/admin/enterprise/documents/:id',async(req,res,p,q)=>{const {admin}=await requireAdmin(req,'IDENTITY_APPROVE');const d=imageChunk(await documents.read(p.id,null,true),q);await writeAdminAudit(req,admin,'ENTERPRISE_DOCUMENT_READ','ENTERPRISE',p.id);ok(res,d);});
-  router.post('/api/admin/enterprise/:id',async(req,res,p)=>{const {admin,user}=await requireAdmin(req,'IDENTITY_APPROVE'),b=await readJson(req);if(user.id===p.id)throw err.forbidden('不能审核自己的企业认证');const status=v.oneOf(b.status,'审核决定',['APPROVED','REJECTED']),result=v.str(b.result,'审核意见',{min:2,max:1000}),revision=v.int(b.revision,'申请版本',{min:1,max:1000000});
-    await tx(async c=>{const [r]=await c.execute("UPDATE enterprise_certifications SET status=?,result=?,reviewedAt=UTC_TIMESTAMP(3) WHERE userId=? AND status='PENDING' AND revision=?",[status,result,p.id,revision]);if(!r.affectedRows)throw err.conflict('申请已处理或版本已变化，请刷新');await writeAdminAudit(req,admin,'ENTERPRISE_'+status,'ENTERPRISE',p.id,{result,revision},c);});ok(res,{reviewed:true});
+  router.post('/api/admin/enterprise/:id',async(req,res,p)=>{const {admin,user}=await requireAdmin(req,'IDENTITY_APPROVE'),b=await readJson(req);if(user.id===p.id)throw err.forbidden('不能审核自己的企业/机构认证');const status=v.oneOf(b.status,'审核决定',['APPROVED','REJECTED']),result=v.str(b.result,'审核意见',{min:2,max:1000}),revision=v.int(b.revision,'申请版本',{min:1,max:1000000});
+    const label=status==='APPROVED'?v.str(b.displayLabel,'公开展示标签',{min:1,max:40}):null;
+    await tx(async c=>{const [r]=await c.execute("UPDATE enterprise_certifications SET status=?,result=?,displayLabel=?,reviewedAt=UTC_TIMESTAMP(3) WHERE userId=? AND status='PENDING' AND revision=?",[status,result,label,p.id,revision]);if(!r.affectedRows)throw err.conflict('申请已处理或版本已变化，请刷新');await writeAdminAudit(req,admin,'ENTERPRISE_'+status,'ENTERPRISE',p.id,{result,revision,displayLabel:label},c);});ok(res,{reviewed:true});
   });
 }
 module.exports={register,badge};

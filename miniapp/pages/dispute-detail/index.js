@@ -10,6 +10,11 @@ const MAX_FILES_PER_UPLOAD = 10;
 function pad2(value) { return String(value).padStart(2, '0'); }
 
 Page({
+  async netdiskEvidence(e){
+    if(this.data.uploading)return;this.setData({uploading:true});
+    try{await request('POST',`/disputes/${this.data.id}/evidence`,{fileIds:[e.detail.fileId],description:this.data.evidenceDescription});this.setData({evidenceDescription:''});await this.load();}
+    catch(error){wx.showToast({title:error.message||'提交失败',icon:'none'});}finally{this.setData({uploading:false});}
+  },
   data: {
     id: '', myId: '', dispute: null,
     uploading: false, evidenceCountdown: '', evidenceDescription: '', pendingEvidence: [],
@@ -23,9 +28,9 @@ Page({
     if (!q.id) { wx.showToast({ title: '缺少纠纷ID', icon: 'none' }); return; }
     this.setData({ id: q.id, myId: user.id });
   },
-  onShow() { this.load(); },
-  onHide() { this.stopCountdown(); },
-  onUnload() { this.stopCountdown(); },
+  onShow() { this.load(); clearInterval(this._poll); this._poll=setInterval(()=>this.load(),10000); },
+  onHide() { clearInterval(this._poll); this.stopCountdown(); },
+  onUnload() { clearInterval(this._poll); this.stopCountdown(); },
 
   async load() {
     try {

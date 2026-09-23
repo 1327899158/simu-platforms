@@ -9,5 +9,10 @@ async function migrate(query) {
     `CREATE TABLE IF NOT EXISTS enterprise_certifications (userId VARCHAR(32) PRIMARY KEY, companyName VARCHAR(120) NOT NULL, creditCode VARCHAR(18) NOT NULL UNIQUE, evidence JSON NOT NULL, status VARCHAR(20) NOT NULL, result VARCHAR(1000), revision INT NOT NULL DEFAULT 1, submittedAt DATETIME(3) NOT NULL, reviewedAt DATETIME(3))`,
     `CREATE TABLE IF NOT EXISTS enterprise_documents (id VARCHAR(32) PRIMARY KEY, userId VARCHAR(32) NOT NULL, mime VARCHAR(30) NOT NULL, payload MEDIUMTEXT NOT NULL, createdAt DATETIME(3) NOT NULL, INDEX(userId))`,
   ]) await query(sql);
+  const columns = await query('SHOW COLUMNS FROM enterprise_certifications');
+  for (const [name, definition] of [['certificationType',"VARCHAR(20) NOT NULL DEFAULT 'COMPANY'"],['applicationNote','VARCHAR(1000) NULL'],['displayLabel','VARCHAR(40) NULL']]) {
+    if (!columns.some(c => c.Field === name)) await query(`ALTER TABLE enterprise_certifications ADD COLUMN ${name} ${definition}`);
+  }
+  if (columns.some(c => c.Field === 'creditCode' && c.Null === 'NO')) await query('ALTER TABLE enterprise_certifications MODIFY COLUMN creditCode VARCHAR(18) NULL');
 }
 module.exports={migrate};

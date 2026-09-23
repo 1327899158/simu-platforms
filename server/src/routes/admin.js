@@ -368,7 +368,7 @@ function register(router) {
   router.get('/api/admin/files/:id/url', async (req, res, params) => {
     await requireAdmin(req, 'USER_READ');
     const file = await queryOne(
-      `SELECT f.id, f.fileID, f.name, f.mime, f.sizeBytes
+      `SELECT f.id, f.fileID, f.name, f.mime, f.sizeBytes, f.netdiskUrl, f.netdiskPassword
        FROM identity_verification_files ivf
        JOIN uploaded_files f ON f.id = ivf.fileId
        WHERE f.id = ? AND ivf.purpose='SUPPORTING'`, [params.id]

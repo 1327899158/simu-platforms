@@ -22,6 +22,7 @@
 
   <view class="qualification-card">
     <view class="section-head"><view><text class="section-title">补充认证资料</text><text class="section-tip">学历、证书、项目案例等（选填）</text></view><button class="choose-button {{uploading ? 'disabled' : ''}}" disabled="{{uploading}}" bindtap="chooseSupporting">{{uploading ? uploadText : '上传资料'}}</button></view>
+<netdisk-input bind:added="netdiskAdded" disabled="{{uploading || saving || files.length >= 10}}"/>
     <view class="file-row" wx:for="{{files}}" wx:key="fileId"><view class="file-main" data-source="support" data-index="{{index}}" bindtap="openFile"><text class="file-icon">{{item.kind === 'IMAGE' ? '图' : '文'}}</text><view class="file-copy"><text class="file-name">{{item.name}}</text><text class="file-meta">{{item.sizeText}} · 点击查看</text></view></view><button class="remove-button" data-index="{{index}}" bindtap="removeSupporting">删除</button></view>
     <view class="empty" wx:if="{{!loading && !files.length}}">无需上传身份证照片；补充认证资料为选填</view>
   </view>

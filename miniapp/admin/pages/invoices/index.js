@@ -9,6 +9,11 @@ const filters = [
 ];
 
 Page({
+  async netdiskInvoice(e){
+    const id=e.currentTarget.dataset.id;if(this.data.processingId)return;this.setData({processingId:id});
+    try{await request('POST',`/admin/invoices/${id}/files`,{fileIds:[e.detail.fileId]});wx.showToast({title:'已交付'});await this.load();}
+    catch(error){wx.showToast({title:error.message||'交付失败',icon:'none'});}finally{this.setData({processingId:''});}
+  },
   data: { items: [], filters, status: '', loading: true, canProcess: false, processingId: '', downloading: false },
   onShow() { this.load(); },
   onPullDownRefresh() { this.load().finally(() => wx.stopPullDownRefresh()); },

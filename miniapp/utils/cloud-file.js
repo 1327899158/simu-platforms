@@ -122,6 +122,12 @@ function saveTempFile(filePath) {
 }
 
 async function downloadAndOpen(info) {
+  if(info && info.netdiskUrl){
+    const content=info.netdiskUrl+(info.netdiskPassword?'\n提取码：'+info.netdiskPassword:'\n无需提取码');
+    const r=await new Promise(resolve=>wx.showModal({title:'网盘资料',content,confirmText:'复制链接',success:resolve,fail:()=>resolve({})}));
+    if(r.confirm)await new Promise((resolve,reject)=>wx.setClipboardData({data:content,success:resolve,fail:reject}));
+    return {mode:'shared'};
+  }
   const traceId = diagnosticId();
   const fileName = (info && info.name) || '附件';
   console.log('[cloud-file] start', { traceId, fileName });
@@ -217,7 +223,7 @@ async function downloadAndOpen(info) {
 }
 
 function deleteCloudFile(fileID) {
-  if (!fileID || !wx.cloud || typeof wx.cloud.deleteFile !== 'function') return Promise.resolve();
+  if (!fileID || !fileID.startsWith('cloud://') || !wx.cloud || typeof wx.cloud.deleteFile !== 'function') return Promise.resolve();
   return new Promise((resolve, reject) => {
     wx.cloud.deleteFile({
       fileList: [fileID],

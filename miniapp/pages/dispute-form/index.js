@@ -15,6 +15,7 @@ const REASONS = [
 ];
 
 Page({
+  netdiskAdded(e){if(this.data.uploads.length>=5)return;this.setData({uploads:this.data.uploads.concat(e.detail)});},
   data: {
     orderId: '',
     reasons: REASONS,

@@ -17,6 +17,7 @@
  *   POST /api/admin/disputes/:id/refund    退款登记状态更新
  */
 const { refreshForOrder } = require('../services/engineer-level');
+const { ensureConversation, systemMessage, publishConversationDoc, publishSystemMessage } = require('../services/chat-svc');
 const { readJson, ok, err } = require('../lib/http');
 const { v, maskPhone, nowIso, parseDbDate } = require('../lib/util');
 const { query, queryOne, tx } = require('../db');
@@ -282,8 +283,16 @@ function register(router) {
       }
       if (!added) throw err.conflict('所选文件已经提交过');
       await conn.execute(`UPDATE disputes SET updatedAt = ? WHERE id = ?`, [now, d.id]);
-      return { added, evidenceDeadlineAt: evidenceWindow(d).evidenceDeadlineAt };
+      const conv=await ensureConversation(d.orderId,conn);
+      const content=`对方补充了${added}份纠纷证据，请进入订单纠纷详情查看材料和说明。`;
+      const meta={senderId:user.id,actionOrderId:d.orderId};
+      const message=await systemMessage(conv.id,content,conn,meta);
+      return { added, evidenceDeadlineAt: evidenceWindow(d).evidenceDeadlineAt, notification:{conv,content,meta,msgId:message.msgId} };
     });
+    const n=result.notification;
+    if(n.conv._isNew)publishConversationDoc(n.conv);
+    publishSystemMessage(n.conv.id,n.content,n.msgId,n.meta);
+    delete result.notification;
     ok(res, result);
   });
 

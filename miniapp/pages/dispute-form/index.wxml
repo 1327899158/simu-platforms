@@ -38,6 +38,7 @@
         <text class="evid-remove" data-index="{{index}}" bindtap="removeEvidence">✕</text>
       </view>
     </view>
+<netdisk-input bind:added="netdiskAdded" disabled="{{uploading || submitting || uploads.length >= 5}}"/>
     <button class="btn-upload {{uploading ? 'disabled' : ''}}" bindtap="addEvidence" disabled="{{uploading}}">
       {{uploading ? '上传中…' : '＋ 添加证据文件'}}
     </button>

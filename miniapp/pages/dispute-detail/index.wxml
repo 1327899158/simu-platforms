@@ -52,6 +52,7 @@
       <textarea value="{{evidenceDescription}}" bindinput="inputEvidenceDescription" maxlength="1000" disabled="{{uploading}}" placeholder="说明本次材料的内容及证明事项，最多1000字" auto-height/>
       <text class="evid-meta">{{evidenceDescription.length}} / 1000</text>
       <button class="evidence-submit" bindtap="submitEvidence" loading="{{uploading}}" disabled="{{uploading || !pendingEvidence.length}}">{{uploading ? '上传中…' : '上传证据'}}</button>
+      <netdisk-input submit-text="提交网盘证据" bind:added="netdiskEvidence" disabled="{{uploading || dispute.myEvidenceCount >= 20}}"/>
     </view>
 
     <view class="evid-item" wx:for="{{dispute.evidence}}" wx:key="fileId"

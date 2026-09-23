@@ -10,7 +10,7 @@ function sizeText(sizeBytes) {
 }
 
 Page({
-  data: { orderId: '', user: null, invoice: null, invoiceTitle: '', taxNumber: '', email: '', customerNote: '', loading: true, submitting: false, downloadingFileId: '' },
+  data: { invoiceType:'NORMAL',buyerType:'PERSONAL',invoiceFormat:'DIGITAL',address:'',phone:'',bank:'',account:'', orderId: '', user: null, invoice: null, invoiceTitle: '', taxNumber: '', email: '', customerNote: '', loading: true, submitting: false, downloadingFileId: '' },
   onLoad(q) { this.setData({ orderId: q.orderId || '' }); },
   onShow() { const user = ensureLogin(); if (user) { this.setData({ user }); this.load(); } },
   async load() {
@@ -29,6 +29,9 @@ Page({
     } catch (error) { wx.showToast({ title: error.message || '发票信息加载失败', icon: 'none' }); }
     finally { this.setData({ loading: false }); }
   },
+  chooseType(e){const invoiceType=Number(e.detail.value)?'SPECIAL':'NORMAL';this.setData({invoiceType,...(invoiceType==='SPECIAL'?{buyerType:'BUSINESS'}:{})});},
+  chooseBuyer(e){this.setData({buyerType:Number(e.detail.value)?'BUSINESS':'PERSONAL'});},
+  chooseFormat(e){this.setData({invoiceFormat:Number(e.detail.value)?'TRADITIONAL':'DIGITAL'});},
   onField(e) { this.setData({ [e.currentTarget.dataset.field]: e.detail.value }); },
   async submit() {
     if (this.data.submitting || this.data.invoice) return;
@@ -37,7 +40,7 @@ Page({
     if (invoiceTitle.trim().length < 2) return wx.showToast({ title: '请填写发票抬头', icon: 'none' });
     this.setData({ submitting: true });
     try {
-      await request('POST', `/orders/${this.data.orderId}/invoice-request`, { invoiceTitle: invoiceTitle.trim(), taxNumber: taxNumber.trim(), email: email.trim(), customerNote: customerNote.trim() });
+      await request('POST', `/orders/${this.data.orderId}/invoice-request`, { invoiceType:this.data.invoiceType,buyerType:this.data.buyerType,invoiceFormat:this.data.invoiceFormat,address:this.data.address,phone:this.data.phone,bank:this.data.bank,account:this.data.account,invoiceTitle: invoiceTitle.trim(), taxNumber: taxNumber.trim(), email: email.trim(), customerNote: customerNote.trim() });
       wx.showToast({ title: '申请已提交', icon: 'success' }); this.load();
     } catch (error) { wx.showToast({ title: error.message || '提交失败', icon: 'none' }); }
     finally { this.setData({ submitting: false }); }

@@ -1,5 +1,5 @@
+<view class="chat-container" style="bottom:{{keyboardHeight}}px">
 <announcement-banner/>
-<view class="chat-container">
 
   <!-- 顶部导航 -->
   <view class="chat-header">
@@ -8,7 +8,7 @@
   </view>
 
   <!-- 消息列表 -->
-  <scroll-view class="message-list" scroll-y scroll-top="{{scrollTop}}" scroll-with-animation>
+  <scroll-view class="message-list" scroll-y scroll-top="{{scrollTop}}" scroll-into-view="{{scrollAnchor}}" bindscrolltoupper="loadOlder">
     <view wx:for="{{msgs}}" wx:key="id" id="{{item.anchor}}">
       <!-- 系统消息 -->
       <view class="sys-msg {{item.actionOrderId || item.actionCooperation ? 'sys-msg-action' : ''}}" wx:if="{{item.sys}}"
@@ -52,7 +52,7 @@
     <view class="empty-message" wx:if="{{!msgs.length}}">
       <text>暂无消息，开始聊天吧</text>
     </view>
-    <view style="height:24rpx"></view>
+    <view id="chat-bottom" style="height:24rpx"></view>
   </scroll-view>
 
   <!-- 底部输入 -->
@@ -60,8 +60,9 @@
     <view class="img-btn {{imageSending ? 'disabled' : ''}}" bindtap="sendImage">
       <ui-symbol value="{{imageSending ? '…' : '🖼️'}}"/>
     </view>
+    <view class="img-btn" bindtap="sendFile">文件</view>
     <input class="chat-input" placeholder="输入消息..." value="{{text}}" bindinput="input" maxlength="2000"
-      confirm-type="send" bindconfirm="send" adjust-position />
+      confirm-type="send" bindconfirm="send" adjust-position="{{false}}" bindkeyboardheightchange="keyboardChange" />
     <button class="send-btn {{sending ? 'dim' : ''}}" bindtap="send" disabled="{{!text}}">发送</button>
   </view>
   <view class="chat-disabled-tip" wx:else>

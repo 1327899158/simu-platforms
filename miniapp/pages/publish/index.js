@@ -52,6 +52,7 @@ function mediaFile(file, index) {
 }
 
 Page({
+  netdiskAdded(e){if(this.data.files.length>=this.data.maxAttachments)return;this.setData({files:this.data.files.concat(e.detail)});},
   data: {
     step: 1,
     dicts: { softwares: [], directions: [], deliveryOptions: [] },

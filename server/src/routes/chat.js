@@ -172,10 +172,13 @@ function register(router) {
     const sendAccess = await conversationSendAccess(c);
     const after = query_.get('after') ? v.int(query_.get('after'), 'after', { min: 0, max: 2147483647 }) : 0;
     const limit = query_.get('limit') ? v.int(query_.get('limit'), 'limit', { min: 1, max: 100 }) : 50;
+    const before = query_.get('before') ? v.int(query_.get('before'), 'before', { min: 1, max: Number.MAX_SAFE_INTEGER }) : 0;
+    const latest = query_.get('latest') === '1';
+    const reverse = !!before || latest;
     const rows = await query(
-      `SELECT m.* FROM messages m
-       WHERE m.convId = ? AND m.id > ? ORDER BY m.id LIMIT ${limit}`,
-      [c.id, after]);
+      `SELECT m.* FROM messages m WHERE m.convId = ? ${before ? 'AND m.id < ?' : latest ? '' : 'AND m.id > ?'} ORDER BY m.id ${reverse ? 'DESC' : 'ASC'} LIMIT ${limit}`,
+      before ? [c.id,before] : latest ? [c.id] : [c.id,after]);
+    if(reverse) rows.reverse();
 
     // 置已读
     await query(
@@ -240,6 +243,7 @@ function register(router) {
       fileId = v.str(b.fileId, 'fileId', { min: 1 });
       const f = await queryOne(`SELECT * FROM uploaded_files WHERE id = ? AND uploaderId = ?`, [fileId, user.id]);
       if (!f) throw err.bad('文件不存在或不属于你');
+      if (type === 'FILE' && (!Number(f.sizeBytes) || Number(f.sizeBytes) > 1024 * 1024)) throw err.bad('聊天文件大小必须在1MB以内');
       if (f.orderId && f.orderId !== c.orderId) throw err.forbidden('不能发送其他订单的文件');
       attachedFile = f;
       content = f.name;

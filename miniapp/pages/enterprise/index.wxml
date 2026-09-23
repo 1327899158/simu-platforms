@@ -1,13 +1,15 @@
 <announcement-banner/>
 <view class="community">
- <view class="hero"><image class="enterprise-art" src="/assets/identity.png" mode="aspectFit"/><view class="title">企业认证</view><view class="muted">提交企业资质，审核后展示认证标识</view></view>
- <view class="notice">请提供真实营业执照及相关资质，确保名称、信用代码清晰可读。材料仅本人和授权管理员可查看。企业认证不替代个人实名认证，也不自动开通开票或提现。</view>
+ <view class="hero"><image class="enterprise-art" src="/assets/identity.png" mode="aspectFit"/><view class="title">企业/机构认证</view><view class="muted">提交企业、机构或毕业院校相关信息，经管理员审核后展示相应标签</view></view>
+ <view class="notice">可上传企业、机构、毕业院校的相关信息和证明材料，如营业执照、任职或授权证明、毕业证书等。管理员审核后决定个人信息中展示的标签，申请人不能自行指定。材料仅本人和授权管理员可查看，本认证不替代个人实名认证。</view>
  <view class="error" wx:if="{{error}}" bindtap="load">{{error}} · 点击重试</view>
- <view class="card" wx:if="{{record}}"><view class="enterprise-status">{{record.statusText}}</view><view class="muted" wx:if="{{record.result}}">审核意见：{{record.result}}</view></view>
+ <view class="card" wx:if="{{record}}"><view class="enterprise-status">{{record.statusText}}</view><view wx:if="{{record.status==='APPROVED'}}">展示标签：{{record.displayLabel || '企业已认证'}}</view><view class="muted" wx:if="{{record.result}}">审核意见：{{record.result}}</view></view>
  <view class="card" wx:if="{{ready}}">
-  <view>企业名称</view><input value="{{companyName}}" placeholder="与营业执照一致" maxlength="120" disabled="{{!editable || busy}}" data-key="companyName" bindinput="input"/>
-  <view>统一社会信用代码</view><input value="{{creditCode}}" placeholder="18位统一社会信用代码" maxlength="18" disabled="{{!editable || busy}}" data-key="creditCode" bindinput="input"/>
-  <view>营业执照及相关资质（1—5张）</view>
+  <picker range="{{types}}" value="{{certificationType==='COMPANY'?0:certificationType==='INSTITUTION'?1:2}}" bindchange="chooseType" disabled="{{!editable || busy || uploading}}"><view>认证类型：{{certificationType==='COMPANY'?'企业':certificationType==='INSTITUTION'?'机构':'毕业院校'}} ›</view></picker>
+  <view>企业、机构或毕业院校名称</view><input value="{{companyName}}" placeholder="请填写与证明材料一致的完整名称" maxlength="120" disabled="{{!editable || busy}}" data-key="companyName" bindinput="input"/>
+  <view wx:if="{{certificationType!=='SCHOOL'}}"><view>统一社会信用代码（{{certificationType==='COMPANY'?'必填':'选填'}}）</view><input value="{{creditCode}}" placeholder="18位统一社会信用代码" maxlength="18" disabled="{{!editable || busy}}" data-key="creditCode" bindinput="input"/></view>
+  <view>相关信息（选填）</view><textarea value="{{applicationNote}}" data-key="applicationNote" bindinput="input" maxlength="1000" disabled="{{!editable || busy}}" placeholder="可补充与企业/机构的关系、毕业院校及专业等信息，供管理员审核"/>
+  <view>相关证明材料（1—5张）</view>
   <view class="document" wx:for="{{evidence}}" wx:key="*this"><text data-id="{{item}}" bindtap="preview">查看资质图片 {{index+1}} ›</text><button wx:if="{{editable}}" data-id="{{item}}" bindtap="remove" disabled="{{busy || uploading}}">移除</button></view>
   <button wx:if="{{editable && evidence.length<5}}" bindtap="add" loading="{{uploading}}" disabled="{{uploading || busy}}">上传资质图片（已上传 {{evidence.length}}/5 张）</button>
   <button class="primary" wx:if="{{editable}}" bindtap="submit" loading="{{busy}}" disabled="{{busy || uploading}}">提交审核</button>

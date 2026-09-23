@@ -3,7 +3,7 @@
   <view class="hero"><text class="hero-title">{{user.role === 'CUSTOMER' ? '申请发票' : '发票申请详情'}}</text><text class="hero-desc">真实开票由工程师或平台后续处理；本页不涉及支付和开票接口。</text></view>
   <view class="card" wx:if="{{invoice}}">
     <text class="status">{{invoice.statusText}}</text><text class="title">{{invoice.invoiceTitle}}</text>
-    <text class="item" wx:if="{{invoice.taxNumber}}">税号：{{invoice.taxNumber}}</text><text class="item" wx:if="{{invoice.email}}">邮箱：{{invoice.email}}</text>
+    <view wx:if="{{invoice.invoiceDetails}}"><view>{{invoice.invoiceDetails.type==='SPECIAL'?'增值税专用发票':'增值税普通发票'}} · {{invoice.invoiceDetails.format==='TRADITIONAL'?'传统发票':'数电发票'}}</view><view wx:if="{{invoice.invoiceDetails.address}}">地址：{{invoice.invoiceDetails.address}}</view><view wx:if="{{invoice.invoiceDetails.phone}}">电话：{{invoice.invoiceDetails.phone}}</view><view wx:if="{{invoice.invoiceDetails.bank}}">开户行：{{invoice.invoiceDetails.bank}}</view><view wx:if="{{invoice.invoiceDetails.account}}">账号：{{invoice.invoiceDetails.account}}</view></view><text class="item" wx:if="{{invoice.taxNumber}}">税号：{{invoice.taxNumber}}</text><text class="item" wx:if="{{invoice.email}}">邮箱：{{invoice.email}}</text>
     <text class="item" wx:if="{{invoice.customerNote}}">客户备注：{{invoice.customerNote}}</text><text class="item" wx:if="{{invoice.engineerNote}}">工程师说明：{{invoice.engineerNote}}</text>
     <view class="invoice-files" wx:if="{{invoice.files.length}}">
       <text class="files-title">电子发票文件</text>
@@ -16,8 +16,17 @@
     <button wx:if="{{user.role === 'ENGINEER'}}" class="primary" bindtap="goInvoices">前往发票处理</button>
   </view>
   <view class="card" wx:elif="{{user.role === 'CUSTOMER'}}">
+    <picker range="{{['增值税普通发票','增值税专用发票']}}" bindchange="chooseType"><view class="input">{{invoiceType==='SPECIAL'?'增值税专用发票':'增值税普通发票'}} ›</view></picker>
+    <picker wx:if="{{invoiceType==='NORMAL'}}" range="{{['个人','单位']}}" bindchange="chooseBuyer"><view class="input">抬头类型：{{buyerType==='BUSINESS'?'单位':'个人'}} ›</view></picker>
+    <picker range="{{['数电发票','传统发票']}}" bindchange="chooseFormat"><view class="input">{{invoiceFormat==='DIGITAL'?'数电发票':'传统发票'}} ›</view></picker>
+    <view wx:if="{{invoiceType==='SPECIAL'}}"><view>专票仅支持单位抬头。传统专票需补全地址、电话及银行信息；数电票这些信息选填。</view>
+      <input class="input" value="{{address}}" data-field="address" bindinput="onField" placeholder="注册地址" maxlength="200"/>
+      <input class="input" value="{{phone}}" data-field="phone" bindinput="onField" placeholder="注册电话" maxlength="40"/>
+      <input class="input" value="{{bank}}" data-field="bank" bindinput="onField" placeholder="开户银行" maxlength="120"/>
+      <input class="input" value="{{account}}" data-field="account" bindinput="onField" placeholder="银行账号" maxlength="50"/>
+    </view>
     <text class="label">发票抬头（必填）</text><input class="input" data-field="invoiceTitle" bindinput="onField" maxlength="120" placeholder="个人姓名或单位名称" />
-    <text class="label">纳税人识别号（选填）</text><input class="input" data-field="taxNumber" bindinput="onField" maxlength="50" placeholder="单位开票时填写" />
+    <text class="label">纳税人识别号（{{buyerType==='BUSINESS'?'必填':'选填'}}）</text><input class="input" data-field="taxNumber" bindinput="onField" maxlength="50" placeholder="单位开票时填写" />
     <text class="label">接收邮箱（选填）</text><input class="input" data-field="email" bindinput="onField" maxlength="120" placeholder="电子发票接收邮箱" />
     <text class="label">备注（选填）</text><textarea class="textarea" data-field="customerNote" bindinput="onField" maxlength="500" placeholder="开票要求或其他说明" />
     <button class="primary" loading="{{submitting}}" disabled="{{submitting}}" bindtap="submit">提交发票申请</button>

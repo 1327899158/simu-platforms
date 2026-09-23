@@ -114,6 +114,7 @@
   "sitemapLocation": "sitemap.json",
   "lazyCodeLoading": "requiredComponents",
   "usingComponents": {
+    "netdisk-input": "/components/netdisk-input/index",
     "ui-symbol": "/components/ui-symbol/index",
     "case-gallery": "/components/case-gallery/index",
     "signin-float": "/components/signin-float/index",

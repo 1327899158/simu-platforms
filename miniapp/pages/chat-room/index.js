@@ -38,8 +38,8 @@ Page({
   data: {
     convId: '', myId: '', myOpenid: '', myAvatar: '', role: '',
     msgs: [], text: '', lastId: 0,
-    scrollTop: 0, _tick: 0,
-    sending: false, imageSending: false,
+    scrollTop: 0, _tick: 0, keyboardHeight: 0, scrollAnchor: '', olderLoading: false, hasOlder: true,
+    sending: false, imageSending: false, fileSending: false,
     avatarSize: 48, bubbleMaxWidth: '70%', imageWidth: 360,
     peer: null,
     canSend: true, sendDisabledReason: '',
@@ -81,9 +81,11 @@ Page({
   },
 
   async onShow() {
+    this._active = true;
     this._shouldScrollBottom = true;
     // 先拉历史消息
     await this.pullHistory();
+    if (!this._active) return;
     // 启动 db.watch（主链路）
     this._startWatch();
     // 启动轮询兜底（db.watch 失败时保底）
@@ -91,11 +93,14 @@ Page({
   },
 
   onHide() {
+    this._active = false;
+    this.setData({keyboardHeight:0});
     this._stopWatch();
     this._stopPoll();
     getApp().fetchUnread && getApp().fetchUnread();
   },
   onUnload() {
+    this._active = false;
     this._stopWatch();
     this._stopPoll();
     this._pullQueued = false;
@@ -143,7 +148,7 @@ Page({
   },
 
   // ---- 消息拉取 ----
-  /** 首次拉取历史消息（after=0） */
+  /** 首次展示最新一页，上拉再加载更早消息。 */
   async pullHistory() {
     if (!this.data.convId) return;
     if (this._pullInFlight) {
@@ -154,7 +159,7 @@ Page({
     try {
       const data = await withTimeout(
         request('GET', `/conversations/${this.data.convId}/messages`,
-          { after: 0, limit: 100 }, { silent: true }),
+          { latest: 1, limit: 100 }, { silent: true }),
         PULL_TIMEOUT_MS,
       );
       if (!data) return;
@@ -163,7 +168,7 @@ Page({
       const mapped = this._mapMsgs(data.items || []);
       this._seenIds = new Set(mapped.map((m) => m.id));
       this.setData({
-        msgs: mapped,
+        msgs: mapped, hasOlder: mapped.length === 100,
         lastId: data.lastId,
         canSend: data.canSend !== false,
         sendDisabledReason: data.sendDisabledReason || '',
@@ -244,9 +249,33 @@ Page({
     }));
   },
 
+  keyboardChange(e) { this.setData({ keyboardHeight: Math.max(0, Number(e.detail.height)||0) }); this._scrollBottom(); },
+  async loadOlder() {
+    if(this.data.olderLoading || !this.data.hasOlder || !this.data.msgs.length)return;
+    this.setData({olderLoading:true});
+    const anchor=this.data.msgs[0].anchor;
+    try {
+      const r=await request('GET',`/conversations/${this.data.convId}/messages`,{before:this.data.msgs[0].id,limit:100},{silent:true});
+      const added=this._mapMsgs(r.items).filter(m=>!this._seenIds.has(m.id));added.forEach(m=>this._seenIds.add(m.id));
+      this.setData({msgs:added.concat(this.data.msgs),hasOlder:r.items.length===100,scrollAnchor:anchor});
+    } catch(e){wx.showToast({title:e.message||'历史消息加载失败',icon:'none'});}finally{this.setData({olderLoading:false});}
+  },
+  async sendFile() {
+    if(!this.data.canSend || this.data.fileSending)return;
+    this.setData({fileSending:true});
+    try {
+      const r=await new Promise((resolve,reject)=>wx.chooseMessageFile({count:1,type:'file',success:resolve,fail:reject}));
+      const f=r.tempFiles[0];
+      if(!f.size || f.size>1024*1024)throw Error('聊天文件不能超过1MB，请通过订单资料提交较大文件');
+      const up=await upload(f.path,{kind:'DOC',name:f.name});
+      const sent=await request('POST',`/conversations/${this.data.convId}/messages`,{type:'FILE',fileId:up.id});
+      this._appendSentMessage(sent);
+    }catch(e){if(!String(e.errMsg||'').includes('cancel'))wx.showToast({title:e.message||'文件发送失败',icon:'none'});}
+    finally{this.setData({fileSending:false});}
+  },
   _scrollBottom() {
     this.setData({ _tick: this.data._tick + 1 }, () => {
-      this.setData({ scrollTop: 99999 + this.data._tick });
+      this.setData({ scrollAnchor: '' },()=>this.setData({ scrollAnchor: 'chat-bottom', scrollTop: 99999 + this.data._tick }));
     });
   },
 

@@ -2,6 +2,7 @@
 const { getStorage } = require('../tcb');
 // 仅在调用方完成管理权限和文件业务权限校验后使用。
 async function adminFileUrl(file) {
+  if(file.netdiskUrl)return require('./netdisk').linkView(file);
   try {
     const result = await getStorage().getTempFileURL({ fileList: [{ fileID: file.fileID, maxAge: 300 }] });
     const url = result.fileList?.[0]?.tempFileURL;

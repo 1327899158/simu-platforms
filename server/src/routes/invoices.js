@@ -33,6 +33,7 @@ function invoiceView(row, extra = {}) {
   if (!row) return null;
   return {
     ...row,
+    invoiceDetails: typeof row.invoiceDetails === 'string' ? JSON.parse(row.invoiceDetails) : row.invoiceDetails || null,
     platformFeeFen: row.platformFeeFen == null ? null : Number(row.platformFeeFen),
     statusText: STATUS_TEXT[row.status] || row.status,
     ...extra,
@@ -109,6 +110,7 @@ function register(router) {
     const body = await readJson(req);
     const invoiceTitle = v.str(body.invoiceTitle, '发票抬头', { min: 2, max: 120 });
     const taxNumber = optionalString(body, 'taxNumber', '纳税人识别号', 50);
+    const details=require('../services/invoice-details').invoiceDetails(body,taxNumber);
     const email = optionalString(body, 'email', '接收邮箱', 120);
     const customerNote = optionalString(body, 'customerNote', '备注', 500);
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw err.bad('接收邮箱格式不正确');
@@ -131,7 +133,8 @@ function register(router) {
         ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, 'REQUESTED', ?, ?, ?)`,
         [id, params.id, customer.id, order.engineerId, invoiceTitle, taxNumber, email, customerNote, now, now, now]
       );
-      return { id, orderId: params.id, status: 'REQUESTED', invoiceTitle, requestedAt: now };
+      await conn.execute('UPDATE invoice_requests SET invoiceDetails=? WHERE id=?',[JSON.stringify(details),id]);
+      return { id, orderId: params.id, status: 'REQUESTED', invoiceTitle, invoiceDetails:details, requestedAt: now };
     });
     systemMessageForOrder(params.id, '客户提交了发票申请，请在“我的 - 发票处理”中选择处理方式。', { senderId: customer.id, actionOrderId: params.id }).catch(() => {});
     ok(res, invoiceView(result, { files: [] }));
@@ -156,7 +159,7 @@ function register(router) {
     const rows = await query(
       `SELECT o.id AS orderId, o.orderNo, o.projectName, o.finalAmountFen, o.completedAt,
               ir.id, ir.invoiceTitle, ir.taxNumber, ir.email, ir.status, ir.requestedAt,
-              ir.handledAt, ir.updatedAt
+              ir.handledAt, ir.updatedAt, ir.invoiceDetails
          ${from}${filters[filter]}
         ORDER BY o.completedAt DESC,o.id DESC LIMIT ${limit} OFFSET ${offset}`, [customer.id]);
     const items = await invoiceViewsWithFiles(rows.map(row => ({
@@ -181,6 +184,7 @@ function register(router) {
     const taxNumber = optionalString(body, 'taxNumber', '纳税人识别号', 50);
     const email = optionalString(body, 'email', '接收邮箱', 120);
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw err.bad('接收邮箱格式不正确');
+    const details=require('../services/invoice-details').invoiceDetails(body,taxNumber);
     const created = await tx(async conn => {
       const [orders] = await conn.execute(
         `SELECT o.id, q.engineerId FROM orders o LEFT JOIN quotes q ON q.id=o.selectedQuoteId
@@ -192,8 +196,8 @@ function register(router) {
       if (existing.length) throw err.conflict('部分订单已提交发票申请，请刷新后重试');
       const now = nowIso();
       for (const order of orders) await conn.execute(
-        `INSERT INTO invoice_requests(id,orderId,customerId,engineerId,invoiceTitle,taxNumber,email,status,requestedAt,createdAt,updatedAt) VALUES(?,?,?,?,?,?,?,'REQUESTED',?,?,?)`,
-        [newId(), order.id, customer.id, order.engineerId, invoiceTitle, taxNumber, email, now, now, now]
+        `INSERT INTO invoice_requests(id,orderId,customerId,engineerId,invoiceTitle,taxNumber,email,invoiceDetails,status,requestedAt,createdAt,updatedAt) VALUES(?,?,?,?,?,?,?,?,'REQUESTED',?,?,?)`,
+        [newId(), order.id, customer.id, order.engineerId, invoiceTitle, taxNumber, email, JSON.stringify(details), now, now, now]
       );
       return orderIds.length;
     });
@@ -273,7 +277,7 @@ function register(router) {
       }
 
       const [files] = await conn.execute(
-        `SELECT f.id AS fileId, f.uploaderId, f.orderId, f.name, f.kind, f.mime, f.sizeBytes,
+        `SELECT f.id AS fileId, f.uploaderId, f.orderId, f.name, f.kind, f.mime, f.sizeBytes, f.netdiskUrl,
                 EXISTS(SELECT 1 FROM identity_verification_files ivf WHERE ivf.fileId=f.id) AS usedForIdentity,
                 EXISTS(SELECT 1 FROM engineer_verification_files evf WHERE evf.fileId=f.id) AS usedForVerification,
                 EXISTS(SELECT 1 FROM dispute_evidence de WHERE de.fileId=f.id) AS usedForDispute,
@@ -293,7 +297,7 @@ function register(router) {
           throw err.conflict('文件已用于其他业务，请重新上传');
         }
         if (!['IMAGE', 'DOC'].includes(file.kind)
-          || !ALLOWED_INVOICE_EXTENSIONS.has(invoiceFileExtension(file.name))) {
+          || (!file.netdiskUrl && !ALLOWED_INVOICE_EXTENSIONS.has(invoiceFileExtension(file.name)))) {
           throw err.bad('发票文件仅支持图片、PDF、Word 格式');
         }
       }

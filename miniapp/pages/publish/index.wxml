@@ -173,6 +173,7 @@ module.exports = {
 
     <view class="form-group">
       <view class="ui-icon-copy form-label"><ui-symbol value="📦"/> 需求附件 <text class="form-hint">（每次最多选3个，已上传 {{files.length}}/{{maxAttachments}}）</text></view>
+<netdisk-input bind:added="netdiskAdded" disabled="{{uploading || files.length >= maxAttachments}}"/>
       <view class="upload-area {{uploading ? 'disabled' : ''}}" bindtap="chooseFile"
         aria-role="button" aria-label="选择并上传需求附件">
         <view class="ui-icon-copy upload-icon"><ui-symbol value="📦"/></view>

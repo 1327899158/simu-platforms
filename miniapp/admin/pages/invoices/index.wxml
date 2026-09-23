@@ -7,8 +7,9 @@
     <text class="admin-card-subtitle">订单：{{item.orderNo}} · {{item.projectName}}</text>
     <view class="admin-divider"></view>
     <text class="admin-muted">客户：{{item.customerName}}　工程师：{{item.engineerName}}</text>
-    <text class="admin-small" wx:if="{{item.taxNumber}}">税号：{{item.taxNumber}}</text><text class="admin-small" wx:if="{{item.email}}">邮箱：{{item.email}}</text>
+    <view wx:if="{{item.invoiceDetails}}"><view>{{item.invoiceDetails.type==='SPECIAL'?'增值税专用发票':'增值税普通发票'}} · {{item.invoiceDetails.format==='TRADITIONAL'?'传统发票':'数电发票'}}</view><view wx:if="{{item.invoiceDetails.address}}">地址：{{item.invoiceDetails.address}}</view><view wx:if="{{item.invoiceDetails.phone}}">电话：{{item.invoiceDetails.phone}}</view><view wx:if="{{item.invoiceDetails.bank}}">开户行：{{item.invoiceDetails.bank}}</view><view wx:if="{{item.invoiceDetails.account}}">账号：{{item.invoiceDetails.account}}</view></view><text class="admin-small" wx:if="{{item.taxNumber}}">税号：{{item.taxNumber}}</text><text class="admin-small" wx:if="{{item.email}}">邮箱：{{item.email}}</text>
     <text class="admin-small" wx:if="{{item.customerNote}}">客户备注：{{item.customerNote}}</text><text class="admin-small" wx:if="{{item.engineerNote}}">工程师说明：{{item.engineerNote}}</text>
+    <netdisk-input wx:if="{{canProcess && item.status === 'PLATFORM_REQUESTED'}}" data-id="{{item.id}}" submit-text="提交网盘发票" bind:added="netdiskInvoice" disabled="{{!!processingId}}"/>
     <button wx:if="{{canProcess && item.status === 'PLATFORM_REQUESTED'}}" data-id="{{item.id}}" bindtap="deliverInvoice" loading="{{processingId === item.id}}" disabled="{{!!processingId}}">上传并交付平台发票</button>
     <view wx:for="{{item.files}}" wx:for-item="file" wx:key="fileId" data-id="{{file.fileId}}" bindtap="openFile" class="admin-small"><ui-symbol value="📎"/> {{file.name}} · 查看/下载</view>
   </view>

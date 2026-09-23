@@ -25,10 +25,12 @@ function withFileDisplay(item) {
 }
 
 Page({
+  netdiskAdded(e){if(this.data.invoiceUploads.length>=5)return;this.setData({invoiceUploads:this.data.invoiceUploads.concat(e.detail)});},
   data: {
     items: [], displayItems: [], tabs: [{key:'ALL',label:'全部'},{key:'PENDING',label:'待开票'},{key:'PROCESSING',label:'开票中'},{key:'ISSUED',label:'已开票'}], loading: true, processingId: '', role: '', filter: 'ALL',
     page: 0, hasMore: false, batchCandidates: [], batchIds: [],
     billableCount: 0, billableAmountYuan: '0.00',
+    invoiceType:'NORMAL',buyerType:'PERSONAL',invoiceFormat:'DIGITAL',address:'',phone:'',bank:'',account:'',
     batchOpen: false, batchTitle: '', batchTaxNumber: '', batchEmail: '', batchSubmitting: false,
     uploadOpen: false, uploadInvoiceId: '', invoiceUploads: [],
     uploading: false, submittingFiles: false, downloadingFileId: '',
@@ -78,10 +80,14 @@ Page({
     if (!await this.load()) return;
     const batchCandidates = this.data.items.filter(item => item.status === 'PENDING').map(item => ({ ...item, checked: true }));
     if (!batchCandidates.length) return wx.showToast({ title: '暂无待开票订单', icon: 'none' });
-    this.setData({ batchOpen: true, batchCandidates, batchIds: batchCandidates.map(item => item.orderId), batchTitle: '', batchTaxNumber: '', batchEmail: '' });
+    this.setData({ batchOpen: true, batchCandidates, batchIds: batchCandidates.map(item => item.orderId), batchTitle: '', batchTaxNumber: '', batchEmail: '', invoiceType:'NORMAL',buyerType:'PERSONAL',invoiceFormat:'DIGITAL',address:'',phone:'',bank:'',account:'' });
   },
   batchSelection(e) { this.setData({ batchIds: e.detail.value || [] }); },
   closeBatch() { if (!this.data.batchSubmitting) this.setData({ batchOpen: false }); },
+  chooseType(e){const invoiceType=Number(e.detail.value)?'SPECIAL':'NORMAL';this.setData({invoiceType,...(invoiceType==='SPECIAL'?{buyerType:'BUSINESS'}:{})});},
+  chooseBuyer(e){this.setData({buyerType:Number(e.detail.value)?'BUSINESS':'PERSONAL'});},
+  chooseFormat(e){this.setData({invoiceFormat:Number(e.detail.value)?'TRADITIONAL':'DIGITAL'});},
+  onField(e) { this.setData({ [e.currentTarget.dataset.field]: e.detail.value }); },
   batchField(e) { this.setData({ ['batch' + e.currentTarget.dataset.key]: e.detail.value }); },
   async submitBatch() {
     if (this.data.batchSubmitting) return;
@@ -91,7 +97,7 @@ Page({
     if (this.data.batchTitle.trim().length < 2) return wx.showToast({ title: '请填写发票抬头', icon: 'none' });
     this.setData({ batchSubmitting: true });
     try {
-      await request('POST', '/invoices/customer/batch', { orderIds: ids, invoiceTitle: this.data.batchTitle.trim(), taxNumber: this.data.batchTaxNumber.trim(), email: this.data.batchEmail.trim() });
+      await request('POST', '/invoices/customer/batch', { orderIds: ids,invoiceType:this.data.invoiceType,buyerType:this.data.buyerType,invoiceFormat:this.data.invoiceFormat,address:this.data.address,phone:this.data.phone,bank:this.data.bank,account:this.data.account, invoiceTitle: this.data.batchTitle.trim(), taxNumber: this.data.batchTaxNumber.trim(), email: this.data.batchEmail.trim() });
       this.setData({ batchOpen: false }); wx.showToast({ title: `已提交 ${ids.length} 笔申请`, icon: 'success' }); await this.load();
     } catch (e) { wx.showToast({ title: e.message || '批量申请失败', icon: 'none' }); }
     finally { this.setData({ batchSubmitting: false }); }

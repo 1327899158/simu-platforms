@@ -44,7 +44,7 @@ Page({
     invoiceNeedsAction: false,
     respondingRefund: false,
     refundFormOpen: false,
-    refundReason: '',
+    refundReason: '', refundCategory: '', refundReasons: ['未按约定交付','交付成果不符合需求','工程师无法继续服务','双方协商退款','其他'],
     refundUploads: [],
     refundUploading: false,
     refundSubmitting: false,
@@ -338,11 +338,12 @@ Page({
     });
   },
 
+  chooseRefundReason(e){const category=this.data.refundReasons[Number(e.detail.value)];this.setData({refundCategory:category,refundReason:category==='其他'?'':category});},
   requestRefund() {
     const o = this.data.order;
-    if (!o || this.data.refundRequest) return;
+    if (!o || (this.data.refundRequest && (this.data.refundRequest.status!=='REJECTED' || this.data.refundRequest.remainingAttempts<=0))) return;
     this.setData({
-      refundFormOpen: true,
+      refundFormOpen: true, refundCategory: '',
       refundReason: '',
       refundUploads: [],
     });
@@ -354,7 +355,7 @@ Page({
     if(this.data.role!=='CUSTOMER'||this.data.order?.status!=='IN_PROGRESS')return wx.showToast({title:'订单状态已变化，请查看处理记录',icon:'none'});
     const r=await new Promise(resolve=>wx.showActionSheet({itemList:['申请退款','申请纠纷协调'],success:resolve,fail:()=>resolve(null)}));
     if(!r)return;if(r.tapIndex===1)return this.goDisputeForm();
-    this.requestRefund();this.setData({refundReason:'订单已逾期未交付，申请退款。'});
+    this.requestRefund();this.setData({refundCategory:'未按约定交付',refundReason:'订单已逾期未交付，申请退款。'});
     wx.pageScrollTo({selector:'.refund-form-card',duration:250});
   },
 
@@ -463,6 +464,7 @@ Page({
 
   async submitRefundRequest() {
     if (this.data.refundUploading || this.data.refundSubmitting) return;
+    if(!this.data.refundCategory)return wx.showToast({title:'请选择退款理由',icon:'none'});
     const reason = String(this.data.refundReason || '').trim();
     if (!reason) {
       wx.showToast({ title: '请填写退款理由', icon: 'none' });
@@ -481,7 +483,7 @@ Page({
     this.setData({ refundSubmitting: true });
     try {
       await request('POST', `/orders/${this.data.id}/refund-request`, {
-        reason,
+        reason, reasonType:this.data.refundCategory,
         fileIds: this.data.refundUploads.map((file) => file.fileId),
       });
       this.setData({ refundFormOpen: false, refundReason: '', refundUploads: [] });
@@ -501,6 +503,14 @@ Page({
     if (!o.budgetFlexible && o.budgetFen) url += `&fixedFen=${o.budgetFen}`;
     if (o.myQuote) url += `&amountFen=${o.myQuote.amountFen}&days=${o.myQuote.days}&solution=${encodeURIComponent(o.myQuote.solution)}`;
     wx.navigateTo({ url });
+  },
+  netdiskRefund(e){if(this.data.refundUploads.length>=5)return;this.setData({refundUploads:this.data.refundUploads.concat(e.detail)});},
+  async netdiskDeliver(e){
+    if(this.data.delivering)return;
+    this.setData({delivering:true});
+    try{await request('POST',`/orders/${this.data.id}/deliver`,{fileIds:[e.detail.fileId],note:'成果已通过网盘交付，请及时查收并确认链接有效'});wx.showToast({title:'已交付'});await this.load();}
+    catch(error){wx.showModal({title:'交付未完成',content:error.message||'请重试',showCancel:false});}
+    finally{this.setData({delivering:false});}
   },
   async deliver() {
     if (this.data.delivering) return;

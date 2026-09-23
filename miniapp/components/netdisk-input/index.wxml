@@ -1,0 +1,7 @@
+<view class="netdisk-box">
+ <view>或添加网盘资料</view>
+ <input value="{{url}}" bindinput="inputUrl" maxlength="1500" placeholder="网盘分享链接（https://…）" disabled="{{busy || disabled}}"/>
+ <input value="{{password}}" bindinput="inputPassword" maxlength="100" placeholder="提取码 / 访问密码（无密码可留空）" disabled="{{busy || disabled}}"/>
+ <view class="hint">请确认链接可访问并填写正确提取码，资料需在交付、验收及售后期间保持有效。不要填写网盘账号的登录密码。</view>
+ <button bindtap="add" loading="{{busy}}" disabled="{{busy || disabled || !url}}">{{submitText}}</button>
+</view>
