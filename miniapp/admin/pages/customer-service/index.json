@@ -1,1 +1,9 @@
-{"navigationBarTitleText":"客服工作台","usingComponents":{"service-desk":"/components/service-desk/index"}}
+{
+  "navigationBarTitleText": "客服工作台",
+  "usingComponents": {
+    "service-desk": "/components/service-desk/index"
+  },
+  "navigationBarBackgroundColor": "#F4F5F9",
+  "backgroundColor": "#F4F5F9",
+  "navigationBarTextStyle": "black"
+}

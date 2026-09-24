@@ -1,0 +1,18 @@
+/* Visual tokens from the supplied mobile admin prototype. Imported last. */
+page {background:#F4F5F9;color:#171B2E;--primary:#33469C;--color-primary:#33469C;--bg-page:#F4F5F9;--grad-hero-sky:linear-gradient(135deg,#33469C,#232F73);}
+.admin-page {background:#F4F5F9;}
+.admin-page .admin-hero {background:linear-gradient(135deg,#33469C,#232F73);color:#fff;box-shadow:0 10rpx 28rpx rgba(51,70,156,.14);border:0;}
+.admin-page .admin-hero-title {color:#fff;}
+.admin-page .admin-hero-desc {color:#DCE1FA;}
+.admin-card,.menu-card,.stat-box,.metric-card {border-color:#E4E6EF;box-shadow:0 2rpx 4rpx rgba(16,24,40,.04);}
+.admin-page .admin-button {background:#33469C;color:#fff;}
+.admin-page .admin-button.secondary {background:#EEF0FA;color:#33469C;}
+.admin-page .admin-button.danger {background:#FBEDEC;color:#C13B34;}
+.admin-page .admin-button.ghost {background:#F4F5F9;color:#4A5068;}
+.admin-page .admin-button[disabled] {opacity:.5;}
+.admin-input {border-color:#E4E6EF;background:#fff;color:#171B2E;}
+.admin-card-title {color:#171B2E;}
+.admin-page .chip.active,.admin-page .admin-chip.active {background:#EEF0FA;color:#33469C;border-color:#33469C;}
+.eyebrow {display:block;font-size:20rpx;letter-spacing:3rpx;color:#DCE1FA;margin-bottom:12rpx;}
+.console-notice {margin-top:20rpx;padding:24rpx;background:#FBF1E4;color:#82551F;border:1rpx solid #EEDDC6;border-radius:18rpx;font-size:24rpx;line-height:1.65;}
+.error-panel {margin:20rpx 0;padding:24rpx;background:#FBEDEC;color:#C13B34;border-radius:18rpx;font-size:26rpx;}

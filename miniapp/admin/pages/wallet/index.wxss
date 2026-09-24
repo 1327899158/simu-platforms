@@ -1,3 +1,5 @@
 @import "../../../community.wxss";
 @import "../../../theme.wxss";
 @import "../../../finance.wxss";
+
+@import "../../console-theme.wxss";

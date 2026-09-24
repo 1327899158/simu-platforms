@@ -1,4 +1,7 @@
 {
   "navigationBarTitleText": "管理总览",
-  "enablePullDownRefresh": true
+  "enablePullDownRefresh": true,
+  "navigationBarBackgroundColor": "#F4F5F9",
+  "backgroundColor": "#F4F5F9",
+  "navigationBarTextStyle": "black"
 }

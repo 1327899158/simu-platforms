@@ -2,7 +2,7 @@ const { request } = require('../../../utils/request');
 const { loadAdmin, hasPermission, exitAdmin, denyAndExit } = require('../../utils/admin');
 
 Page({
-  data: { admin: null, stats: null, loading: true, menus: [] },
+  data: { admin: null, stats: null, loading: true, groups: [], priority: [], tab: 'home', collapsed: {}, error: '' },
   onShow() {
     this.load();
     clearInterval(this._timer);
@@ -18,30 +18,24 @@ Page({
     try {
       const admin = await loadAdmin();
       const stats = await request('GET', '/admin/dashboard', null, { silent: true });
-      const definitions = [
-        {key:'customer-service',title:'客服工作台',desc:'受理咨询、工单回复与处理',path:'/admin/pages/customer-service/index',permission:'CUSTOMER_SERVICE'},
-        {key:'announcements',title:'公告管理',desc:'编辑内容、时间区间及接收角色',path:'/admin/pages/announcements/index',permission:'ANNOUNCEMENT_MANAGE'},
-        {key:'enterprise',title:'企业/机构认证审核',desc:'企业、机构、院校资料及展示标签',path:'/admin/pages/enterprise/index',permission:'IDENTITY_APPROVE'},
-        {key:'wallet',title:'模拟钱包与提现',desc:'测试入账、冻结、审核和模拟打款',path:'/admin/pages/wallet/index',permission:'WALLET_MANAGE'},
-        {key:'help',title:'帮助内容管理',desc:'FAQ、帮助与关于我们',path:'/admin/pages/help/index',permission:'HELP_MANAGE'},
-        {key:'support',title:'反馈与举报处理',desc:'受理、调查、处理及审计',path:'/admin/pages/support/index',permission:'SUPPORT_MANAGE'},
-        { key:'campaigns',title:'首页活动管理',desc:'编辑轮播与活动规则',path:'/admin/pages/campaigns/index',permission:'CAMPAIGN_MANAGE' },
-        { key: 'users', title: '用户管理', desc: '查看账号与状态', path: '/admin/pages/users/index', permission: 'USER_READ' },
-        { key: 'engineers', title: '身份认证审核', desc: '审核用户身份认证', path: '/admin/pages/engineers/index', permission: 'ENGINEER_READ', count: stats.engineerReviews.pending },
-        { key: 'orders', title: '订单管理', desc: '查看平台全部订单', path: '/admin/pages/orders/index', permission: 'ORDER_READ' },
-        { key: 'invoices', title: '发票管理', desc: '预览客户申请与处理状态', path: '/admin/pages/invoices/index', permission: 'INVOICE_READ' },
-        { key: 'disputes', title: '纠纷管理', desc: '处理订单履约纠纷', path: '/admin/pages/disputes/index', permission: 'DISPUTE_READ' },
-        { key: 'preview', title: '数据预览', desc: '查看趋势、分布与评分', path: '/admin/pages/data-preview/index', permission: 'DASHBOARD_READ' },
-        { key: 'audit', title: '操作日志', desc: '追踪敏感管理操作', path: '/admin/pages/audit-logs/index', permission: 'AUDIT_READ' },
-      ];
-      this.setData({ admin, stats, menus: definitions.filter((item) => hasPermission(admin, item.permission)).map(item => ({ ...item, count: item.count || stats.pendingTasks?.[item.key] || 0 })) });
+      const groups = require('../../utils/navigation').navigation(admin, stats, hasPermission);
+      let overview = null;
+      try { overview = await request('GET', '/admin/console/overview', null, { silent: true }); } catch (_) {}
+      const menus = groups.flatMap(group => group.items);
+      const priority = menus.filter(item => ['engineers','enterprise','disputes','support','customer-service','invoices','wallet'].includes(item.key));
+      this.setData({ admin, stats, groups, priority, pending: menus.reduce((sum,item) => sum+item.count,0), overview, canReview: groups.some(group => group.key === 'review'),
+        todayPaid: overview ? (Number(overview.todayPaidFen)/100).toFixed(2) : '—', error: '' });
     } catch (error) {
-      if (!silent) denyAndExit(error.message);
+      if (error.statusCode === 403 || error.statusCode === 401) denyAndExit(error.message);
+      else if (!silent) this.setData({ error: error.message || '工作台加载失败，请重试' });
     } finally {
       this.setData({ loading: false });
       this._loading = false;
     }
   },
+  toggle(e) { const key=e.currentTarget.dataset.key; this.setData({ ['collapsed.'+key]: !this.data.collapsed[key] }); },
+  selectTab(e) { const tab=e.currentTarget.dataset.tab; if(tab==='data') { wx.navigateTo({url:'/admin/pages/data-preview/index'}); return; } this.setData({tab}); wx.pageScrollTo({scrollTop:0}); },
+  retry() { this.load(); },
   open(e) { wx.navigateTo({ url: e.currentTarget.dataset.path }); },
   exit() { exitAdmin(); },
 });

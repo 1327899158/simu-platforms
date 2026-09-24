@@ -11,6 +11,8 @@ const { decryptIdCard, ensureIdentityRecord } = require('../services/identity-sv
 
 const ROLE_TEXT = {
   SUPER_ADMIN: '超级管理员',
+  ARBITER: '仲裁与客服管理员',
+  FINANCE: '财务管理员',
   OPERATOR: '运营管理员',
   AUDITOR: '审计员',
   ENGINEER_REVIEWER: '身份认证审核员',

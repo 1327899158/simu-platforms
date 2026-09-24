@@ -10,3 +10,5 @@
 .metric-label { display: block; margin-top: 3rpx; color: #8A8A8A; font-size: 21rpx; }
 
 @import "../../../theme.wxss";
+
+@import "../../console-theme.wxss";

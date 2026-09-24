@@ -21,7 +21,6 @@ function statusText(status, submittedAt) {
 }
 
 Page({
-  netdiskAdded(e){if(this.data.files.length>=10)return;this.setData({files:this.data.files.concat(e.detail)});},
   data: {
     loading: true, uploading: false, saving: false, bindingPhone: false, uploadText: '',
     realName: '', phone: '', idCardNumber: '', verifyStatus: 'PENDING', verifyText: '未申请', reviewReason: '',

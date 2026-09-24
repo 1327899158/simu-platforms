@@ -3,3 +3,5 @@
 .identity-file { min-height: 88rpx; padding: 14rpx 0; display: flex; align-items: center; gap: 16rpx; border-top: 1rpx solid #F0F2F5; color: #7256A8; }.identity-purpose { display: block; color: #1A1A2E; font-size: 25rpx; font-weight: 650; }.review-actions { display: flex; gap: 16rpx; margin-top: 22rpx; }.review-actions button { flex: 1; }
 
 @import "../../../theme.wxss";
+
+@import "../../console-theme.wxss";

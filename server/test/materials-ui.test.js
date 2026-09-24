@@ -26,10 +26,10 @@ test('分段预览重组为原图片，拒绝错误分段并展示错误阶段',
 test('管理首页显示待办角标，返回时重新拉取，隐藏时停止轮询',async()=>{
  let page,timer,cleared=0,reads=0;
  vm.runInNewContext(source('admin/pages/dashboard/index.js'),{Page:p=>page=p,setInterval:fn=>{timer=fn;return 1;},clearInterval:()=>cleared++,wx:{},
-  require:n=>n.endsWith('/request')?{request:async()=>{reads++;return {engineerReviews:{pending:1},pendingTasks:{enterprise:2,support:3,'customer-service':4,wallet:5,invoices:6,disputes:7}};}}:{loadAdmin:async()=>({}),hasPermission:()=>true,denyAndExit:m=>{throw Error(m);}},
+  require:n=>n.endsWith('/navigation')?require('../../miniapp/admin/utils/navigation'):n.endsWith('/request')?{request:async(m,url)=>{if(url==='/admin/console/overview')return null;reads++;return {engineerReviews:{pending:1},pendingTasks:{enterprise:2,support:3,'customer-service':4,wallet:5,invoices:6,disputes:7}};}}:{loadAdmin:async()=>({}),hasPermission:()=>true,denyAndExit:m=>{throw Error(m);}},
  });
  page.setData=p=>Object.assign(page.data,p);
- await page.load();assert.equal(page.data.menus.find(m=>m.key==='enterprise').count,2);assert.equal(page.data.menus.find(m=>m.key==='support').count,3);
+ await page.load();assert.equal(page.data.groups.flatMap(g=>g.items).find(m=>m.key==='enterprise').count,2);assert.equal(page.data.groups.flatMap(g=>g.items).find(m=>m.key==='support').count,3);
  page.onShow();await new Promise(resolve=>setImmediate(resolve));assert.equal(reads,2);
  await timer();assert.equal(reads,3);page.onHide();assert.ok(cleared>1);
 });

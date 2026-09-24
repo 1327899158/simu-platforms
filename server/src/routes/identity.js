@@ -27,7 +27,7 @@ async function ownedFiles(conn, userId, ids) {
   if (!ids.length) return [];
   const marks = ids.map(() => '?').join(',');
   const [rows] = await conn.execute(
-    `SELECT f.id, f.uploaderId, f.orderId, f.kind, f.mime, f.name,
+    `SELECT f.id, f.uploaderId, f.orderId, f.kind, f.mime, f.name, f.netdiskUrl,
       EXISTS(SELECT 1 FROM messages WHERE fileId=f.id) AS chatUse,
       EXISTS(SELECT 1 FROM invoice_request_files WHERE fileId=f.id) AS invoiceUse,
       EXISTS(SELECT 1 FROM dispute_evidence WHERE fileId=f.id) AS disputeUse,
@@ -37,6 +37,7 @@ async function ownedFiles(conn, userId, ids) {
     throw err.forbidden('只能提交本人上传的非订单文件');
   }
   if (rows.some(f => f.chatUse || f.invoiceUse || f.disputeUse || f.refundUse)) throw err.conflict('文件已用于其他业务，请重新上传认证资料');
+  if (rows.some(f => f.netdiskUrl)) throw err.bad('补充认证资料不支持网盘链接，请移除链接并直接上传图片或文件');
   return rows;
 }
 

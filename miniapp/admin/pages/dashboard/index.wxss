@@ -17,3 +17,31 @@
 .menu-arrow { color: #9CA3AF; font-size: 40rpx; }
 
 @import "../../../theme.wxss";
+
+@import "../../console-theme.wxss";
+
+.workbench {padding-bottom:calc(150rpx + env(safe-area-inset-bottom));}
+.hero-summary {margin-top:28rpx;padding-top:22rpx;border-top:1rpx solid rgba(255,255,255,.2);font-size:25rpx;color:#DCE1FA;}
+.hero-number {font-size:52rpx;font-weight:700;color:#fff;margin:0 12rpx;}
+.section-heading {display:flex;align-items:center;justify-content:space-between;gap:16rpx;margin:34rpx 0 18rpx;font-size:29rpx;font-weight:700;color:#171B2E;}
+.section-heading text {display:block;font-size:21rpx;color:#8A90A6;font-weight:400;margin-top:4rpx;}
+.priority-grid {display:flex;flex-wrap:wrap;gap:16rpx;}
+.priority-card {box-sizing:border-box;width:calc(50% - 8rpx);padding:24rpx;background:#fff;border:1rpx solid #E4E6EF;border-radius:20rpx;}
+.priority-icon {display:flex;align-items:center;justify-content:center;width:52rpx;height:52rpx;border-radius:14rpx;background:#EEF0FA;color:#33469C;font-size:25rpx;font-weight:700;}
+.pending-count {font-size:42rpx;color:#8A90A6;font-weight:700;}
+.pending-count.has-pending {color:#C13B34;}
+.priority-title {display:block;margin-top:20rpx;color:#4A5068;font-size:25rpx;}
+.menu-grid {display:flex;flex-wrap:wrap;gap:14rpx;}
+.menu-grid .menu-card {width:calc(50% - 7rpx);margin:0;padding:22rpx 16rpx;gap:12rpx;position:relative;align-items:flex-start;}
+.menu-grid .menu-icon {width:48rpx;height:48rpx;border-radius:12rpx;background:#EEF0FA;color:#33469C;font-size:23rpx;position:relative;}
+.menu-title {font-size:25rpx;line-height:36rpx;}
+.menu-desc {font-size:20rpx;line-height:30rpx;color:#8A90A6;}
+.menu-grid .menu-count {position:absolute;right:8rpx;top:-8rpx;height:30rpx;min-width:30rpx;font-size:18rpx;}
+.menu-dot {position:absolute;width:12rpx;height:12rpx;background:#C13B34;border:3rpx solid #fff;border-radius:50%;right:-4rpx;top:-4rpx;}
+.stats-grid {margin-top:0;gap:16rpx;}
+.stat-box {margin-top:0;}
+.stat-value {color:#33469C;overflow-wrap:break-word;}
+.stat-value.amount {font-size:32rpx;}
+.console-bottom {position:fixed;bottom:0;left:0;right:0;display:flex;align-items:center;padding:18rpx 12rpx calc(18rpx + env(safe-area-inset-bottom));background:#fff;border-top:1rpx solid #E4E6EF;box-shadow:0 -4rpx 24rpx rgba(16,24,40,.04);z-index:20;}
+.console-bottom>view {flex:1;text-align:center;font-size:24rpx;color:#8A90A6;padding:12rpx 0;}
+.console-bottom .active {color:#33469C;font-weight:700;background:#EEF0FA;border-radius:14rpx;}

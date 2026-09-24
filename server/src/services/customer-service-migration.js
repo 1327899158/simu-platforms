@@ -7,6 +7,8 @@ async function migrate(query){
   `CREATE TABLE IF NOT EXISTS service_ticket_messages (id BIGINT AUTO_INCREMENT PRIMARY KEY,ticketId VARCHAR(32) NOT NULL,senderId VARCHAR(32) NOT NULL,senderKind VARCHAR(12) NOT NULL,content TEXT NOT NULL,createdAt DATETIME(3) NOT NULL,INDEX(ticketId,id))`,
   `CREATE TABLE IF NOT EXISTS announcements (id VARCHAR(32) PRIMARY KEY,title VARCHAR(80) NOT NULL,content TEXT NOT NULL,targetRole VARCHAR(16) NOT NULL,startsAt DATETIME(3) NOT NULL,endsAt DATETIME(3) NOT NULL,enabled TINYINT NOT NULL,revision INT NOT NULL DEFAULT 1,updatedAt DATETIME(3) NOT NULL,INDEX(enabled,startsAt,endsAt))`,
  ])await query(sql);
+ const channel=await query("SHOW COLUMNS FROM service_tickets LIKE 'channel'");
+ if(!channel.length){try{await query("ALTER TABLE service_tickets ADD COLUMN channel VARCHAR(12) NOT NULL DEFAULT 'TICKET'");}catch(e){if(e.code!=='ER_DUP_FIELDNAME')throw e;}}
  const columns=await query("SHOW COLUMNS FROM service_tickets LIKE 'relatedOrder'");
  if(!columns.length){
   try{await query('ALTER TABLE service_tickets ADD COLUMN relatedOrder JSON NULL');}

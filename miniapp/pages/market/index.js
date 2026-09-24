@@ -66,7 +66,7 @@ Page({
           ...order,
           budgetY: fenToYuan(order.budgetFen),
           time: timeShort(order.createdAt),
-          hotValue: Number(order.quoteCount || 0) * 3 + Number(order.viewCount || 0),
+          hotValue: Number(order.quoteCount || 0) * (data.hotQuoteWeight == null ? 3 : data.hotQuoteWeight) + Number(order.viewCount || 0),
         })),
       });
     } catch (e) {

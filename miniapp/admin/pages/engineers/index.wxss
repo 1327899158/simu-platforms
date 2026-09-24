@@ -9,3 +9,5 @@
 .engineer-pressed { transform: scale(.985); opacity: .86; }
 
 @import "../../../theme.wxss";
+
+@import "../../console-theme.wxss";

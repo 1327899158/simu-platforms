@@ -1,5 +1,5 @@
 <view class="admin-page" wx:if="{{user}}">
-  <view class="admin-hero"><text class="admin-hero-title">{{user.nickname || user.username || '用户资料'}}</text><text class="admin-hero-desc">{{user.roleText}} · {{user.id}}</text></view>
+  <view class="admin-hero"><text class="admin-hero-title">{{user.nickname || user.username || '用户资料'}}</text><text class="admin-hero-desc" selectable>{{user.roleText}} · {{user.id}}</text></view>
   <view class="admin-card"><text class="admin-card-title">账号资料</text><view class="detail-line"><text>用户名</text><text>{{user.username || '—'}}</text></view><view class="detail-line"><text>手机号</text><text>{{user.phone || '未绑定'}}</text></view><view class="detail-line"><text>账号状态</text><text>{{user.statusText}}</text></view><view class="detail-line"><text>注册时间</text><text>{{user.createdText}}</text></view></view>
   <view class="admin-card">
     <view class="admin-between"><text class="admin-card-title">身份认证</text><text class="admin-badge {{user.identity.verifyStatus === 'APPROVED' ? 'badge-green' : user.identity.verifyStatus === 'REJECTED' ? 'badge-red' : 'badge-orange'}}">{{user.identity.statusText}}</text></view>

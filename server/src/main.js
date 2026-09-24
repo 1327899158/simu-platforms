@@ -42,6 +42,7 @@ require('./routes/invoices').register(router);
 require('./routes/disputes').register(router);
 require('./routes/chat').register(router);
 require('./routes/admin').register(router);
+require('./routes/admin-console').register(router);
 
 router.get('/api/health', async (_req, res) =>
   sendJson(res, 200, { code: 0, data: { ok: true, now: new Date().toISOString() } }));
@@ -84,6 +85,7 @@ async function bootstrap() {
   await require('./services/community-migration').migrate(require('./db').query);
   await require('./services/delivery-enterprise-migration').migrate(require('./db').query);
   await require('./services/customer-service-migration').migrate(require('./db').query);
+  await require('./services/admin-console').migrate(require('./db').query);
   require('./services/completion-reward-svc').start();
   require('./services/overdue-svc').start();
   require('./services/account-closure-svc').start();

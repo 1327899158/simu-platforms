@@ -1,4 +1,7 @@
 {
   "navigationBarTitleText": "管理员身份验证",
-  "disableScroll": true
+  "disableScroll": true,
+  "navigationBarBackgroundColor": "#F4F5F9",
+  "backgroundColor": "#F4F5F9",
+  "navigationBarTextStyle": "black"
 }

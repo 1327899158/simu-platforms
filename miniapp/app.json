@@ -73,7 +73,8 @@
         "pages/wallet/index",
         "pages/enterprise/index",
         "pages/customer-service/index",
-        "pages/announcements/index"
+        "pages/announcements/index",
+        "pages/console/index"
       ]
     }
   ],

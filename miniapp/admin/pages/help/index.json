@@ -1,1 +1,7 @@
-{"navigationBarTitleText":"帮助内容管理","enablePullDownRefresh":true}
+{
+  "navigationBarTitleText": "帮助内容管理",
+  "enablePullDownRefresh": true,
+  "navigationBarBackgroundColor": "#F4F5F9",
+  "backgroundColor": "#F4F5F9",
+  "navigationBarTextStyle": "black"
+}

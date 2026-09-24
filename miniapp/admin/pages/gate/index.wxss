@@ -8,3 +8,5 @@
 .gate-note { margin-top: 42rpx; font-size: 22rpx; line-height: 36rpx; color: #8A8A8A; text-align: center; }
 
 @import "../../../theme.wxss";
+
+@import "../../console-theme.wxss";

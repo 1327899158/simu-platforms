@@ -1,4 +1,7 @@
 {
   "navigationBarTitleText": "身份认证审核",
-  "enablePullDownRefresh": true
+  "enablePullDownRefresh": true,
+  "navigationBarBackgroundColor": "#F4F5F9",
+  "backgroundColor": "#F4F5F9",
+  "navigationBarTextStyle": "black"
 }

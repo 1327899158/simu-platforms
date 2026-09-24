@@ -16,3 +16,5 @@
 
 @import "../../../theme.wxss";
 @import "../../../illustrations.wxss";
+
+@import "../../console-theme.wxss";

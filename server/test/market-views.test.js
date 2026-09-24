@@ -1,11 +1,13 @@
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict');
 const mock=(p,exports)=>{require.cache[require.resolve(p)]={exports,loaded:true};};
+let storedWeight=null;
 const seen=new Set();let views=0,listingSQL='',listingArgs=[];
 const order=()=>({id:'o',customerId:'c',status:'QUOTING',description:'需求',viewCount:views,createdAt:'2026-09-10'});
 mock('../src/db',{
+ parseJson:(s,d)=>s?JSON.parse(s):d,
  query:async (sql,args)=>{listingSQL=sql;listingArgs=args;return [order()];},
- queryOne:async sql=>sql.includes('SELECT * FROM orders')?order():sql.includes('allCount')?{allCount:1,todayCount:1}:null,
+ queryOne:async sql=>sql.includes('valueJson FROM admin_console_settings')?(storedWeight===null?null:{valueJson:JSON.stringify({hotQuoteWeight:storedWeight})}):sql.includes('SELECT * FROM orders')?order():sql.includes('allCount')?{allCount:1,todayCount:1}:null,
  tx:async work=>work({execute:async(sql,args)=>{
   if(sql.includes('INSERT IGNORE INTO order_views')){const key=args.join(':');if(seen.has(key))return [{affectedRows:0}];seen.add(key);return [{affectedRows:1}];}
   if(sql.includes('UPDATE orders')){views++;return [{affectedRows:1}];}
@@ -42,4 +44,12 @@ test('需求搜索覆盖标题、内容和方向，转义通配符且不扩大�
  assert.match(listingSQL,/o.status = 'QUOTING'/);
  assert.match(listingSQL,/NOT EXISTS/);
  await assert.rejects(call('/api/market/orders','e1','keyword='+'a'.repeat(81)),e=>e.status===400);
+});
+
+test('平台保存的热度权重影响实际大厅排序，接口同时返回展示权重',async()=>{
+ storedWeight=7;
+ const result=await call('/api/market/orders','e1','sort=hot');
+ assert.match(listingSQL,/quoteCount \* 7 \+ o.viewCount/);
+ assert.equal(result.hotQuoteWeight,7);
+ storedWeight=null;
 });

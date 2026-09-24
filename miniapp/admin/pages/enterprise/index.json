@@ -1,1 +1,7 @@
-{"navigationBarTitleText":"企业/机构认证审核","enablePullDownRefresh":true}
+{
+  "navigationBarTitleText": "企业/机构认证审核",
+  "enablePullDownRefresh": true,
+  "navigationBarBackgroundColor": "#F4F5F9",
+  "backgroundColor": "#F4F5F9",
+  "navigationBarTextStyle": "black"
+}

@@ -11,3 +11,5 @@
 .request-id { word-break: break-all; }
 
 @import "../../../theme.wxss";
+
+@import "../../console-theme.wxss";

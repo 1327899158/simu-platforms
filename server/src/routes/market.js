@@ -39,8 +39,9 @@ function register(router) {
       args.push(`%${software}%`);
     }
     if (cursor && sort === 'latest') { cond.push('o.createdAt < ?'); args.push(cursor); }
+    const hotWeight = (await require('../services/admin-console').settings()).hotQuoteWeight;
     const orderBy = sort === 'hot'
-      ? '(quoteCount * 3 + o.viewCount) DESC, o.createdAt DESC, o.id DESC'
+      ? `(quoteCount * ${hotWeight} + o.viewCount) DESC, o.createdAt DESC, o.id DESC`
       : 'o.createdAt DESC';
     const rows = await query(
       `SELECT o.*,
@@ -67,6 +68,7 @@ function register(router) {
       [user.id]);
     ok(res, {
       items,
+      hotQuoteWeight: hotWeight,
       stats: {
         allCount: Number(stats?.allCount || 0),
         todayCount: Number(stats?.todayCount || 0),

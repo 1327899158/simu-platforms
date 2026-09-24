@@ -1,2 +1,4 @@
 @import "../../../community.wxss";
 @import "../../../theme.wxss";
+
+@import "../../console-theme.wxss";

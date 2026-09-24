@@ -8,3 +8,5 @@
 .review-inline-link:active { opacity: .72; }
 
 @import "../../../theme.wxss";
+
+@import "../../console-theme.wxss";

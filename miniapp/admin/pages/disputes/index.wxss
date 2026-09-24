@@ -26,3 +26,5 @@
   color: #767676;
 }
 @import "../../../illustrations.wxss";
+
+@import "../../console-theme.wxss";

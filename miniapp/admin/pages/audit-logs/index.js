@@ -3,6 +3,7 @@ const { getAdmin, denyAndExit } = require('../../utils/admin');
 const { timeShort } = require('../../../utils/format');
 
 const ACTION_TEXT = {
+  ADMIN_ACCOUNT_UPDATE: '调整管理员权限', CONSOLE_CONFIG_UPDATE: '修改平台配置',
   USER_STATUS_UPDATE: '修改用户状态', ENGINEER_REVIEW: '审核身份认证', IDENTITY_REVIEW: '审核身份认证', ORDER_FORCE_CLOSE: '关闭订单',
 };
 
@@ -33,6 +34,8 @@ Page({
     if (!detail || typeof detail !== 'object') return '';
     const parts = [];
     if (detail.from || detail.to) parts.push(`${detail.from || '—'} → ${detail.to || '—'}`);
+    if (detail.role) parts.push('角色：'+detail.role+'，状态：'+detail.status);
+    if (detail.hotQuoteWeight != null) parts.push('大厅报价热度权重：'+detail.hotQuoteWeight);
     if (detail.reason) parts.push(`原因：${detail.reason}`);
     return parts.join('；');
   },

@@ -8,6 +8,17 @@ function validateAnnouncement(b){const title=v.str(b.title,'标题',{min:1,max:8
 async function detail(id,userId,admin=false){const r=await queryOne('SELECT * FROM service_tickets WHERE id=?',[id]);if(!r||(!admin&&r.userId!==userId))throw err.notFound('工单不存在');const messages=await query('SELECT id,senderKind,content,createdAt FROM service_ticket_messages WHERE ticketId=? ORDER BY id DESC LIMIT 100',[id]);return {...r,evidence:parseJson(r.evidence),relatedOrder:r.relatedOrder?parseJson(r.relatedOrder,null):null,messages:messages.reverse()};}
 function orderScope(user){return user.role==='CUSTOMER'?'o.customerId=?':'EXISTS(SELECT 1 FROM quotes q WHERE q.orderId=o.id AND q.engineerId=?)';}
 function register(router){
+ router.post('/api/service-chats',async(req,res)=>{
+  const u=await member(req);
+  const id=await tx(async c=>{
+   await c.execute('SELECT id FROM users WHERE id=? FOR UPDATE',[u.id]);
+   const [[existing]]=await c.execute("SELECT id FROM service_tickets WHERE userId=? AND channel='CHAT' ORDER BY createdAt DESC LIMIT 1 FOR UPDATE",[u.id]);
+   if(existing)return existing.id;
+   const id=newId();
+   await c.execute("INSERT INTO service_tickets(id,userId,category,title,content,evidence,channel,status,createdAt,updatedAt) VALUES(?,?,'其他','在线客服','','[]','CHAT','OPEN',UTC_TIMESTAMP(3),UTC_TIMESTAMP(3))",[id,u.id]);
+   return id;
+  });ok(res,{id});
+ });
  router.get('/api/service-ticket-orders',async(req,res,p,q)=>{
   const user=await member(req),args=[user.id];let where=orderScope(user);
   const id=v.str(q.get('id'),'订单ID',{max:32,optional:true});
@@ -33,7 +44,7 @@ function register(router){
   ok(res,require('../services/image-chunks').imageChunk(image,q));
  });
  router.post('/api/service-tickets',async(req,res)=>{const u=await member(req),b=await readJson(req),category=v.oneOf(b.category,'问题类型',CATEGORIES),title=v.str(b.title,'标题',{min:2,max:120}),content=v.str(b.content,'问题描述',{min:5,max:3000});const ids=v.arr(b.evidence||[],'截图',{maxLen:5}).map(id=>v.str(id,'图片ID',{min:1,max:32})),id=newId();await tx(async c=>{
-  await c.execute('SELECT id FROM users WHERE id=? FOR UPDATE',[u.id]);const [[count]]=await c.execute('SELECT COUNT(*) n FROM service_tickets WHERE userId=? AND createdAt>=DATE_SUB(UTC_TIMESTAMP(3),INTERVAL 1 DAY)',[u.id]);if(Number(count.n)>=10)throw err.tooMany('每天最多提交10个工单');
+  await c.execute('SELECT id FROM users WHERE id=? FOR UPDATE',[u.id]);const [[count]]=await c.execute("SELECT COUNT(*) n FROM service_tickets WHERE userId=? AND channel='TICKET' AND createdAt>=DATE_SUB(UTC_TIMESTAMP(3),INTERVAL 1 DAY)",[u.id]);if(Number(count.n)>=10)throw err.tooMany('每天最多提交10个工单');
   for(const fid of ids){const [[f]]=await c.execute('SELECT id FROM support_evidence_blobs WHERE id=? AND userId=?',[fid,u.id]);if(!f)throw err.forbidden('只能使用自己的截图');}
   let relatedOrder=null;const orderId=v.str(b.orderId,'关联订单',{max:32,optional:true});
   if(orderId){
@@ -42,7 +53,7 @@ function register(router){
    relatedOrder=JSON.stringify(order);
   }
   await c.execute("INSERT INTO service_tickets(id,userId,category,title,content,evidence,relatedOrder,status,createdAt,updatedAt) VALUES(?,?,?,?,?,?,?,'OPEN',UTC_TIMESTAMP(3),UTC_TIMESTAMP(3))",[id,u.id,category,title,content,JSON.stringify([...new Set(ids)]),relatedOrder]);});ok(res,{id});});
- router.get('/api/service-tickets',async(req,res,p,q)=>{const u=await member(req),rows=await query(`SELECT id,title,category,status,updatedAt FROM service_tickets WHERE userId=? ORDER BY updatedAt DESC,id LIMIT 21 OFFSET ${offset(q)}`,[u.id]);ok(res,{items:rows.slice(0,20),hasMore:rows.length>20});});
+ router.get('/api/service-tickets',async(req,res,p,q)=>{const u=await member(req),rows=await query(`SELECT id,title,category,status,updatedAt,channel FROM service_tickets WHERE userId=? AND channel='${v.oneOf(q.get('channel')||'TICKET','服务类型',['CHAT','TICKET'])}' ORDER BY updatedAt DESC,id LIMIT 21 OFFSET ${offset(q)}`,[u.id]);ok(res,{items:rows.slice(0,20),hasMore:rows.length>20});});
  router.get('/api/service-tickets/:id',async(req,res,p)=>ok(res,await detail(p.id,(await member(req)).id)));
  router.get('/api/admin/service-tickets',async(req,res,p,q)=>{
   await requireAdmin(req,'CUSTOMER_SERVICE');
@@ -50,6 +61,7 @@ function register(router){
   // 显式统一关联比较，兼容已有数据库，无需在启动时执行改表操作。
   const rows=await query(`SELECT t.*,u.nickname FROM service_tickets t
    JOIN users u ON u.id COLLATE utf8mb4_unicode_ci = t.userId COLLATE utf8mb4_unicode_ci
+   WHERE t.channel='${v.oneOf(q.get('channel')||'TICKET','服务类型',['CHAT','TICKET'])}'
    ORDER BY (t.status IN ('OPEN','PROCESSING')) DESC,t.updatedAt DESC,t.id LIMIT 21 OFFSET ${offset(q)}`);
   ok(res,{items:rows.slice(0,20),hasMore:rows.length>20});
  });
