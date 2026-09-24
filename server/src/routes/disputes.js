@@ -112,9 +112,10 @@ async function disputeDetail(d) {
   );
   const messages = await query(
     `SELECT id, senderId, type, content, fileId, createdAt
-       FROM dispute_messages WHERE disputeId = ? ORDER BY id ASC LIMIT 500`, [d.id]
+       FROM dispute_messages WHERE disputeId = ? ORDER BY id DESC LIMIT 500`, [d.id]
   );
   // 消息发送者身份（普通用户取昵称，管理员取 displayName，SYSTEM 特殊标记）
+  messages.reverse();
   const senderIds = [...new Set(messages.map((m) => m.senderId))];
   let senderMap = {};
   if (senderIds.length) {
@@ -296,10 +297,24 @@ function register(router) {
     ok(res, result);
   });
 
-  // 旧版纠纷对话接口已关闭，避免客户端绕过“仅上传证据”的页面限制。
-  router.post('/api/disputes/:id/messages', async (req, res) => {
-    await requireUser(req);
-    throw err.conflict('纠纷对话已关闭，请在48小时举证期内上传证据文件');
+  // 当事人可在纠纷结束前交流；举证截止不影响文字沟通。
+  router.post('/api/disputes/:id/messages', async (req, res, params) => {
+    const user = await requireUser(req);
+    const b = await readJson(req);
+    const content = v.str(String(b.content || '').trim(), '消息', { min: 1, max: 2000 });
+    const current = await queryOne('SELECT orderId FROM disputes WHERE id = ?', [params.id]);
+    if (!current) throw err.notFound('纠纷不存在');
+    if (!(await isOrderParty(current.orderId, user.id))) throw err.forbidden('仅纠纷当事人可交流');
+    const result = await tx(async (conn) => {
+      const [[d]] = await conn.execute('SELECT * FROM disputes WHERE id = ? FOR UPDATE', [params.id]);
+      if (!d || d.status !== 'OPEN') throw err.conflict('纠纷已结束，不能继续发送消息');
+      const createdAt = nowIso();
+      const [inserted] = await conn.execute(
+        "INSERT INTO dispute_messages(disputeId, senderId, type, content, createdAt) VALUES(?, ?, 'TEXT', ?, ?)",
+        [d.id, user.id, content, createdAt]);
+      return { id: Number(inserted.insertId), createdAt };
+    });
+    ok(res, result);
   });
 
   // POST /api/disputes/:id/cancel —— 发起人取消

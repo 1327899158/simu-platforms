@@ -418,17 +418,26 @@ Page({
   escalateRefund() {
     const refund = this.data.refundRequest;
     if (!refund || refund.status !== 'REJECTED') return;
-    wx.showModal({
-      title: '申请客服介入',
-      content: '工程师已拒绝退款申请。申请后订单将进入纠纷处理，双方可在48小时内上传证据。',
-      confirmText: '申请介入',
-      success: async (result) => {
-        if (!result.confirm) return;
-        try {
-          const data = await request('POST', `/orders/${this.data.id}/refund-request/escalate`, {});
-          wx.showToast({ title: '已申请客服介入', icon: 'success' });
-          setTimeout(() => wx.navigateTo({ url: `/pages/dispute-detail/index?id=${data.disputeId}` }), 350);
-        } catch (error) { wx.showToast({ title: error.message || '申请客服介入失败', icon: 'none' }); }
+    const types = ['QUALITY', 'DELAY', 'MISSING', 'PAYMENT', 'COMMUNICATION', 'OTHER'];
+    wx.showActionSheet({
+      itemList: ['成果质量不符', '交付延迟', '成果缺失', '费用争议', '沟通不畅', '其他'],
+      success: ({ tapIndex }) => {
+        const reasonType = types[tapIndex];
+        if (!reasonType) return;
+        wx.showModal({
+          title: '申请客服介入',
+          content: '申请后订单进入纠纷处理，双方可在48小时内上传证据。是否确认？',
+          confirmText: '申请介入',
+          success: async (result) => {
+            if (!result.confirm || this._escalating) return;
+            this._escalating = true;
+            try {
+              const data = await request('POST', `/orders/${this.data.id}/refund-request/escalate`, { reasonType });
+              wx.navigateTo({ url: `/pages/dispute-detail/index?id=${data.disputeId}` });
+            } catch (error) { wx.showToast({ title: error.message || '申请客服介入失败', icon: 'none' }); }
+            finally { this._escalating = false; }
+          },
+        });
       },
     });
   },

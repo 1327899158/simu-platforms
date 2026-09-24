@@ -55,21 +55,40 @@
       <netdisk-input submit-text="提交网盘证据" bind:added="netdiskEvidence" disabled="{{uploading || dispute.myEvidenceCount >= 20}}"/>
     </view>
 
-    <view class="evid-item" wx:for="{{dispute.evidence}}" wx:key="fileId"
-      data-index="{{index}}" bindtap="openEvidence">
-      <view class="evid-icon">{{item.kind === 'IMAGE' ? '图' : '文'}}</view>
-      <view class="evid-copy">
-        <text class="evid-name">{{item.name}}</text>
-        <text class="evidence-description" wx:if="{{item.description}}">材料说明：{{item.description}}</text>
-        <text class="evid-meta">{{item.uploaderText}} · {{item.timeText}} · {{item.sizeText}}</text>
+    <view class="party-evidence" wx:for="{{dispute.evidenceGroups}}" wx:key="role" wx:for-item="group">
+      <view class="party-heading">{{group.label}}<text>{{group.count}} 份</text></view>
+      <view class="evidence-batch" wx:for="{{group.batches}}" wx:key="key" wx:for-item="batch" wx:for-index="batchIndex">
+        <view class="batch-heading">材料组 {{batchIndex + 1}} · {{batch.timeText}}</view>
+        <view class="batch-description">{{batch.description || '未填写材料说明'}}</view>
+        <view class="evid-item" wx:for="{{batch.files}}" wx:key="fileId" data-index="{{item.index}}" bindtap="openEvidence">
+          <view class="evid-icon">{{item.kind === 'IMAGE' ? '图片' : '附件'}}</view>
+          <view class="evid-copy"><text class="evid-name">{{item.name}}</text><text class="evid-meta">{{item.sizeText}} · 点击查看</text></view>
+          <text class="evid-arrow">›</text>
+        </view>
       </view>
-      <text class="evid-arrow">›</text>
+      <view class="empty-evidence" wx:if="{{!group.count}}">该方暂未提交材料</view>
     </view>
-    <view class="empty-evidence" wx:if="{{!dispute.evidence.length}}">暂未提交证据材料</view>
 
     <view class="closed-tip" wx:if="{{!dispute.evidenceOpen}}">
       {{dispute.status === 'OPEN' ? '举证已结束，等待平台管理员仲裁' : '该纠纷已' + dispute.statusText}}
     </view>
   </view>
+  <view class="card dispute-chat">
+    <view class="card-title">双方交流</view>
+    <view class="evid-meta">沟通内容双方可见，证明材料请在上方提交。展示最近500条消息，自动更新。</view>
+    <scroll-view scroll-y class="chat-history" scroll-into-view="{{chatTarget}}">
+      <view wx:for="{{dispute.messages}}" wx:key="id" id="message-{{item.id}}" class="chat-message {{item.mine ? 'chat-mine' : ''}}">
+        <view class="evid-meta">{{item.senderText}}{{item.mine ? '（我）' : ''}} · {{item.timeText}}</view>
+        <view class="chat-bubble"><text selectable>{{item.content || '附件消息'}}</text></view>
+      </view>
+      <view class="empty-evidence" wx:if="{{!dispute.messages.length}}">暂无交流消息，可在下方留言沟通</view>
+    </scroll-view>
+    <view wx:if="{{dispute.status === 'OPEN'}}" class="chat-compose">
+      <textarea value="{{chatText}}" bindinput="inputChat" maxlength="2000" disabled="{{sending}}" placeholder="输入沟通内容（最多2000字）"/>
+      <button bindtap="sendChat" loading="{{sending}}" disabled="{{sending || !chatText}}">发送</button>
+    </view>
+    <view wx:else class="closed-tip">纠纷已结束，交流记录可继续查看</view>
+  </view>
+
 </view>
 <view class="loading" wx:if="{{!dispute}}">正在加载纠纷详情…</view>

@@ -16,7 +16,7 @@ Page({
     catch(error){wx.showToast({title:error.message||'提交失败',icon:'none'});}finally{this.setData({uploading:false});}
   },
   data: {
-    id: '', myId: '', dispute: null,
+    id: '', myId: '', dispute: null, chatText: '', sending: false, chatTarget: '',
     uploading: false, evidenceCountdown: '', evidenceDescription: '', pendingEvidence: [],
   },
   _countdownTimer: null,
@@ -36,7 +36,11 @@ Page({
     try {
       const d = await request('GET', `/disputes/${this.data.id}`, null, { silent: true });
       const dispute = this.normalize(d);
+      const previous = this.data.dispute;
       this.setData({ dispute });
+      const last = dispute.messages[dispute.messages.length - 1];
+      if (last && (!previous || this._scrollAfterSend)) this.setData({ chatTarget: 'message-' + last.id });
+      this._scrollAfterSend = false;
       this.startCountdown(dispute.evidenceDeadlineAt, dispute.evidenceOpen);
     } catch (e) {
       wx.showToast({ title: e.message || '纠纷加载失败', icon: 'none' });
@@ -53,8 +57,25 @@ Page({
         ? '我提交的'
         : (f.uploaderRole === 'ENGINEER' ? '工程师提交' : '客户提交'),
     }));
+    const evidenceGroups = ['CUSTOMER', 'ENGINEER'].map((role) => {
+      const files = evidence.map((f, index) => ({ ...f, index })).filter((f) =>
+        role === 'CUSTOMER' ? f.uploaderId === (d.customer || {}).id : f.uploaderId !== (d.customer || {}).id);
+      const batches = [];
+      files.forEach((f) => {
+        const key = JSON.stringify([f.uploaderId, f.createdAt, f.description]);
+        let batch = batches.find((b) => b.key === key);
+        if (!batch) { batch = { key, timeText: f.timeText, description: f.description, files: [] }; batches.push(batch); }
+        batch.files.push(f);
+      });
+      return { role, label: role === 'CUSTOMER' ? '客户的证据' : '工程师的证据', count: files.length, batches };
+    });
+    const messages = (d.messages || []).map((m) => ({ ...m,
+      mine: m.senderId === this.data.myId,
+      senderText: m.senderId === 'SYSTEM' ? '系统' : (m.sender && m.sender.kind === 'admin') ? '管理员' : m.senderId === (d.customer || {}).id ? '客户' : '工程师',
+      timeText: timeShort(m.createdAt),
+    }));
     return {
-      ...d,
+      ...d, evidenceGroups, messages,
       refundY: d.refundAmountFen == null ? null : fenToYuan(d.refundAmountFen),
       createdText: timeShort(d.createdAt),
       resolvedText: timeShort(d.resolvedAt),
@@ -63,6 +84,20 @@ Page({
       evidence,
       myEvidenceCount: evidence.filter((f) => f.uploaderId === this.data.myId).length,
     };
+  },
+
+  inputChat(e) { this.setData({ chatText: e.detail.value }); },
+  async sendChat() {
+    const content = this.data.chatText.trim();
+    if (!content || this.data.sending) return;
+    this.setData({ sending: true });
+    try {
+      await request('POST', `/disputes/${this.data.id}/messages`, { content });
+      this.setData({ chatText: '' });
+      this._scrollAfterSend = true;
+      await this.load();
+    } catch (e) { wx.showToast({ title: e.message || '发送失败', icon: 'none' }); }
+    finally { this.setData({ sending: false }); }
   },
 
   sizeText(bytes) {

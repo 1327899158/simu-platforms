@@ -11,7 +11,7 @@ const { createPayment, createJsapiOrder } = require('../services/pay-svc');
 const { config } = require('../config');
 const { systemMessageForOrder } = require('../services/chat-svc');
 const { refreshForOrder } = require('../services/engineer-level');
-const { evidenceDeadlineIso } = require('../services/dispute-svc');
+const { evidenceDeadlineIso, REASON_TYPES } = require('../services/dispute-svc');
 
 const REFUND_REQUESTABLE_ORDER_STATUS = ['IN_PROGRESS', 'DELIVERED'];
 // 保留 COMPLETED 仅用于兼容升级前已存在的退款记录恢复状态，新申请不得使用。
@@ -472,6 +472,8 @@ function register(router) {
   // POST /api/orders/:id/refund-request/escalate —— 客户在退款被拒后主动申请客服介入。
   router.post('/api/orders/:id/refund-request/escalate', async (req, res, params) => {
     const customer = await requireCustomer(req);
+    const b = await readJson(req);
+    const reasonType = v.oneOf(String(b.reasonType || '').toUpperCase(), '纠纷类型', REASON_TYPES);
     const result = await tx(async (conn) => {
       const [[refundRequest]] = await conn.execute(
         `SELECT rr.*, o.status AS orderStatus
@@ -496,8 +498,8 @@ function register(router) {
       await conn.execute(
         `INSERT INTO disputes
            (id, orderId, initiatorId, reasonType, description, status, orderStatusAtOpen, evidenceDeadlineAt, createdAt, updatedAt)
-         VALUES(?, ?, ?, 'OTHER', ?, 'OPEN', ?, ?, ?, ?)`,
-        [disputeId, refundRequest.orderId, customer.id,
+         VALUES(?, ?, ?, ?, ?, 'OPEN', ?, ?, ?, ?)`,
+        [disputeId, refundRequest.orderId, customer.id, reasonType,
           `客户退款申请被工程师拒绝，现申请客服介入处理。退款理由：${refundRequest.reason || '未填写'}`,
           originalStatus, evidenceDeadlineIso(), now, now]
       );

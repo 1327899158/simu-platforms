@@ -11,6 +11,31 @@ const today = 'DATE_SUB(DATE(DATE_ADD(UTC_TIMESTAMP(3), INTERVAL 8 HOUR)), INTER
 const page = q => ({ limit: 30, offset: q.get('offset') ? v.int(q.get('offset'), 'offset', { min: 0, max: 1000000 }) : 0 });
 function register(router) {
   require('./admin-finance').register(router);
+  router.get('/api/admin/console/operations', async (req,res,_p,q) => {
+    const {admin}=await requireAdmin(req,'DASHBOARD_READ');
+    const {hasPermission}=require('../lib/admin-mw');
+    const permissions={orders:hasPermission(admin,'ORDER_READ')};
+    return ok(res,await require('../services/operations-analytics').overview(Number(q.get('days')||30),permissions));
+  });
+  router.post('/api/admin/console/operations/plans', async (req,res) => {
+    const {admin}=await requireAdmin(req,'CONFIG_MANAGE');const b=await readJson(req);
+    const title=v.str(b.title,'措施名称',{min:2,max:100});
+    const goal=v.str(b.goal,'目标与衡量指标',{min:2,max:500});
+    const startDate=v.str(b.startDate,'执行日期',{min:10,max:10});
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(startDate)||!Number.isFinite(Date.parse(startDate+'T00:00:00Z'))||new Date(startDate+'T00:00:00Z').toISOString().slice(0,10)!==startDate)throw err.bad('执行日期无效');
+    const item={id:newId(),title,goal,startDate,createdAt:nowIso(),owner:admin.displayName||'管理员'};
+    await tx(async c=>{
+      await c.execute("INSERT IGNORE INTO admin_console_settings(settingKey,valueJson,updatedAt) VALUES('operationsPlans','[]',?)",[nowIso()]);
+      const [[stored]]=await c.execute("SELECT valueJson FROM admin_console_settings WHERE settingKey='operationsPlans' FOR UPDATE");
+      const plans=require('../db').parseJson(stored.valueJson,[]);
+      if(!Array.isArray(plans))throw err.conflict('措施记录格式异常');
+      if(plans.length>=100)throw err.conflict('最多记录100项措施，请先联系管理员归档');
+      plans.unshift(item);
+      await c.execute("UPDATE admin_console_settings SET valueJson=?,updatedAt=? WHERE settingKey='operationsPlans'",[JSON.stringify(plans),nowIso()]);
+      await writeAdminAudit(req,admin,'OPERATIONS_PLAN_CREATE','SETTINGS',item.id,item,c);
+    });
+    ok(res,item);
+  });
   router.get('/api/admin/console/overview', async (req, res) => {
     await requireAdmin(req, 'DASHBOARD_READ');
     const [orders, payments, engineers, disputes] = await Promise.all([

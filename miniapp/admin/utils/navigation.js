@@ -20,6 +20,7 @@ const groups = [
   ] },
   { key: 'operations', title: '运营与配置', description: '数据、内容、权限和平台规则', items: [
     ['preview', '数据看板', '近七日趋势与业务分布', 'DASHBOARD_READ', '📊', base + 'data-preview/index'],
+    ['operations', '运营分析', '转化、供需、留存与异常订单', 'DASHBOARD_READ', '📊', consolePath('operations')],
     ['hall', '大厅统计', '供需概览与热门需求', 'DASHBOARD_READ', '📈', consolePath('hall')],
     ['marketing', '营销活动', '活动内容与优惠权益统计', 'CAMPAIGN_MANAGE', '🎟️', consolePath('marketing')],
     ['campaigns', '首页活动管理', '轮播与活动规则', 'CAMPAIGN_MANAGE', '🖼️'],

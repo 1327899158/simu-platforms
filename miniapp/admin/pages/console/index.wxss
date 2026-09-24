@@ -34,3 +34,9 @@
 .direction-heading{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12rpx;font-size:27rpx;font-weight:600;color:#171B2E}.direction-rate{font-size:23rpx;font-weight:400;color:#0E8F58}
 .direction-counts{display:flex;flex-wrap:wrap;margin:14rpx -6rpx;font-size:23rpx;color:#4A5068}.direction-counts text{padding:4rpx 6rpx;min-width:30%;box-sizing:border-box}
 .heat-track{height:12rpx;margin-top:10rpx;background:#F0F2F7;border-radius:8rpx;overflow:hidden}.heat-demand{height:100%;background:#4F6BFF;border-radius:8rpx}.heat-completed{height:100%;background:#0E8F58;border-radius:8rpx}
+
+.operations-tabs{margin-top:20rpx;white-space:nowrap}.operations-tabs-inner{display:inline-flex;gap:12rpx;padding:8rpx 0}.operations-tab{padding:16rpx 24rpx;background:#fff;border-radius:28rpx;font-size:25rpx;color:#657087}.operations-tab.active{background:#33469c;color:#fff}
+
+.plan-goal{box-sizing:border-box;width:100%;height:180rpx;margin:16rpx 0}
+
+.funnel-step{font-size:25rpx;margin-top:20rpx}.funnel-track{height:16rpx;background:#eef0f7;border-radius:8rpx;margin-top:10rpx;overflow:hidden}.funnel-fill{height:100%;background:#5267c4;border-radius:8rpx}
