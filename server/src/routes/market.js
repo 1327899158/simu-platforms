@@ -2,6 +2,7 @@
 /** 抢单大厅（云开发版）。 */
 const { ok, err } = require('../lib/http');
 const { v } = require('../lib/util');
+const { priorityFor, encodeCursor, decodeCursor } = require('../services/order-promotion');
 const { query, queryOne, tx } = require('../db');
 const { requireEngineer } = require('../lib/auth-mw');
 const { orderView, quoteCountOf } = require('./orders');
@@ -14,6 +15,9 @@ function register(router) {
     const limit = q_.get('limit') ? v.int(q_.get('limit'), 'limit', { min: 1, max: 50 }) : 20;
     const cursor = q_.get('cursor');
     const sort = q_.get('sort') || 'latest';
+    const placement = q_.get('placement') || 'hall';
+    const priority = priorityFor(placement);
+    const rank = `(o.promotion = '${priority}')`;
     if (!['latest', 'hot'].includes(sort)) throw err.bad('不支持的排序方式');
     const cond = [`o.status = 'QUOTING'`, `o.deletedAt IS NULL`, `o.customerId <> ?`, `NOT EXISTS(SELECT 1 FROM direct_demands dd WHERE dd.orderId=o.id)`];
     const args = [user.id];
@@ -38,11 +42,15 @@ function register(router) {
       cond.push(`o.softwareTags LIKE ?`);
       args.push(`%${software}%`);
     }
-    if (cursor && sort === 'latest') { cond.push('o.createdAt < ?'); args.push(cursor); }
+    if (cursor && sort === 'latest') {
+      const c = decodeCursor(cursor, placement);
+      cond.push(`(${rank} < ? OR (${rank} = ? AND (o.createdAt < ? OR (o.createdAt = ? AND o.id < ?))))`);
+      args.push(c.r,c.r,c.t,c.t,c.id);
+    }
     const hotWeight = (await require('../services/admin-console').settings()).hotQuoteWeight;
     const orderBy = sort === 'hot'
-      ? `(quoteCount * ${hotWeight} + o.viewCount) DESC, o.createdAt DESC, o.id DESC`
-      : 'o.createdAt DESC';
+      ? `${rank} DESC, (quoteCount * ${hotWeight} + o.viewCount) DESC, o.createdAt DESC, o.id DESC`
+      : `${rank} DESC, o.createdAt DESC, o.id DESC`;
     const rows = await query(
       `SELECT o.*,
               (SELECT COUNT(*) FROM quotes qc
@@ -73,7 +81,7 @@ function register(router) {
         allCount: Number(stats?.allCount || 0),
         todayCount: Number(stats?.todayCount || 0),
       },
-      nextCursor: sort === 'latest' && rows.length === limit ? rows[rows.length - 1].createdAt : null,
+      nextCursor: sort === 'latest' && rows.length === limit ? encodeCursor(rows[rows.length - 1], placement) : null,
     });
   });
 

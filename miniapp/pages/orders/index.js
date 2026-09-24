@@ -10,6 +10,7 @@ const TABS = [
   { key: 'DELIVERED', countKey: 'DELIVERED', label: '待验收', dotCls: 'dot-pink' },
   { key: 'COMPLETED', countKey: 'COMPLETED', label: '已完成', dotCls: 'dot-green' },
   { key: 'REFUND_PENDING', countKey: 'REFUND_PENDING', label: '退款确认', dotCls: 'dot-orange' },
+  { key: 'DISPUTING', countKey: 'DISPUTING', label: '纠纷中', dotCls: 'dot-red' },
   { key: 'CANCELLED', countKey: 'CANCELLED', label: '已取消', dotCls: 'dot-gray' },
 ];
 Page({

@@ -213,6 +213,13 @@ module.exports = {
       <view class="summary-item"><text class="summary-label">附件</text><text class="summary-value">{{files.length}} 个文件</text></view>
     </view>
 
+    <view class="promotion-panel" wx:if="{{!directEngineerId}}">
+      <text class="promotion-heading">需求展示方式（选填）</text>
+      <text class="promotion-hint">二选一，也可普通发布；仅在需求待报价期间优先展示。当前仅展示标价，暂未开通收费。</text>
+      <view class="promotion-choice {{promotion === 'NONE' ? 'selected' : ''}}" data-value="NONE" bindtap="selectPromotion"><text>普通发布</text><text>{{promotion === 'NONE' ? '●' : '○'}}</text></view>
+      <view class="promotion-choice {{promotion === 'EXPOSURE' ? 'selected' : ''}}" data-value="EXPOSURE" bindtap="selectPromotion"><view><text>增加曝光 <text class="promotion-price">19元/次</text></text><text class="promotion-hint">优先出现在工程师首页的需求列表上方</text></view><text>{{promotion === 'EXPOSURE' ? '●' : '○'}}</text></view>
+      <view class="promotion-choice {{promotion === 'URGENT' ? 'selected' : ''}}" data-value="URGENT" bindtap="selectPromotion"><view><text>置顶加急 <text class="promotion-price">29元/次</text></text><text class="promotion-hint">需求大厅优先置顶，并显示红色“加急”</text></view><text>{{promotion === 'URGENT' ? '●' : '○'}}</text></view>
+    </view>
     <view class="terms" bindtap="toggleAgree">
       <view class="checkbox-box {{agreed ? 'checked' : ''}}">
         <text wx:if="{{agreed}}">✓</text>

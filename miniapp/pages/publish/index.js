@@ -72,6 +72,7 @@ Page({
     deliveryKey: 'standard',
     customDays: '',
     specialNote: '',
+    promotion: 'NONE',
     // 步骤4
     files: [], // {fileId, name, sizeText, kind}
     uploading: false,
@@ -134,13 +135,14 @@ Page({
     if (this.data.submitting) return;
     if (!this._userId) return;
     const { projectName, description, budgetYuan, budgetFlexible, softwareTags,
-      directionTags, otherSoftware, otherDirection, deliveryKey, customDays, specialNote, files } = this.data;
+      directionTags, otherSoftware, otherDirection, deliveryKey, customDays, specialNote, promotion, files } = this.data;
     wx.setStorageSync(draftKey(this._draftScope), {
       projectName, description, budgetYuan, budgetFlexible, softwareTags,
-      directionTags, otherSoftware, otherDirection, deliveryKey, customDays, specialNote, files,
+      directionTags, otherSoftware, otherDirection, deliveryKey, customDays, specialNote, promotion, files,
     });
   },
 
+  selectPromotion(e) { const promotion=e.currentTarget.dataset.value;if(['NONE','EXPOSURE','URGENT'].includes(promotion))this.setData({promotion}); },
   toStep(e) { this.setData({ step: Number(e.currentTarget.dataset.s) }); },
   prev() { if (this.data.step > 1) this.setData({ step: this.data.step - 1 }); },
   next() {
@@ -326,6 +328,7 @@ Page({
         deliveryDays: days,
         budgetFlexible: d.budgetFlexible,
         specialNote: (d.specialNote || '').trim() || undefined,
+        promotion: this._directEngineerId ? 'NONE' : d.promotion,
         fileIds: d.files.map((f) => f.fileId),
       };
       if (d.budgetYuan) body.budgetFen = yuanToFen(d.budgetYuan);

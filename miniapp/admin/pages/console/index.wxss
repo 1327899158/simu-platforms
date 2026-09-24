@@ -1,7 +1,8 @@
 @import "../../admin.wxss";
 @import "../../console-theme.wxss";
-.console-metrics {display:flex;flex-wrap:wrap;gap:16rpx;margin:20rpx 0;}
-.console-metrics>view {box-sizing:border-box;width:calc(50% - 8rpx);background:#fff;padding:24rpx;border:1rpx solid #E4E6EF;border-radius:20rpx;}
+.console-metrics {display:flex;flex-wrap:wrap;margin:20rpx -8rpx;}
+.console-metrics .metric-cell {display:flex;box-sizing:border-box;flex:0 0 50%;width:50%;min-width:0;padding:8rpx;}
+.metric-box {width:100%;min-width:0;box-sizing:border-box;background:#fff;padding:24rpx;border:1rpx solid #E4E6EF;border-radius:20rpx;}
 .metric-number {display:block;font-size:36rpx;font-weight:700;color:#33469C;word-break:break-all;}
 .metric-title {display:block;font-size:23rpx;color:#8A90A6;margin-top:10rpx;}
 .console-row {display:flex;gap:20rpx;align-items:center;padding:24rpx 0;border-bottom:1rpx solid #E4E6EF;}
@@ -23,3 +24,13 @@
 .range-tabs {display:flex;background:#fff;padding:8rpx;border-radius:18rpx;margin-top:20rpx;}
 .range-tabs>view {flex:1;text-align:center;padding:16rpx;font-size:25rpx;}
 .range-tabs .active {background:#EEF0FA;color:#33469C;border-radius:12rpx;}
+
+.hall-console .metric-title{min-height:68rpx;line-height:34rpx;margin:0 0 10rpx;font-size:24rpx}
+.hall-console .metric-number{line-height:48rpx}
+.hall-console .console-row{display:block;padding:24rpx 0}
+.hall-console .row-value{display:inline-block;max-width:100%;text-align:left;margin-top:12rpx;padding:6rpx 14rpx;border-radius:10rpx;background:#EEF0FA;font-size:24rpx;box-sizing:border-box}
+.hall-console .row-title{line-height:40rpx}
+.direction-item{padding:26rpx 0;border-bottom:1rpx solid #E4E6EF}.direction-item:last-child{border:0}
+.direction-heading{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12rpx;font-size:27rpx;font-weight:600;color:#171B2E}.direction-rate{font-size:23rpx;font-weight:400;color:#0E8F58}
+.direction-counts{display:flex;flex-wrap:wrap;margin:14rpx -6rpx;font-size:23rpx;color:#4A5068}.direction-counts text{padding:4rpx 6rpx;min-width:30%;box-sizing:border-box}
+.heat-track{height:12rpx;margin-top:10rpx;background:#F0F2F7;border-radius:8rpx;overflow:hidden}.heat-demand{height:100%;background:#4F6BFF;border-radius:8rpx}.heat-completed{height:100%;background:#0E8F58;border-radius:8rpx}

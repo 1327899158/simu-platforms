@@ -25,7 +25,8 @@ Page({
           sizeText: sizeText(file.sizeBytes),
         }));
       }
-      this.setData({ invoice });
+      const d=invoice?.invoiceDetails || {};
+      this.setData({ invoice, ...(invoice?.status==='RETURNED'?{invoiceTitle:invoice.invoiceTitle || '',taxNumber:invoice.taxNumber || '',email:invoice.email || '',customerNote:invoice.customerNote || '',invoiceType:d.type || 'NORMAL',buyerType:d.buyer || 'PERSONAL',invoiceFormat:d.format || 'DIGITAL',address:d.address || '',phone:d.phone || '',bank:d.bank || '',account:d.account || ''}:{}) });
     } catch (error) { wx.showToast({ title: error.message || '发票信息加载失败', icon: 'none' }); }
     finally { this.setData({ loading: false }); }
   },
@@ -34,7 +35,7 @@ Page({
   chooseFormat(e){this.setData({invoiceFormat:Number(e.detail.value)?'TRADITIONAL':'DIGITAL'});},
   onField(e) { this.setData({ [e.currentTarget.dataset.field]: e.detail.value }); },
   async submit() {
-    if (this.data.submitting || this.data.invoice) return;
+    if (this.data.submitting || (this.data.invoice && this.data.invoice.status !== 'RETURNED')) return;
     if (this.data.user.role !== 'CUSTOMER') return wx.showToast({ title: '请到“我的 - 发票处理”处理申请', icon: 'none' });
     const { invoiceTitle, taxNumber, email, customerNote } = this.data;
     if (invoiceTitle.trim().length < 2) return wx.showToast({ title: '请填写发票抬头', icon: 'none' });

@@ -1,24 +1,32 @@
 <view class="admin-page workbench">
   <view class="admin-hero">
-    <view class="admin-between"><view><text class="eyebrow">SIMU · 管理工作台</text><text class="admin-hero-title">{{admin.displayName || '管理员'}}</text><text class="admin-hero-desc">{{admin.adminRoleText}} · 权限由平台授权</text></view><button class="exit-button" bindtap="exit">退出</button></view>
+    <view class="admin-between"><view class="workbench-identity"><view class="workbench-avatar">管</view><view><text class="eyebrow">SIMU · 管理工作台</text><text class="admin-hero-title">{{admin.displayName || '管理员'}}</text><text class="admin-hero-desc">{{admin.adminRoleText}} · 权限由平台授权</text></view></view><button class="exit-button" bindtap="exit">退出</button></view>
     <view class="hero-summary">当前待处理 <text class="hero-number">{{pending || 0}}</text> 项</view>
   </view>
   <view class="error-panel" wx:if="{{error}}"><text>{{error}}</text><button size="mini" bindtap="retry">重试</button></view>
   <block wx:if="{{tab === 'home'}}">
-    <view class="section-heading">优先处理<text>点击卡片进入处理列表</text></view>
-    <view class="priority-grid"><view class="priority-card" wx:for="{{priority}}" wx:key="key" data-path="{{item.path}}" bindtap="open"><view class="admin-between"><text class="priority-icon">{{item.icon}}</text><text class="pending-count {{item.count ? 'has-pending' : ''}}">{{item.count}}</text></view><text class="priority-title">{{item.title}}</text></view></view>
-    <view class="section-heading">平台概览<text>支付统计含模拟模式提示</text></view>
-    <view class="stats-grid" wx:if="{{overview}}">
-      <view class="stat-box"><text class="stat-value">{{overview.todayOrders}}</text><text class="stat-label">今日新订单</text><text class="stat-extra">北京时间</text></view>
-      <view class="stat-box"><text class="stat-value amount">¥{{todayPaid}}</text><text class="stat-label">今日成功支付记录</text><text class="stat-extra">当前{{overview.paymentMode === 'mock' ? '模拟支付' : '支付通道'}} · 非平台净收入</text></view>
-      <view class="stat-box"><text class="stat-value">{{overview.quotingEngineers7d}}</text><text class="stat-label">近七日报价工程师</text><text class="stat-extra">按实际报价人数去重</text></view>
-      <view class="stat-box"><text class="stat-value">{{overview.disputeResolutionRate === null ? '—' : overview.disputeResolutionRate + '%'}}</text><text class="stat-label">纠纷结案率</text><text class="stat-extra">已结案 / 非取消纠纷</text></view>
+    <view class="wb-section-head"><text class="wb-section-title">优先处理</text><text class="wb-section-note">点击卡片进入处理列表</text></view>
+    <view class="wb-grid">
+      <view class="wb-cell" wx:for="{{priority}}" wx:key="key">
+        <view class="wb-task priority-{{item.key}}" data-path="{{item.path}}" bindtap="open" hover-class="menu-pressed">
+          <view class="wb-task-icon">{{item.icon}}</view>
+          <text class="wb-task-title">{{item.title}}</text>
+          <view class="wb-task-status {{item.count ? 'has-pending' : ''}}"><text class="wb-task-count">{{item.count}}</text><text> 项待处理</text></view>
+        </view>
+      </view>
+    </view>
+    <view class="wb-section-head"><text class="wb-section-title">平台概览</text><text class="wb-section-note">支付记录含模拟数据，不代表平台净收入</text></view>
+    <view class="wb-grid" wx:if="{{overview}}">
+      <view class="wb-cell"><view class="wb-metric"><text class="wb-metric-label">今日新订单</text><text class="wb-metric-value">{{overview.todayOrders}}</text><text class="wb-metric-note">北京时间</text></view></view>
+      <view class="wb-cell"><view class="wb-metric"><text class="wb-metric-label">今日成功支付记录</text><text class="wb-metric-value wb-money">¥{{todayPaid}}</text><text class="wb-metric-note">当前{{overview.paymentMode === 'mock' ? '模拟支付' : '支付通道'}}</text></view></view>
+      <view class="wb-cell"><view class="wb-metric"><text class="wb-metric-label">近七日报价工程师</text><text class="wb-metric-value">{{overview.quotingEngineers7d}}</text><text class="wb-metric-note">按实际报价人数去重</text></view></view>
+      <view class="wb-cell"><view class="wb-metric"><text class="wb-metric-label">纠纷结案率</text><text class="wb-metric-value">{{overview.disputeResolutionRate === null ? '—' : overview.disputeResolutionRate + '%'}}</text><text class="wb-metric-note">已结案 / 非取消纠纷</text></view></view>
     </view><view class="admin-muted" wx:else>概览暂不可用，可下拉刷新；下方业务入口仍可使用。</view>
   </block>
   <block wx:for="{{groups}}" wx:key="key" wx:for-item="group">
     <view class="nav-section" wx:if="{{tab === 'home' || (tab === 'review' && group.key === 'review') || (tab === 'operations' && group.key !== 'review')}}">
       <view class="section-heading" data-key="{{group.key}}" bindtap="toggle"><view>{{group.title}}<text>{{group.description}}</text></view><text>{{collapsed[group.key] ? '展开 ＋' : '收起 −'}}</text></view>
-      <view class="menu-grid" wx:if="{{!collapsed[group.key]}}"><view class="menu-card" wx:for="{{group.items}}" wx:key="key" data-path="{{item.path}}" bindtap="open" hover-class="menu-pressed"><view class="menu-icon">{{item.icon}}<text class="menu-dot" wx:if="{{item.count}}"></text></view><view class="admin-grow"><text class="menu-title">{{item.title}}</text><text class="menu-desc">{{item.desc}}</text></view><text class="menu-count" wx:if="{{item.count}}">{{item.count}}</text></view></view>
+      <view class="menu-grid" wx:if="{{!collapsed[group.key]}}"><view class="menu-card module-{{item.key}}" wx:for="{{group.items}}" wx:key="key" data-path="{{item.path}}" bindtap="open" hover-class="menu-pressed"><view class="menu-icon">{{item.icon}}<text class="menu-dot" wx:if="{{item.count}}"></text></view><view class="admin-grow"><text class="menu-title">{{item.title}}</text><text class="menu-desc">{{item.desc}}</text></view><text class="menu-count" wx:if="{{item.count}}">{{item.count}}</text></view></view>
     </view>
   </block>
   <view class="admin-loading" wx:if="{{loading}}">正在加载管理数据…</view>

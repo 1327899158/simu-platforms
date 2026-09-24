@@ -74,6 +74,7 @@ function orderView(o, extra = {}) {
     budgetFlexible: !!o.budgetFlexible,
     deliveryDays: o.deliveryDays,
     specialNote: o.specialNote,
+    promotion: o.promotion || 'NONE',
     status: o.status,
     statusText: customerQuoteStage && o.status === 'QUOTING'
       ? customerQuotingText(quoteCount)
@@ -118,6 +119,7 @@ function register(router) {
     const deliveryDays = v.int(b.deliveryDays, '工期(天)', { min: 1, max: 90 });
     const budgetFen = v.int(b.budgetFen, '预算', { min: 100, max: 1000000000, optional: true });
     const specialNote = v.str(b.specialNote, '特殊要求', { max: 2000, optional: true });
+    const promotion = require('../services/order-promotion').validatePromotion(b.promotion, b.directEngineerId);
     const rawFileIds = v.arr(b.fileIds, '文件', { maxLen: 20, optional: true }) || [];
     const fileIds = rawFileIds.map((fid) => v.str(fid, '文件ID', { min: 1, max: 32 }));
     if (new Set(fileIds).size !== fileIds.length) throw err.bad('附件列表包含重复文件');
@@ -147,12 +149,12 @@ function register(router) {
       const now = nowIso();
       await conn.execute(
         `INSERT INTO orders(id, orderNo, customerId, projectName, description, softwareTags,
-           directionTags, budgetFen, budgetFlexible, deliveryDays, specialNote, createdAt, updatedAt)
-         VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+           directionTags, budgetFen, budgetFlexible, deliveryDays, specialNote, createdAt, updatedAt, promotion)
+         VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
         [id, orderNo, user.id, projectName, description,
           JSON.stringify(softwareTags), JSON.stringify(directionTags),
           budgetFen ?? null, v.bool(b.budgetFlexible, true) ? 1 : 0,
-          deliveryDays, specialNote ?? null, now, now]
+          deliveryDays, specialNote ?? null, now, now, promotion]
       );
       directNotice = await require('../services/cooperation-svc').attachDirect(conn,user.id,id,b.directEngineerId,budgetFen,projectName);
       for (const file of attachmentFiles) {
@@ -379,9 +381,9 @@ function register(router) {
       if (frozen.affectedRows !== 1) throw err.conflict('订单状态已变化，请刷新后重试');
       await conn.execute(
         `INSERT INTO refund_requests
-           (id, orderId, customerId, engineerId, status, orderStatusAtRequest, reason, createdAt, updatedAt)
-         VALUES(?, ?, ?, ?, 'PENDING', ?, ?, ?, ?)`,
-        [id, order.id, customer.id, order.engineerId, originalStatus, reason, now, now]
+           (id, orderId, customerId, engineerId, status, orderStatusAtRequest, reason, createdAt, updatedAt, reasonType)
+         VALUES(?, ?, ?, ?, 'PENDING', ?, ?, ?, ?, ?)`,
+        [id, order.id, customer.id, order.engineerId, originalStatus, reason, now, now, reasonType]
       );
       for (const file of refundFiles) {
         await conn.execute(

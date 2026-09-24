@@ -120,7 +120,7 @@ Page({
   // ---------- 工程师 ----------
   async loadHall() {
     if (!this.data.canTakeOrders) return;
-    const params = { limit: 5 };
+    const params = { limit: 5, placement: 'home' };
     let data;
     try { data = await request('GET', '/market/orders', params); }
     catch (e) { wx.showToast({ title: e.message || '抢单大厅加载失败', icon: 'none' }); return; }

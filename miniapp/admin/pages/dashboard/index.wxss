@@ -1,12 +1,6 @@
 @import "../../admin.wxss";
 .exit-button { min-height: 72rpx; margin: 0; padding: 0 20rpx; border: 1rpx solid rgba(255,255,255,.46); border-radius: 36rpx; background: rgba(255,255,255,.14); color: #fff; font-size: 23rpx; display: flex; align-items: center; }
 .exit-button::after { border: none; }
-.stats-grid { display: flex; flex-wrap: wrap; justify-content: space-between; margin-top: 8rpx; }
-.stat-box { width: calc(50% - 8rpx); margin-top: 16rpx; padding: 22rpx; box-sizing: border-box; border-radius: 18rpx; background: #fff; border: 1rpx solid #E4E7EE; box-shadow: 0 2rpx 10rpx rgba(0,0,0,.04); }
-.stat-value { display: block; font-size: 42rpx; line-height: 52rpx; font-weight: 750; color: #2FA8DE; }
-.stat-value.warning { color: #D97706; }
-.stat-label { display: block; margin-top: 4rpx; font-size: 25rpx; font-weight: 600; color: #1A1A2E; }
-.stat-extra { display: block; margin-top: 6rpx; font-size: 21rpx; color: #8A8A8A; }
 .menu-list { margin-top: 20rpx; }
 .menu-card { min-height: 112rpx; margin-bottom: 14rpx; padding: 18rpx 20rpx; display: flex; align-items: center; gap: 18rpx; box-sizing: border-box; border-radius: 18rpx; background: #fff; border: 1rpx solid #E4E7EE; }
 .menu-pressed { transform: scale(.985); opacity: .86; }
@@ -25,12 +19,6 @@
 .hero-number {font-size:52rpx;font-weight:700;color:#fff;margin:0 12rpx;}
 .section-heading {display:flex;align-items:center;justify-content:space-between;gap:16rpx;margin:34rpx 0 18rpx;font-size:29rpx;font-weight:700;color:#171B2E;}
 .section-heading text {display:block;font-size:21rpx;color:#8A90A6;font-weight:400;margin-top:4rpx;}
-.priority-grid {display:flex;flex-wrap:wrap;gap:16rpx;}
-.priority-card {box-sizing:border-box;width:calc(50% - 8rpx);padding:24rpx;background:#fff;border:1rpx solid #E4E6EF;border-radius:20rpx;}
-.priority-icon {display:flex;align-items:center;justify-content:center;width:52rpx;height:52rpx;border-radius:14rpx;background:#EEF0FA;color:#33469C;font-size:25rpx;font-weight:700;}
-.pending-count {font-size:42rpx;color:#8A90A6;font-weight:700;}
-.pending-count.has-pending {color:#C13B34;}
-.priority-title {display:block;margin-top:20rpx;color:#4A5068;font-size:25rpx;}
 .menu-grid {display:flex;flex-wrap:wrap;gap:14rpx;}
 .menu-grid .menu-card {width:calc(50% - 7rpx);margin:0;padding:22rpx 16rpx;gap:12rpx;position:relative;align-items:flex-start;}
 .menu-grid .menu-icon {width:48rpx;height:48rpx;border-radius:12rpx;background:#EEF0FA;color:#33469C;font-size:23rpx;position:relative;}
@@ -38,10 +26,51 @@
 .menu-desc {font-size:20rpx;line-height:30rpx;color:#8A90A6;}
 .menu-grid .menu-count {position:absolute;right:8rpx;top:-8rpx;height:30rpx;min-width:30rpx;font-size:18rpx;}
 .menu-dot {position:absolute;width:12rpx;height:12rpx;background:#C13B34;border:3rpx solid #fff;border-radius:50%;right:-4rpx;top:-4rpx;}
-.stats-grid {margin-top:0;gap:16rpx;}
-.stat-box {margin-top:0;}
-.stat-value {color:#33469C;overflow-wrap:break-word;}
-.stat-value.amount {font-size:32rpx;}
 .console-bottom {position:fixed;bottom:0;left:0;right:0;display:flex;align-items:center;padding:18rpx 12rpx calc(18rpx + env(safe-area-inset-bottom));background:#fff;border-top:1rpx solid #E4E6EF;box-shadow:0 -4rpx 24rpx rgba(16,24,40,.04);z-index:20;}
 .console-bottom>view {flex:1;text-align:center;font-size:24rpx;color:#8A90A6;padding:12rpx 0;}
 .console-bottom .active {color:#33469C;font-weight:700;background:#EEF0FA;border-radius:14rpx;}
+
+/* Workbench-specific treatment matches the reference header and module tiles. */
+.workbench {padding-top:0;}
+.workbench .admin-hero {margin:0 -32rpx 28rpx;padding:36rpx 36rpx 40rpx;background:linear-gradient(160deg,#4F6BFF,#6C4CFF);color:#fff;border:0;border-radius:0 0 28rpx 28rpx;box-shadow:0 12rpx 28rpx rgba(79,107,255,.15);}
+.workbench .admin-hero-title {font-size:29rpx;color:#fff;}
+.workbench .admin-hero-desc,.workbench .eyebrow {color:rgba(255,255,255,.72);font-size:20rpx;}
+.workbench .eyebrow {margin-bottom:4rpx;letter-spacing:1rpx;}
+.workbench-identity {display:flex;align-items:center;gap:18rpx;min-width:0;}
+.workbench-avatar {width:72rpx;height:72rpx;flex-shrink:0;border-radius:50%;background:linear-gradient(135deg,#F5A623,#FF7A45);color:#fff;display:flex;align-items:center;justify-content:center;font-size:30rpx;font-weight:700;border:3rpx solid rgba(255,255,255,.25);}
+.workbench .exit-button {min-height:60rpx;padding:0 20rpx;font-size:22rpx;}
+.workbench .hero-summary {border:0;padding:0;margin-top:26rpx;font-size:28rpx;font-weight:600;color:#fff;}
+.workbench .hero-number {font-size:48rpx;}
+.workbench .menu-grid {gap:14rpx;}
+.workbench .menu-grid .menu-card {width:calc((100% - 28rpx)/3);min-height:148rpx;flex-direction:column;align-items:center;justify-content:center;gap:12rpx;padding:20rpx 8rpx;text-align:center;}
+.workbench .menu-grid .menu-icon {background:transparent;width:52rpx;height:52rpx;font-size:36rpx;}
+.workbench .menu-title {font-size:23rpx;line-height:1.5;}
+.workbench .menu-desc {display:none;}
+.workbench .menu-grid .menu-count {top:10rpx;right:10rpx;min-width:30rpx;}
+.workbench .section-heading {font-size:28rpx;margin-top:30rpx;}
+.workbench .console-bottom .active {background:transparent;color:#33469C;position:relative;}
+.workbench .console-bottom .active::before {content:'';position:absolute;top:-18rpx;left:30%;right:30%;height:5rpx;background:#33469C;border-radius:0 0 6rpx 6rpx;}
+@media (max-width:340px) {.workbench .menu-title{font-size:22rpx}.workbench .menu-grid .menu-card{width:calc(50% - 7rpx)}}
+/* Own class names prevent shared stat/card styles from changing column widths.
+   Half-width wrappers include their gutters: no flex-gap or calc rounding. */
+.wb-section-head {margin:30rpx 0 12rpx;}
+.wb-section-title {display:block;font-size:28rpx;line-height:42rpx;font-weight:700;color:#171B2E;}
+.wb-section-note {display:block;margin-top:4rpx;font-size:22rpx;line-height:34rpx;color:#8A90A6;overflow-wrap:break-word;}
+.wb-grid {display:flex;flex-wrap:wrap;align-items:stretch;margin:0 -8rpx;}
+.wb-cell {display:flex;flex:0 0 50%;width:50%;min-width:0;padding:8rpx;box-sizing:border-box;}
+.wb-task,.wb-metric {width:100%;min-width:0;box-sizing:border-box;background:#fff;border:1rpx solid #E4E6EF;border-radius:22rpx;box-shadow:0 2rpx 4rpx rgba(16,24,40,.05);padding:24rpx;display:flex;flex-direction:column;}
+.wb-task {min-height:238rpx;}
+.wb-task-icon {width:64rpx;height:64rpx;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:32rpx;border-radius:16rpx;background:#EEF0FF;}
+.priority-disputes .wb-task-icon {background:#FBEDEC;}
+.priority-support .wb-task-icon {background:#F0EBFF;}
+.priority-enterprise .wb-task-icon {background:#E5F5EE;}
+.priority-invoices .wb-task-icon,.priority-wallet .wb-task-icon {background:#FBF1E4;}
+.wb-task-title {display:block;font-size:26rpx;line-height:38rpx;font-weight:600;color:#171B2E;margin:16rpx 0 10rpx;overflow-wrap:break-word;}
+.wb-task-status {margin-top:auto;font-size:22rpx;line-height:32rpx;color:#8A90A6;word-break:break-all;}
+.wb-task-status.has-pending {color:#C13B34;}
+.wb-task-count {font-weight:700;}
+.wb-metric {min-height:218rpx;}
+.wb-metric-label {display:block;min-height:68rpx;font-size:24rpx;line-height:34rpx;color:#4A5068;}
+.wb-metric-value {display:block;margin:8rpx 0 12rpx;min-width:0;font-size:38rpx;line-height:48rpx;font-weight:700;color:#33469C;word-break:break-all;}
+.wb-metric-value.wb-money {font-size:30rpx;}
+.wb-metric-note {display:block;margin-top:auto;font-size:21rpx;line-height:32rpx;color:#8A90A6;overflow-wrap:break-word;}

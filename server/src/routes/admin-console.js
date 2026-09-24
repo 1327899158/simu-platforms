@@ -10,6 +10,7 @@ const PERMISSION_TEXT = { '*':'全部管理权限', DASHBOARD_READ:'查看工作
 const today = 'DATE_SUB(DATE(DATE_ADD(UTC_TIMESTAMP(3), INTERVAL 8 HOUR)), INTERVAL 8 HOUR)';
 const page = q => ({ limit: 30, offset: q.get('offset') ? v.int(q.get('offset'), 'offset', { min: 0, max: 1000000 }) : 0 });
 function register(router) {
+  require('./admin-finance').register(router);
   router.get('/api/admin/console/overview', async (req, res) => {
     await requireAdmin(req, 'DASHBOARD_READ');
     const [orders, payments, engineers, disputes] = await Promise.all([
@@ -43,7 +44,7 @@ function register(router) {
       query(`SELECT o.id,o.orderNo,o.projectName,o.viewCount,o.budgetFen,(SELECT COUNT(*) FROM quotes q WHERE q.orderId=o.id AND q.status<>'WITHDRAWN') quoteCount FROM orders o WHERE ${publicOrders} AND o.status='QUOTING' ORDER BY o.viewCount DESC,o.createdAt DESC LIMIT 20`),
       query('SELECT role,COUNT(*) count FROM users WHERE deletedAt IS NULL AND status=\'ACTIVE\' GROUP BY role')
     ]);
-    return ok(res, { summary, top, users: levels, settings: await settings() });
+    return ok(res, { summary, top, users: levels, settings: await settings(), analytics: await require('../services/hall-analytics').analytics() });
   });
   router.get('/api/admin/console/storage', async (req, res, _p, q) => {
     await requireAdmin(req, 'STORAGE_READ');

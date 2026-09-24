@@ -13,7 +13,7 @@ const ALLOWED_INVOICE_EXTENSIONS = new Set([
 ]);
 
 const STATUS_TEXT = Object.freeze({
-  REQUESTED: '待工程师处理', SELF_ISSUE: '工程师自行开票中',
+  RETURNED: '已退回，请修改资料', REQUESTED: '待工程师处理', SELF_ISSUE: '工程师自行开票中',
   PLATFORM_REQUESTED: '已申请平台开票', ISSUED: '已完成开票', REJECTED: '暂不支持开票',
 });
 
@@ -122,10 +122,14 @@ function register(router) {
       );
       if (!order || order.customerId !== customer.id) throw err.notFound('订单不存在');
       if (order.status !== 'COMPLETED' || !order.engineerId) throw err.conflict('仅已完成且已选定工程师的订单可申请发票');
-      const [[existing]] = await conn.execute(`SELECT id FROM invoice_requests WHERE orderId=? FOR UPDATE`, [params.id]);
-      if (existing) throw err.conflict('该订单已提交发票申请');
+      const [[existing]] = await conn.execute(`SELECT id,status FROM invoice_requests WHERE orderId=? FOR UPDATE`, [params.id]);
+      if (existing && existing.status !== 'RETURNED') throw err.conflict('该订单已提交发票申请');
       const now = nowIso();
-      const id = newId();
+      const id = existing?.id || newId();
+      if (existing) {
+        await conn.execute("UPDATE invoice_requests SET invoiceTitle=?,taxNumber=?,email=?,customerNote=?,invoiceDetails=?,status='PLATFORM_REQUESTED',handlingMode='PLATFORM',adminReturnReason=NULL,requestedAt=?,updatedAt=? WHERE id=?",[invoiceTitle,taxNumber,email,customerNote,JSON.stringify(details),now,now,id]);
+        return {id,orderId:params.id,status:'PLATFORM_REQUESTED',invoiceTitle,invoiceDetails:details,requestedAt:now};
+      }
       await conn.execute(
         `INSERT INTO invoice_requests(
           id, orderId, customerId, engineerId, invoiceTitle, taxNumber, email, customerNote,
@@ -136,7 +140,7 @@ function register(router) {
       await conn.execute('UPDATE invoice_requests SET invoiceDetails=? WHERE id=?',[JSON.stringify(details),id]);
       return { id, orderId: params.id, status: 'REQUESTED', invoiceTitle, invoiceDetails:details, requestedAt: now };
     });
-    systemMessageForOrder(params.id, '客户提交了发票申请，请在“我的 - 发票处理”中选择处理方式。', { senderId: customer.id, actionOrderId: params.id }).catch(() => {});
+    systemMessageForOrder(params.id, result.status === 'PLATFORM_REQUESTED' ? '客户已修改发票资料并重新提交平台审核。' : '客户提交了发票申请，请在“我的 - 发票处理”中选择处理方式。', { senderId: customer.id, actionOrderId: params.id }).catch(() => {});
     ok(res, invoiceView(result, { files: [] }));
   });
 
@@ -147,7 +151,7 @@ function register(router) {
     const filter = v.oneOf(q.get('status') || 'ALL', '发票筛选', ['ALL', 'PENDING', 'PROCESSING', 'ISSUED']);
     const filters = {
       ALL: '', PENDING: ' AND ir.id IS NULL',
-      PROCESSING: " AND ir.status IN ('REQUESTED','SELF_ISSUE','PLATFORM_REQUESTED')",
+      PROCESSING: " AND ir.status IN ('REQUESTED','SELF_ISSUE','PLATFORM_REQUESTED','RETURNED')",
       ISSUED: " AND ir.status='ISSUED'",
     };
     const from = `FROM orders o LEFT JOIN invoice_requests ir ON ir.orderId=o.id
@@ -206,6 +210,9 @@ function register(router) {
 
   router.get('/api/invoices/mine', async (req, res) => {
     const engineer = await requireEngineer(req);
+    const conditions=[],args=[];
+    if(status){conditions.push('ir.status=?');args.push(status);}
+    if(q.get('id')){conditions.push('ir.id=?');args.push(v.str(q.get('id'),'发票ID',{min:1,max:32}));}
     const rows = await query(
       `SELECT ir.*, o.orderNo, o.projectName, u.nickname AS customerName
          FROM invoice_requests ir
@@ -331,17 +338,34 @@ function register(router) {
   router.post('/api/invoices/:id/files', submitInvoiceFiles());
   router.post('/api/admin/invoices/:id/files', submitInvoiceFiles(true));
 
+  router.post('/api/admin/invoices/:id/return', async (req,res,p) => {
+    const {admin}=await requireAdmin(req,'INVOICE_PROCESS');
+    const reason=v.str((await readJson(req)).reason,'退回原因',{min:2,max:500});
+    const record=await tx(async conn=>{
+      const [[row]]=await conn.execute('SELECT * FROM invoice_requests WHERE id=? FOR UPDATE',[p.id]);
+      if(!row)throw err.notFound('发票申请不存在');
+      if(row.status!=='PLATFORM_REQUESTED')throw err.conflict('仅待平台处理的发票可退回修改');
+      await conn.execute("UPDATE invoice_requests SET status='RETURNED',adminReturnReason=?,updatedAt=? WHERE id=?",[reason,nowIso(),p.id]);
+      await writeAdminAudit(req,admin,'INVOICE_RETURN','INVOICE',p.id,{reason},conn);return row;
+    });
+    systemMessageForOrder(record.orderId,'平台退回发票申请，请客户在订单发票详情修改后重提。原因：'+reason,{actionOrderId:record.orderId}).catch(()=>{});
+    return ok(res,{status:'RETURNED'});
+  });
+
   // 管理员可预览申请并交付已实际开具的文件；不调用税务开票或收费接口。
   router.get('/api/admin/invoices', async (req, res, _params, q) => {
     await requireAdmin(req, 'INVOICE_READ');
     const status = String(q.get('status') || '').toUpperCase();
     if (status) v.oneOf(status, '发票状态', Object.keys(STATUS_TEXT));
+    const conditions=[],args=[];
+    if(status){conditions.push('ir.status=?');args.push(status);}
+    if(q.get('id')){conditions.push('ir.id=?');args.push(v.str(q.get('id'),'发票ID',{min:1,max:32}));}
     const rows = await query(
       `SELECT ir.*, o.orderNo, o.projectName, c.nickname AS customerName, e.nickname AS engineerName
          FROM invoice_requests ir JOIN orders o ON o.id=ir.orderId
          JOIN users c ON c.id=ir.customerId JOIN users e ON e.id=ir.engineerId
-        ${status ? 'WHERE ir.status=?' : ''}
-        ORDER BY ir.updatedAt DESC LIMIT 200`, status ? [status] : []
+        ${conditions.length ? 'WHERE '+conditions.join(' AND ') : ''}
+        ORDER BY ir.updatedAt DESC LIMIT 200`, args
     );
     ok(res, { items: await invoiceViewsWithFiles(rows) });
   });

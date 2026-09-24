@@ -74,7 +74,8 @@
         "pages/enterprise/index",
         "pages/customer-service/index",
         "pages/announcements/index",
-        "pages/console/index"
+        "pages/console/index",
+        "pages/finance/index"
       ]
     }
   ],

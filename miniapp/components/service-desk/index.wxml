@@ -1,4 +1,4 @@
-<view class="community"><view class="error" wx:if="{{error}}" bindtap="load">{{error}} · 重试</view>
+<view class="community {{admin ? 'admin-service' : ''}}"><view class="error" wx:if="{{error}}" bindtap="load">{{error}} · 重试</view>
  <block wx:if="{{!detail && !form}}">
   <view class="hero"><view class="title">{{admin?'客服工作台':'客服中心'}}</view><view class="caption">{{admin?'在线会话和工单分别处理':'在线聊天可直接咨询，复杂问题也可单独提交工单'}}</view></view>
   <view class="service-entry" wx:if="{{!admin}}"><view class="card"><view class="title">在线客服</view><view class="caption">直接发送消息，无需填写工单</view><button class="primary" bindtap="consult" disabled="{{busy}}" loading="{{busy}}">立即咨询</button></view><view class="card"><view class="title">提交工单</view><view class="caption">填写问题、材料及关联订单，跟进处理进度</view><button bindtap="create" disabled="{{busy}}">提交工单</button></view></view>
@@ -12,7 +12,7 @@
   <view class="service-chat-head"><button bindtap="back">‹ 返回</button><view>{{detail.title}}<view class="caption">{{detail.statusText}} · {{detail.channel==='CHAT'?'在线客服':'工单详情'}}</view></view></view>
   <scroll-view scroll-y class="{{detail.channel==='CHAT'?'service-chat-messages':'service-ticket-messages'}}" scroll-into-view="{{chatAnchor}}">
    <view class="card" wx:if="{{detail.channel!=='CHAT'}}"><view>{{detail.content}}</view><view wx:if="{{detail.relatedOrder}}">关联订单：{{detail.relatedOrder.projectName}}（{{detail.relatedOrder.orderNo}}）</view><button wx:for="{{detail.evidence}}" wx:key="*this" data-id="{{item}}" bindtap="preview">查看截图 {{index+1}}</button></view>
-   <view class="caption" wx:if="{{detail.channel==='CHAT' && !detail.messages.length}}">你好，请直接输入需要咨询的问题，也可以点击下方“发送订单”。</view>
+   <view class="service-message system" wx:if="{{!admin && detail.channel === 'CHAT'}}"><view class="service-bubble">您正在排队，请稍等客服回复。</view></view>
    <view wx:for="{{detail.messages}}" wx:key="id" class="service-message {{item.senderKind==='SYSTEM'?'system':(admin ? item.senderKind==='STAFF' : item.senderKind==='USER')?'mine':'peer'}}">
     <view class="caption">{{item.senderKind==='STAFF'?'客服':item.senderKind==='SYSTEM'?'系统':'用户'}} · {{item.createdAt}}</view><view class="service-bubble">{{item.content}}</view>
    </view>

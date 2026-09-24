@@ -60,7 +60,7 @@ Page({
     if (this.data.role !== 'CUSTOMER' || f === 'ALL') return items;
     return items.filter(item =>
       (f === 'PENDING' && item.status === 'PENDING') ||
-      (f === 'PROCESSING' && ['REQUESTED', 'SELF_ISSUE', 'PLATFORM_REQUESTED'].includes(item.status)) ||
+      (f === 'PROCESSING' && ['REQUESTED', 'SELF_ISSUE', 'PLATFORM_REQUESTED', 'RETURNED'].includes(item.status)) ||
       (f === 'ISSUED' && item.status === 'ISSUED'));
   },
   setFilter(e) {
@@ -71,7 +71,7 @@ Page({
   },
   visible(item) {
     const f = this.data.filter;
-    return f === 'ALL' || (f === 'PENDING' && item.status === 'PENDING') || (f === 'PROCESSING' && ['REQUESTED', 'SELF_ISSUE', 'PLATFORM_REQUESTED'].includes(item.status)) || (f === 'ISSUED' && item.status === 'ISSUED');
+    return f === 'ALL' || (f === 'PENDING' && item.status === 'PENDING') || (f === 'PROCESSING' && ['REQUESTED', 'SELF_ISSUE', 'PLATFORM_REQUESTED', 'RETURNED'].includes(item.status)) || (f === 'ISSUED' && item.status === 'ISSUED');
   },
   applyInvoice(e) { wx.navigateTo({ url: `/pages/invoice-request/index?orderId=${e.currentTarget.dataset.id}` }); },
   async openBatch() {

@@ -67,8 +67,9 @@
   </view>
 
   <view class="requirement-list">
-    <view class="requirement-card" wx:for="{{items}}" wx:key="id"
+    <view class="requirement-card {{item.promotion === 'URGENT' ? 'urgent-demand' : ''}}" wx:for="{{items}}" wx:key="id"
       data-id="{{item.id}}" bindtap="open" hover-class="card-press" hover-stay-time="80">
+      <text class="urgent-ribbon" wx:if="{{item.promotion === 'URGENT'}}">🔥 加急</text>
       <view class="req-header">
         <text class="req-title">{{item.projectName || '未命名需求'}}</text>
         <text class="req-status {{item.myQuote ? 'quoted' : 'quoting'}}">{{item.myQuote ? '已报价' : '待报价'}}</text>

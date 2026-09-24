@@ -3,6 +3,7 @@ const { getAdmin, denyAndExit } = require('../../utils/admin');
 const { timeShort } = require('../../../utils/format');
 
 const ACTION_TEXT = {
+  INVOICE_RETURN: '退回发票申请',
   ADMIN_ACCOUNT_UPDATE: '调整管理员权限', CONSOLE_CONFIG_UPDATE: '修改平台配置',
   USER_STATUS_UPDATE: '修改用户状态', ENGINEER_REVIEW: '审核身份认证', IDENTITY_REVIEW: '审核身份认证', ORDER_FORCE_CLOSE: '关闭订单',
 };

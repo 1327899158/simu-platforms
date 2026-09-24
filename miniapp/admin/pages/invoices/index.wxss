@@ -4,3 +4,5 @@
 @import "../../../theme.wxss";
 
 @import "../../console-theme.wxss";
+
+.invoice-local-upload{margin-top:24rpx;padding-top:24rpx;border-top:1rpx solid #E4E6EF}.invoice-local-upload .admin-small{display:block;margin:12rpx 0 20rpx;line-height:1.7}.invoice-local-upload button{margin-top:16rpx}

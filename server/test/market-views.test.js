@@ -53,3 +53,16 @@ test('平台保存的热度权重影响实际大厅排序，接口同时返回�
  assert.equal(result.hotQuoteWeight,7);
  storedWeight=null;
 });
+
+test('首页优先曝光、大厅最新和热门均优先加急，保留可见性过滤',async()=>{
+ for(const query of ['sort=latest','sort=hot','placement=home']) {
+  await call('/api/market/orders','e1',query);
+  const priority=query.includes('home')?'EXPOSURE':'URGENT';
+  assert.ok(listingSQL.includes("ORDER BY (o.promotion = '"+priority+"') DESC"));
+  assert.match(listingSQL,/o.status = 'QUOTING'/);assert.match(listingSQL,/o.deletedAt IS NULL/);assert.match(listingSQL,/NOT EXISTS/);
+ }
+ await assert.rejects(call('/api/market/orders','e1','placement=bad'),e=>e.status===400);
+ const cursor=require('../src/services/order-promotion').encodeCursor({id:'c123',createdAt:'2026-09-24 00:00:00',promotion:'URGENT'},'hall');
+ await call('/api/market/orders','e1','cursor='+cursor);
+ assert.match(listingSQL,/o.id < \?/);assert.deepEqual(listingArgs.slice(-5),[1,1,'2026-09-24 00:00:00','2026-09-24 00:00:00','c123']);
+});

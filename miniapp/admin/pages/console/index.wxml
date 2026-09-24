@@ -1,9 +1,19 @@
-<view class="admin-page">
+<view class="admin-page {{kind === 'hall' ? 'hall-console' : ''}}">
   <view class="admin-hero"><view class="admin-between"><text class="eyebrow">PLATFORM CONSOLE</text><text bindtap="home">工作台 ›</text></view><text class="admin-hero-title">{{title}}</text><text class="admin-hero-desc">{{subtitle}}</text></view>
   <view class="console-notice" wx:if="{{notice}}">{{notice}}</view>
   <view class="error-panel" wx:if="{{error}}"><text>{{error}}</text><button size="mini" bindtap="retry">重新加载</button></view>
   <view class="range-tabs" wx:if="{{kind === 'finance'}}"><view wx:for="{{dayOptions}}" wx:key="*this" class="{{days === item ? 'active' : ''}}" data-days="{{item}}" bindtap="range">近 {{item}} 天</view></view>
-  <view class="console-metrics"><view wx:for="{{metrics}}" wx:key="title"><text class="metric-number">{{item.value}}</text><text class="metric-title">{{item.title}}</text></view></view>
+  <view class="console-metrics"><view class="metric-cell" wx:for="{{metrics}}" wx:key="title"><view class="metric-box"><text class="metric-title">{{item.title}}</text><text class="metric-number">{{item.value}}</text></view></view></view>
+  <view class="admin-card" wx:if="{{kind === 'hall' && directions.length}}">
+    <text class="admin-card-title">领域供需热度</text>
+    <text class="admin-muted">按需求数降序。蓝色为需求、绿色为完成；多方向订单每个方向只计一次，因此各方向合计可能超过总订单数。工程师数为当前认证通过且填写该方向的有效账号，不能直接视为可接单产能。</text>
+    <view class="direction-item" wx:for="{{directions}}" wx:key="name">
+      <view class="direction-heading"><text>{{item.name}}</text><text class="direction-rate">完成率 {{item.completionRate === null ? '—' : item.completionRate + '%'}}</text></view>
+      <view class="direction-counts"><text>需求 {{item.demand}}</text><text>完成 {{item.completed}}</text><text>待报价 {{item.open}}</text><text>终止 {{item.terminated}}</text><text>工程师 {{item.engineers}}</text></view>
+      <view class="heat-track"><view class="heat-demand" style="width:{{item.heat}}%"></view></view>
+      <view class="heat-track"><view class="heat-completed" style="width:{{item.completedHeat}}%"></view></view>
+    </view>
+  </view>
   <view class="console-links" wx:if="{{links.length}}"><button class="admin-button secondary" wx:for="{{links}}" wx:key="path" data-path="{{item.path}}" bindtap="open">{{item.title}} ›</button></view>
   <view class="admin-card" wx:if="{{kind === 'config' && !loading && !error}}"><text class="admin-card-title">大厅热门排序</text><text class="field-label">每条有效报价的热度权重（0–20）</text><input class="admin-input" type="number" value="{{hotQuoteWeight}}" bindinput="inputWeight" maxlength="2"/><text class="admin-muted">得分 = 浏览数 + 有效报价数 × 权重。只影响“热门”排序。</text><button class="admin-button" bindtap="saveConfig" loading="{{saving}}" disabled="{{saving}}">保存并生效</button></view>
   <block wx:if="{{kind === 'accounts' && !loading && !error}}">

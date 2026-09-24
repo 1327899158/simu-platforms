@@ -517,6 +517,9 @@ async function init() {
 
   // 增量迁移：为旧表补充新字段（CREATE TABLE IF NOT EXISTS 不会改已存在的表）
   const migrations = [
+    {table:'refund_requests',check:'reasonType',sql:'ALTER TABLE refund_requests ADD COLUMN reasonType VARCHAR(60) NULL'},
+    {table:'invoice_requests',check:'adminReturnReason',sql:'ALTER TABLE invoice_requests ADD COLUMN adminReturnReason VARCHAR(500) NULL'},
+    {table:'orders',check:'promotion',sql:"ALTER TABLE orders ADD COLUMN promotion VARCHAR(16) NOT NULL DEFAULT 'NONE'"},
     {table:'uploaded_files',check:'netdiskUrl',sql:'ALTER TABLE uploaded_files ADD COLUMN netdiskUrl VARCHAR(1500) NULL'},
     {table:'uploaded_files',check:'netdiskPassword',sql:'ALTER TABLE uploaded_files ADD COLUMN netdiskPassword VARCHAR(100) NULL'},
     {table:'invoice_requests',check:'invoiceDetails',sql:'ALTER TABLE invoice_requests ADD COLUMN invoiceDetails JSON NULL'},

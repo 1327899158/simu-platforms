@@ -20,6 +20,7 @@ const path = name => '/admin/pages/'+name+'/index';
 Page({
   data: { kind:'',title:'平台管理',subtitle:'',loading:true,error:'',metrics:[],sections:[],links:[],items:[],roles:[],days:30,dayOptions:[7,30,90],offset:0,hasMore:false,form:null,saving:false,hotQuoteWeight:'3' },
   onLoad(options) {
+    if(options.kind==='finance'){wx.redirectTo({url:'/admin/pages/finance/index'});return;}
     const kind=Object.prototype.hasOwnProperty.call(META,options.kind) ? options.kind : 'hall';
     this.setData({kind,title:META[kind][0],subtitle:META[kind][1]});
     wx.setNavigationBarTitle({title:META[kind][0]});
@@ -52,10 +53,16 @@ Page({
         {title:'发票申请 · 全部时间',rows:d.invoices.map(i=>row(i.status,label(i.status),'',i.count+' 份'))}];
       links=[['模拟提现审核','wallet','WALLET_MANAGE'],['发票申请处理','invoices','INVOICE_READ']];
     } else if(kind==='hall') {
-      metrics=[metric('公开需求总数',d.summary.total),metric('当前待报价',d.summary.quoting || 0),metric('累计浏览次数',d.summary.views),metric('待报价且预算≥¥5000',d.summary.highBudget || 0)];
-      sections=[{title:'浏览热度 TOP 20 · 待报价需求',rows:d.top.map(i=>row(i.id,i.projectName,i.orderNo+' · 浏览 '+i.viewCount+' · 报价 '+i.quoteCount,i.budgetFen == null?'面议':money(i.budgetFen),hasPermission(admin,'ORDER_READ')?path('order-detail')+'?id='+i.id:''))},
+      const a=d.analytics || {},t=a.totals || {};
+      metrics=[metric('历史公开需求',t.total || 0),metric('完成订单',t.completed || 0),metric('终止未完成订单',t.terminated || 0),metric('当前待报价',d.summary.quoting || 0),metric('发生有效纠纷的订单',t.disputeOrders || 0),metric('申请过退款的订单',t.refundOrders || 0)];
+      this.setData({directions:a.directions || []});
+      sections=[
+        {title:'终止未完成订单 · 原因分布',rows:(a.failures || []).map(i=>row(i.category,i.label,'按订单去重，每单归入一种关闭原因',i.count+' 单'))},
+        {title:'纠纷类型与处理结果',rows:(a.disputes || []).map((i,n)=>row(n,i.label,i.statusText,i.count+' 次申请 · '+i.orders+' 单'))},
+        {title:'退款类型与处理结果',rows:(a.refunds || []).map((i,n)=>row(n,i.category,i.statusText,i.count+' 次申请 · '+i.orders+' 单'))},
+        {title:'浏览热度 TOP 20 · 待报价需求',rows:d.top.map(i=>row(i.id,i.projectName,i.orderNo+' · 浏览 '+i.viewCount+' · 报价 '+i.quoteCount,i.budgetFen == null?'面议':money(i.budgetFen),hasPermission(admin,'ORDER_READ')?path('order-detail')+'?id='+i.id:''))},
         {title:'有效用户供需概况',rows:d.users.map(i=>row(i.role,label(i.role),'有效账号',i.count))}];
-      this.setData({notice:'排除定向订单。热门排序得分 = 浏览数 + 有效报价数 × '+d.settings.hotQuoteWeight+'；榜单按浏览数排序。'});
+      this.setData({notice:'全历史公开需求，排除定向订单，包含已关闭/删除的历史记录。终止未完成指已取消或已关闭，不把进行中订单或单纯发起纠纷当作失败。关闭原因按仲裁、同意退款、管理员关闭、其他依次归类。纠纷/退款次数可重复，分类涉及订单数不可相加；退款同意不等于真实资金已退回。旧退款无法识别的类型归为“历史未分类”。'});
     } else if(kind==='storage') {
       metrics=[metric('已登记文件 / 链接',d.summary.count),metric('登记文件容量',bytes(d.summary.bytes)),metric('网盘链接',d.summary.links || 0)];
       sections=[{title:'按资料类型统计',rows:d.groups.map(i=>row(i.kind,i.kind,i.count+' 项',bytes(i.bytes)))},

@@ -11,7 +11,7 @@ mock('../src/db',{
   if(sql.startsWith('SELECT COUNT(*) n FROM refund_requests'))return [[{n:attempts}]];
   if(sql.includes('SELECT id FROM disputes'))return [[]];
   if(sql.startsWith('UPDATE orders'))return [{affectedRows:1}];
-  if(sql.includes('INSERT INTO refund_requests')){created++;return [{}];}
+  if(sql.includes('INSERT INTO refund_requests')){assert.equal(args.at(-1),'其他');created++;return [{}];}
   throw Error(sql);
  }})
 });

@@ -533,3 +533,7 @@
 .step-line.active { background: #5BC0EB; }
 
 @import "../../theme.wxss";
+
+.promotion-panel{margin:24rpx 0;padding:24rpx;background:#fff;border:1rpx solid #d6e3e2;border-radius:22rpx}.promotion-heading{display:block;font-size:29rpx;font-weight:700}.promotion-hint{display:block;font-size:23rpx;color:#697d7e;line-height:1.6;margin-top:8rpx}.promotion-choice{display:flex;align-items:center;justify-content:space-between;gap:16rpx;padding:22rpx;margin-top:16rpx;border:2rpx solid #e4e6ef;border-radius:16rpx;font-size:27rpx}.promotion-choice.selected{border-color:#35788d;background:#eef6f7;color:#285c70}
+
+.promotion-price{font-size:24rpx;font-weight:600;color:#D3542A;margin-left:12rpx}
