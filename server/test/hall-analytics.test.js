@@ -4,7 +4,7 @@ const statements=[];
 require.cache[require.resolve('../src/db')]={loaded:true,exports:{
  parseJson:(s,d)=>{if(typeof s!=='string')return s;try{return JSON.parse(s);}catch{return d;}},
  query:async(sql,args)=>{statements.push([sql,args]);if(sql.includes('END category,COUNT'))return [{category:'REFUND_CANCEL',count:'2'}];return [];},
- queryOne:async()=>({total:'10',completed:'3',terminated:'2',disputeOrders:'2',refundOrders:'1'})
+ queryOne:async(sql,args)=>{statements.push([sql,args]);return {total:'10',completed:'3',terminated:'2',disputeOrders:'2',refundOrders:'1'};}
 }};
 const {directions,analytics,tags}=require('../src/services/hall-analytics');
 test('多方向订单每方向去重，空方向保留，零样本方向显示，供给不混入需求数',()=>{
@@ -28,4 +28,15 @@ test('异常统计不因多次退款乘增订单数，保留历史关闭订单�
  const refunds=statements.find(([s])=>s.includes('r.reason LIKE'));
  assert.match(refunds[0],/COUNT\(DISTINCT r.orderId\)/);assert.match(refunds[0],/r.reasonType/);assert.ok(refunds[1].includes('其他：%'));assert.doesNotMatch(refunds[0],/SELECT r\.reason,/);
  const failureSql=statements.find(([s])=>s.includes('END category,COUNT'))[0];assert.match(failureSql,/r.status='AGREED'/);
+});
+
+test('大厅汇总引用MySQL保留字别名，保持终止订单字段与数值兼容',async()=>{
+ statements.length=0;
+ const result=await analytics();
+ const sql=statements.find(([s])=>s.startsWith('SELECT COUNT(*) total'))[0];
+ assert.match(sql,/SUM\(o.status IN \('CANCELLED','CLOSED'\)\) AS `terminated`/);
+ assert.doesNotMatch(sql,/\)\s+terminated\s*,/i);
+ assert.equal(result.totals.terminated,2);
+ assert.equal(result.totals.total,10);
+ assert.equal(result.totals.completed,3);
 });
