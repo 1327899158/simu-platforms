@@ -74,7 +74,7 @@ function orderView(o, extra = {}) {
     budgetFlexible: !!o.budgetFlexible,
     deliveryDays: o.deliveryDays,
     specialNote: o.specialNote,
-    promotion: o.promotion || 'NONE',
+    promotion: o.promotion === 'EXPOSURE' ? 'EXPOSURE' : 'NONE',
     status: o.status,
     statusText: customerQuoteStage && o.status === 'QUOTING'
       ? customerQuotingText(quoteCount)
@@ -120,6 +120,7 @@ function register(router) {
     const budgetFen = v.int(b.budgetFen, '预算', { min: 100, max: 1000000000, optional: true });
     const specialNote = v.str(b.specialNote, '特殊要求', { max: 2000, optional: true });
     const promotion = require('../services/order-promotion').validatePromotion(b.promotion, b.directEngineerId);
+    const exposureUnits = promotion === 'EXPOSURE' ? require('../services/exposure-svc').quantity(b.exposureUnits) : 0;
     const rawFileIds = v.arr(b.fileIds, '文件', { maxLen: 20, optional: true }) || [];
     const fileIds = rawFileIds.map((fid) => v.str(fid, '文件ID', { min: 1, max: 32 }));
     if (new Set(fileIds).size !== fileIds.length) throw err.bad('附件列表包含重复文件');
@@ -156,6 +157,7 @@ function register(router) {
           budgetFen ?? null, v.bool(b.budgetFlexible, true) ? 1 : 0,
           deliveryDays, specialNote ?? null, now, now, promotion]
       );
+      if (promotion === 'EXPOSURE') await require('../services/exposure-svc').create(conn, id, user.id, exposureUnits);
       directNotice = await require('../services/cooperation-svc').attachDirect(conn,user.id,id,b.directEngineerId,budgetFen,projectName);
       for (const file of attachmentFiles) {
         const [linked] = await conn.execute(

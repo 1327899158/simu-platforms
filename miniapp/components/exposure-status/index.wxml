@@ -1,0 +1,17 @@
+<view wx:if="{{info || orderStatus==='QUOTING' || error}}" class="exposure-panel">
+ <view class="heading">增加曝光 · 19元/100人</view>
+ <view wx:if="{{error}}" class="hint" bindtap="load">{{error}} · 点击重试</view>
+ <block wx:if="{{info}}">
+  <view class="state">{{info.state==='UNPAID'?'待支付曝光费':info.state==='ACTIVE'?'正在曝光':info.state==='COMPLETED'?'曝光已完成':'曝光已暂停'}}</view>
+  <view>已推流给 {{info.deliveredPeople}} 人 / {{info.targetPeople}} 人</view>
+  <progress percent="{{info.progress}}" show-info stroke-width="8" activeColor="#3c8495"/>
+  <view class="hint">{{info.paymentMode==='mock'?'当前为模拟曝光支付，未实际扣款。':''}}同一工程师只计一次，仅工程师首页可见展示计数。</view>
+  <view wx:if="{{info.state==='PAUSED'}}" class="hint">需求已停止报价，剩余推流暂停，可联系订单客服处理。</view>
+ </block>
+ <block wx:if="{{ready && orderStatus==='QUOTING' && (!info || info.state==='UNPAID')}}">
+  <view wx:if="{{!info}}" class="quantity"><text>购买份数（每份100人）</text><input type="number" maxlength="3" value="{{units}}" bindinput="quantity" disabled="{{busy}}"/></view>
+  <view class="hint">工程师首页展示，不保证报价或成交；达到目标人数后停止曝光。</view>
+  <button bindtap="pay" disabled="{{busy}}" loading="{{busy}}">{{info?'支付曝光费 ¥'+info.amountFen/100:'购买 '+units*100+' 人曝光 · ¥'+units*19}}</button>
+ </block>
+ <button wx:if="{{info && info.state==='PAUSED'}}" bindtap="help">联系订单客服</button>
+</view>

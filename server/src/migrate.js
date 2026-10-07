@@ -10,6 +10,7 @@ init()
   .then(() => require('./services/delivery-enterprise-migration').migrate(require('./db').query))
   .then(() => require('./services/customer-service-migration').migrate(require('./db').query))
   .then(() => require('./services/admin-console').migrate(require('./db').query))
+  .then(() => require('./services/exposure-migration').migrate(require('./db').query))
   .then(() => process.exit(0))
   .catch((error) => {
     console.error('[migrate] failed:', error.message);

@@ -41,9 +41,10 @@ test('大额队列严格超过5000元，报表不虚构平台收入',async()=>{
  const daily=sqls.find(([sql])=>sql.includes('GROUP BY day'));assert.equal(daily[1].length,2);assert.ok(daily[0].includes('paidAt<?'));
 });
 const {promotionSummary}=require('../src/routes/admin-finance');
-test('推广来源分别按19元与29元测算，不将选择次数计为已收款',()=>{
- const result=promotionSummary([{promotion:'EXPOSURE',count:'3'},{promotion:'URGENT',count:'2'}]);
- assert.equal(result[0].estimatedFen,5700);assert.equal(result[1].estimatedFen,5800);
- assert.equal(result[0].receivedFen,null);assert.equal(result[1].paymentStatus,'NOT_INTEGRATED');
- assert.equal(promotionSummary([])[0].count,0);assert.equal(promotionSummary([])[1].estimatedFen,0);
+test('曝光财务区分购买额、微信实收与模拟支付并展示推流人数',()=>{
+ const result=promotionSummary([{count:'3',estimatedFen:'7600',receivedFen:'3800',mockFen:'1900',targetPeople:'400',deliveredPeople:'175'}]);
+ assert.equal(result.length,1);assert.equal(result[0].unitFen,1900);assert.equal(result[0].estimatedFen,7600);
+ assert.equal(result[0].receivedFen,3800);assert.equal(result[0].mockFen,1900);
+ assert.equal(result[0].targetPeople,400);assert.equal(result[0].deliveredPeople,175);
+ assert.equal(promotionSummary([])[0].count,0);assert.equal(promotionSummary([])[0].receivedFen,0);
 });

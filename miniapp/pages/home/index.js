@@ -16,11 +16,12 @@ Page({
     unreadOrderCount: 0,
     unreadQuoteCount: 0,
     // 工程师
-    hall: [],
+    hall: [], exposures: [],
     hallStats: { allCount: null, todayCount: null },
     campaigns: [], notices: [], engineers: [], categories: [],
   },
   async onShow() {
+    this._exposureActive=true;
     clearInterval(this._quoteTimer);
     let user = ensureLogin();
     if (!user) return;
@@ -28,6 +29,7 @@ Page({
       user = await request('GET', '/me', null, { silent: true });
       wx.setStorageSync('user', user);
     } catch (_) {}
+    if(this.data.user?.id!==user.id)this._exposureSeen=new Set();
     const canTakeOrders = user.role === 'ENGINEER' && isApproved(user);
     this.setData({
       role: user.role,
@@ -40,8 +42,8 @@ Page({
     if (user.role === 'ENGINEER') {
       this.loadQuoteUnread();
       this._quoteTimer = setInterval(() => this.loadQuoteUnread(), 15000);
-      if (canTakeOrders) this.loadHall();
-      else this.setData({ hall: [] });
+      if (canTakeOrders) { this.loadHall(); this.loadExposures(); }
+      else this.setData({ hall: [],exposures:[] });
     } else {
       this.loadCustomer();
       this.loadDiscovery();
@@ -49,8 +51,8 @@ Page({
       this._noticeTimer = setInterval(() => this.loadNotices(), 15000);
     }
   },
-  onHide() { clearInterval(this._noticeTimer); clearInterval(this._quoteTimer); },
-  onUnload() { clearInterval(this._noticeTimer); clearInterval(this._quoteTimer); },
+  onHide() { this._exposureActive=false;require('../../utils/exposure-tracker').stop(this); clearInterval(this._noticeTimer); clearInterval(this._quoteTimer); },
+  onUnload() { this._exposureActive=false;require('../../utils/exposure-tracker').stop(this); clearInterval(this._noticeTimer); clearInterval(this._quoteTimer); },
   async loadQuoteUnread() {
     const userId = this.data.user && this.data.user.id;
     try {
@@ -79,7 +81,7 @@ Page({
   },
   onPullDownRefresh() {
     const p = this.data.role === 'ENGINEER'
-      ? Promise.all([this.loadQuoteUnread(), this.data.canTakeOrders ? this.loadHall() : Promise.resolve()])
+      ? Promise.all([this.loadQuoteUnread(), this.data.canTakeOrders ? Promise.all([this.loadHall(),this.loadExposures()]) : Promise.resolve()])
       : Promise.all([this.loadCustomer(), this.loadDiscovery()]);
     p.finally(() => wx.stopPullDownRefresh());
   },
@@ -118,6 +120,14 @@ Page({
   goProfile() { wx.navigateTo({ url: '/pages/profile-edit/index' }); },
 
   // ---------- 工程师 ----------
+  async loadExposures() {
+    const userId=this.data.user?.id;
+    try {
+      const r=await request('GET','/home/exposures',null,{silent:true});
+      if(!this._exposureActive||this.data.user?.id!==userId||!this.data.canTakeOrders)return;
+      this.setData({exposures:r.items.map(o=>({...o,budgetY:fenToYuan(o.budgetFen)})),hall:this.data.hall.filter(o=>!r.items.some(e=>e.id===o.id))},()=>require('../../utils/exposure-tracker').observe(this));
+    }catch(_){if(this._exposureActive)this.setData({exposures:[]});}
+  },
   async loadHall() {
     if (!this.data.canTakeOrders) return;
     const params = { limit: 5, placement: 'home' };
@@ -126,7 +136,7 @@ Page({
     catch (e) { wx.showToast({ title: e.message || '抢单大厅加载失败', icon: 'none' }); return; }
     this.setData({
       hallStats: data.stats || { allCount: null, todayCount: null },
-      hall: data.items.map((o) => ({
+      hall: data.items.filter(o=>!this.data.exposures.some(e=>e.id===o.id)).map((o) => ({
         ...o, budgetY: fenToYuan(o.budgetFen), time: timeShort(o.createdAt),
       })),
     });

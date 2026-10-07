@@ -120,6 +120,7 @@
     "ui-symbol": "/components/ui-symbol/index",
     "case-gallery": "/components/case-gallery/index",
     "signin-float": "/components/signin-float/index",
-    "announcement-banner": "/components/announcement-banner/index"
+    "announcement-banner": "/components/announcement-banner/index",
+    "exposure-status": "/components/exposure-status/index"
   }
 }

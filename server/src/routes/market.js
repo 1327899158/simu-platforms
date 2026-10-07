@@ -2,7 +2,7 @@
 /** 抢单大厅（云开发版）。 */
 const { ok, err } = require('../lib/http');
 const { v } = require('../lib/util');
-const { priorityFor, encodeCursor, decodeCursor } = require('../services/order-promotion');
+const { validatePlacement, encodeCursor, decodeCursor } = require('../services/order-promotion');
 const { query, queryOne, tx } = require('../db');
 const { requireEngineer } = require('../lib/auth-mw');
 const { orderView, quoteCountOf } = require('./orders');
@@ -16,8 +16,7 @@ function register(router) {
     const cursor = q_.get('cursor');
     const sort = q_.get('sort') || 'latest';
     const placement = q_.get('placement') || 'hall';
-    const priority = priorityFor(placement);
-    const rank = `(o.promotion = '${priority}')`;
+    validatePlacement(placement);
     if (!['latest', 'hot'].includes(sort)) throw err.bad('不支持的排序方式');
     const cond = [`o.status = 'QUOTING'`, `o.deletedAt IS NULL`, `o.customerId <> ?`, `NOT EXISTS(SELECT 1 FROM direct_demands dd WHERE dd.orderId=o.id)`];
     const args = [user.id];
@@ -44,13 +43,13 @@ function register(router) {
     }
     if (cursor && sort === 'latest') {
       const c = decodeCursor(cursor, placement);
-      cond.push(`(${rank} < ? OR (${rank} = ? AND (o.createdAt < ? OR (o.createdAt = ? AND o.id < ?))))`);
-      args.push(c.r,c.r,c.t,c.t,c.id);
+      cond.push('(o.createdAt < ? OR (o.createdAt = ? AND o.id < ?))');
+      args.push(c.t,c.t,c.id);
     }
     const hotWeight = (await require('../services/admin-console').settings()).hotQuoteWeight;
     const orderBy = sort === 'hot'
-      ? `${rank} DESC, (quoteCount * ${hotWeight} + o.viewCount) DESC, o.createdAt DESC, o.id DESC`
-      : `${rank} DESC, o.createdAt DESC, o.id DESC`;
+      ? `(quoteCount * ${hotWeight} + o.viewCount) DESC, o.createdAt DESC, o.id DESC`
+      : 'o.createdAt DESC, o.id DESC';
     const rows = await query(
       `SELECT o.*,
               (SELECT COUNT(*) FROM quotes qc

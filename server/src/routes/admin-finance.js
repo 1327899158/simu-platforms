@@ -18,10 +18,10 @@ function period(q,now=new Date()) {
   return {range,start:start.toISOString().slice(0,10),end:new Date(end.getTime()-86400000).toISOString().slice(0,10),from:sqlDate(start),until:sqlDate(end)};
 }
 function promotionSummary(rows){
-  return [['EXPOSURE','增加曝光',1900],['URGENT','置顶加急',2900]].map(([key,label,unitFen])=>{
-    const count=Number(rows.find(r=>r.promotion===key)?.count || 0);
-    return {key,label,unitFen,count,estimatedFen:count*unitFen,receivedFen:null,paymentStatus:'NOT_INTEGRATED'};
-  });
+  const r=rows[0]||{};
+  return [{key:'EXPOSURE',label:'增加曝光',unitFen:1900,count:Number(r.count||0),
+    targetPeople:Number(r.targetPeople||0),deliveredPeople:Number(r.deliveredPeople||0),
+    estimatedFen:Number(r.estimatedFen||0),receivedFen:Number(r.receivedFen||0),mockFen:Number(r.mockFen||0),paymentStatus:'INTEGRATED'}];
 }
 function register(router){
   router.get('/api/admin/finance/overview',async(req,res,_p,q)=>{
@@ -34,11 +34,15 @@ function register(router){
       query("SELECT w.id,w.amountFen,w.bankLabel,w.status,w.createdAt,u.nickname FROM demo_withdrawals w JOIN users u ON u.id COLLATE utf8mb4_unicode_ci=w.userId COLLATE utf8mb4_unicode_ci WHERE w.amountFen>500000 AND w.status IN ('SUBMITTED','APPROVED','PAYING') ORDER BY w.createdAt,w.id LIMIT 50"),
       query("SELECT i.id,i.orderId,i.invoiceTitle,o.orderNo,o.projectName,o.finalAmountFen FROM invoice_requests i JOIN orders o ON o.id=i.orderId WHERE i.status='PLATFORM_REQUESTED' ORDER BY i.requestedAt,i.id LIMIT 50"),
       query("SELECT DATE_FORMAT(DATE_ADD(paidAt,INTERVAL 8 HOUR),'%Y-%m-%d') day,COUNT(*) count,SUM(amountFen) amountFen FROM payments WHERE status='SUCCESS' AND paidAt>=? AND paidAt<? GROUP BY day ORDER BY day",args),
-      query("SELECT o.promotion,COUNT(*) count FROM orders o WHERE o.promotion IN ('EXPOSURE','URGENT') AND o.createdAt>=? AND o.createdAt<? AND NOT EXISTS(SELECT 1 FROM direct_demands dd WHERE dd.orderId COLLATE utf8mb4_unicode_ci=o.id COLLATE utf8mb4_unicode_ci) GROUP BY o.promotion",args)
+      query(`SELECT COUNT(*) count,COALESCE(SUM(targetPeople),0) targetPeople,COALESCE(SUM(deliveredPeople),0) deliveredPeople,
+        COALESCE(SUM(amountFen),0) estimatedFen,
+        COALESCE(SUM(CASE WHEN paymentStatus='SUCCESS' AND paymentMode='wechat' THEN amountFen ELSE 0 END),0) receivedFen,
+        COALESCE(SUM(CASE WHEN paymentStatus='SUCCESS' AND paymentMode='mock' THEN amountFen ELSE 0 END),0) mockFen
+        FROM order_exposures WHERE createdAt>=? AND createdAt<?`,args)
     ]);
     const promotions=promotionSummary(promotionRows);
     return ok(res,{dates,paid,pending,issued,withdrawals,queue,invoices,daily,incomeFen:null,promotions,
-      promotionBasis:'按所选期间发布且选择该方式的公开需求计次，含后续关闭的历史记录；以当前标价测算，未实际收款、不构成应收欠款，不计入平台实际收入。', 
+      promotionBasis:'按所选期间创建的曝光购买记录统计，19元/100人；购买金额包含待支付记录，真实实收与模拟支付分列，推流人数按不同工程师去重。',
       notice:'平台抽佣、服务费和真实结算账本未接入；待履约金额是订单总额，不是可结算余额。提现为模拟资金。统计含历史模拟支付。待办队列不受日期筛选影响，每类最多显示最早50笔。'});
   });
   router.get('/api/admin/finance/withdrawals/:id',async(req,res,p)=>{

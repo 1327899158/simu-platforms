@@ -215,10 +215,10 @@ module.exports = {
 
     <view class="promotion-panel" wx:if="{{!directEngineerId}}">
       <text class="promotion-heading">需求展示方式（选填）</text>
-      <text class="promotion-hint">二选一，也可普通发布；仅在需求待报价期间优先展示。当前仅展示标价，暂未开通收费。</text>
+      <text class="promotion-hint">按100位不同工程师一份购买，支付成功后在工程师首页推流。重复展示不重复计数，不保证收到报价；需求停止报价后暂停曝光。</text>
       <view class="promotion-choice {{promotion === 'NONE' ? 'selected' : ''}}" data-value="NONE" bindtap="selectPromotion"><text>普通发布</text><text>{{promotion === 'NONE' ? '●' : '○'}}</text></view>
-      <view class="promotion-choice {{promotion === 'EXPOSURE' ? 'selected' : ''}}" data-value="EXPOSURE" bindtap="selectPromotion"><view><text>增加曝光 <text class="promotion-price">19元/次</text></text><text class="promotion-hint">优先出现在工程师首页的需求列表上方</text></view><text>{{promotion === 'EXPOSURE' ? '●' : '○'}}</text></view>
-      <view class="promotion-choice {{promotion === 'URGENT' ? 'selected' : ''}}" data-value="URGENT" bindtap="selectPromotion"><view><text>置顶加急 <text class="promotion-price">29元/次</text></text><text class="promotion-hint">需求大厅优先置顶，并显示红色“加急”</text></view><text>{{promotion === 'URGENT' ? '●' : '○'}}</text></view>
+      <view class="promotion-choice {{promotion === 'EXPOSURE' ? 'selected' : ''}}" data-value="EXPOSURE" bindtap="selectPromotion"><view><text>增加曝光 <text class="promotion-price">19元/100人</text></text><text class="promotion-hint">展示在工程师首页，卡片进入可见区域后计入推流人数</text></view><text>{{promotion === 'EXPOSURE' ? '●' : '○'}}</text></view>
+      <view wx:if="{{promotion==='EXPOSURE'}}"><view class="exposure-quantity"><text>购买份数（1—100份）</text><input type="number" maxlength="3" value="{{exposureUnits}}" bindinput="exposureQuantity"/></view><text class="promotion-hint">计划推流 {{exposureUnits * 100}} 人 · ¥{{exposureUnits * 19}}，发布后在订单详情支付曝光费。</text></view>
     </view>
     <view class="terms" bindtap="toggleAgree">
       <view class="checkbox-box {{agreed ? 'checked' : ''}}">

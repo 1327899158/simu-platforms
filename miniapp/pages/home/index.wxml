@@ -49,6 +49,14 @@
    <view wx:if="{{!canTakeOrders}}" class="notification" bindtap="goMarketHall"><text class="notice-icon">★</text><view class="grow"><view>完成身份认证，开启专业接单</view><view class="small">认证状态及补充要求以认证页面为准</view></view><text>›</text></view>
    <block wx:else>
     <view class="surface hall-stats"><view><text class="stat-number">{{hallStats.allCount===null?'—':hallStats.allCount}}</text><text class="small">全部可接需求</text></view><view><text class="stat-number">{{hallStats.todayCount===null?'—':hallStats.todayCount}}</text><text class="small">今日新增</text></view></view>
+    <block wx:if="{{exposures.length}}">
+     <view class="section-head"><text class="section-heading">推荐需求</text><text class="small">推广曝光</text></view>
+     <view class="surface demand-card exposure-card" wx:for="{{exposures}}" wx:key="id" data-id="{{item.id}}" data-token="{{item.impressionToken}}" bindtap="openMarket">
+      <view class="card-top"><text class="status-pill">推广 · 待报价</text></view><view class="demand-title">{{item.projectName}}</view>
+      <view class="skills"><text class="skill" wx:for="{{item.directionTags}}" wx:for-item="tag" wx:key="*this">{{tag}}</text></view>
+      <view class="card-bottom"><text class="amount">预算 ¥{{item.budgetY}}</text><text class="small">工期 {{item.deliveryDays}} 天 · 查看需求 ›</text></view>
+     </view>
+    </block>
     <view class="section-head"><text class="section-heading">发现<text class="marker">新机会</text></text><text class="more" bindtap="goMarketHall">全部需求 ›</text></view>
     <view class="surface demand-card" wx:for="{{hall}}" wx:key="id" data-id="{{item.id}}" bindtap="openMarket" hover-class="pressed">
      <view class="card-top"><text class="status-pill {{item.myQuote?'muted-pill':''}}">{{item.myQuote?'已报价':'待报价'}}</text><text class="small">{{item.time}}</text></view>
@@ -57,7 +65,7 @@
      <view class="demand-info"><view>预算：¥{{item.budgetY}}</view><view>工期：{{item.deliveryDays}} 天</view><view class="small">{{item.quoteCount}} 人报价</view><view class="home-view-badge"><image src="/assets/icons-contrast/eye.svg"/><text>{{item.viewCount || 0}}</text></view></view>
      <view class="card-bottom"><text class="amount">¥{{item.budgetY}}</text><button wx:if="{{!item.myQuote}}" class="blue-button quote-button" data-id="{{item.id}}" data-flexible="{{item.budgetFlexible?1:0}}" data-fen="{{item.budgetFen}}" catchtap="quickQuote">立即报价 ↗</button><text wx:else class="small">已提交报价 ›</text></view>
     </view>
-    <view wx:if="{{!hall.length}}" class="surface home-empty"><view><ui-symbol value="☘"/></view><text>暂无可接单需求</text><text class="small">下拉刷新，或前往大厅查看最新机会</text></view>
+    <view wx:if="{{!hall.length && !exposures.length}}" class="surface home-empty"><view><ui-symbol value="☘"/></view><text>暂无可接单需求</text><text class="small">下拉刷新，或前往大厅查看最新机会</text></view>
     <button class="blue-button hall-button" bindtap="goMarketHall">前往接单大厅 · 查看更多</button>
    </block>
   </view>

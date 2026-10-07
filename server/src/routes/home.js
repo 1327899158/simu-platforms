@@ -25,10 +25,11 @@ function register(router) {
   router.get('/api/home/notices', async(req,res) => {
     const user=await requireUser(req);
     const rows=await query(`SELECT o.id,o.projectName,o.status,o.updatedAt,
+      EXISTS(SELECT 1 FROM order_exposures e WHERE e.orderId COLLATE utf8mb4_unicode_ci=o.id AND e.paymentStatus='SUCCESS' AND e.deliveredPeople<e.targetPeople AND o.status='QUOTING') AS exposing,
       EXISTS(SELECT 1 FROM conversations c JOIN messages m ON m.convId=c.id WHERE c.orderId=o.id AND m.senderId=c.engineerId) AS contacted
       FROM orders o WHERE o.customerId=? AND o.deletedAt IS NULL AND o.status IN ('QUOTING','AWAITING_PAYMENT','IN_PROGRESS','DELIVERED','REFUND_PENDING','DISPUTING') ORDER BY o.updatedAt DESC`,[user.id]);
     const labels={DELIVERED:'工程师已提交成果，点击查看',AWAITING_PAYMENT:'需求已确认，点击完成支付',IN_PROGRESS:'工程师正在执行需求，点击查看进度',REFUND_PENDING:'退款申请处理中，点击查看',DISPUTING:'需求正在处理纠纷，点击查看'};
-    ok(res,rows.filter(o=>labels[o.status]||o.contacted).map(o=>({id:o.id,text:labels[o.status]||'您的需求正在被工程师联系，点击查看进度',projectName:o.projectName})));
+    ok(res,rows.filter(o=>o.exposing||labels[o.status]||o.contacted).map(o=>({id:o.id,text:o.exposing?'需求正在曝光，点击查看推流进度':labels[o.status]||'您的需求正在被工程师联系，点击查看进度',projectName:o.projectName})));
   });
   router.get('/api/engineers/level',async(req,res)=>{const u=await requireUser(req); if(u.role!=='ENGINEER') throw err.forbidden(); ok(res,{current:await getLevel(u.id),levels:LEVELS});});
   router.get('/api/home/engineers',async(req,res,_p,q)=>{

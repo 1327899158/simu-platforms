@@ -275,4 +275,4 @@ function startSweeper() {
   if (timer.unref) timer.unref();
 }
 
-module.exports = { reconcilePayment, createPayment, createJsapiOrder, applyPaymentSuccess, sweepExpiredAwaitingPayment, startSweeper };
+module.exports = { wxpayRequest, cloudPayResult, reconcilePayment, createPayment, createJsapiOrder, applyPaymentSuccess, sweepExpiredAwaitingPayment, startSweeper };

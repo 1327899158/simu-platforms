@@ -29,6 +29,7 @@ require('./routes/home').register(router);
 require('./routes/orders').register(router);
 require('./routes/delivery-enterprise').register(router);
 require('./routes/market').register(router);
+require('./routes/exposure').register(router);
 require('./routes/earnings').register(router);
 require('./routes/quotes').register(router);
 require('./routes/reviews').register(router);
@@ -86,6 +87,7 @@ async function bootstrap() {
   await require('./services/delivery-enterprise-migration').migrate(require('./db').query);
   await require('./services/customer-service-migration').migrate(require('./db').query);
   await require('./services/admin-console').migrate(require('./db').query);
+  await require('./services/exposure-migration').migrate(require('./db').query);
   require('./services/completion-reward-svc').start();
   require('./services/overdue-svc').start();
   require('./services/account-closure-svc').start();
