@@ -4,7 +4,7 @@
  * 云开发版变化：
  *   - 移除 JWT / SQLite / 本地文件 / 短信相关配置
  *   - 新增 CLOUDBASE_ENV_ID / MYSQL_* 系列（云托管自动注入）
- *   - 微信支付通过云托管「开放接口服务」代签名，不再存储密钥
+ *   - 微信支付 API v3 密钥只放在服务端环境变量和挂载的密钥文件中
  */
 const path = require('node:path');
 const fs = require('node:fs');
@@ -69,6 +69,17 @@ const config = {
   wxpayMchid: process.env.WXPAY_MCHID || '',
   // 云托管回调服务名；未配置时使用平台注入的 X-WX-SERVICE。
   wxpayCallbackService: process.env.WXPAY_CALLBACK_SERVICE || '',
+  // 新单默认普通商户 API v3；cloudbase 仅用于历史云托管代签名接入。
+  wxpayTransport: String(process.env.WXPAY_TRANSPORT || 'v3').trim().toLowerCase(),
+  wxpaySerialNo: process.env.WXPAY_SERIAL_NO || '',
+  wxpayPrivateKeyPath: process.env.WXPAY_PRIVATE_KEY_PATH || '',
+  wxpayPrivateKeyBase64: process.env.WXPAY_PRIVATE_KEY_BASE64 || '',
+  wxpayPublicKeyId: process.env.WXPAY_PUBLIC_KEY_ID || '',
+  wxpayPublicKeyPath: process.env.WXPAY_PUBLIC_KEY_PATH || '',
+  wxpayPublicKeyBase64: process.env.WXPAY_PUBLIC_KEY_BASE64 || '',
+  wxpayApiV3Key: process.env.WXPAY_API_V3_KEY || '',
+  wxpayNotifyBaseUrl: process.env.WXPAY_NOTIFY_BASE_URL || '',
+  inviteEnvVersion: ['release','trial','develop'].includes(process.env.INVITE_ENV_VERSION) ? process.env.INVITE_ENV_VERSION : 'release',
   // 演示价开关：设为 1 则实付 0.01 元；生产必须留空
   payAmountOverrideFen: int(process.env.PAY_AMOUNT_OVERRIDE_FEN, 0) || null,
   payTimeoutSec: int(process.env.PAY_TIMEOUT_SEC, 30 * 60),

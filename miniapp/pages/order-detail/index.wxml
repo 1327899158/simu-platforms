@@ -20,6 +20,11 @@ module.exports = {
 </wxs>
 <view class="page-container" wx:if="{{order}}">
   <view class="order-tools"><button class="order-more" bindtap="openMoreMenu" aria-label="更多操作">•••</button></view>
+  <view class="refund-request-card" wx:for="{{moneyRefunds}}" wx:key="id">
+    <text class="refund-request-title">{{item.statusText}}</text>
+    <text class="refund-request-desc">原路退回 ¥{{item.cashRefundText}} · 返还 {{item.coinRefund}} 仿真币</text>
+    <text class="refund-request-desc" wx:if="{{item.status!=='SUCCESS'}}">退款完成后返还抵扣仿真币，现金到账时间以支付渠道为准。</text>
+  </view>
 
   <view class="invoice-reminder" wx:if="{{invoiceNeedsAction}}">
     <view class="invoice-reminder-heading"><view class="invoice-reminder-dot"></view><text>{{invoiceRequest.status === 'REQUESTED' ? '客户已申请发票 · 待处理' : '发票待开具 · 请上传发票'}}</text></view>

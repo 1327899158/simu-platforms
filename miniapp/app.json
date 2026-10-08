@@ -47,7 +47,8 @@
     "pages/earnings/index",
     "pages/wallet/index",
     "pages/bank-card/index",
-    "pages/benefits/index"
+    "pages/benefits/index",
+    "pages/invite-poster/index"
   ],
   "subPackages": [
     {
@@ -121,6 +122,7 @@
     "case-gallery": "/components/case-gallery/index",
     "signin-float": "/components/signin-float/index",
     "announcement-banner": "/components/announcement-banner/index",
-    "exposure-status": "/components/exposure-status/index"
+    "exposure-status": "/components/exposure-status/index",
+    "coin-deduction": "/components/coin-deduction/index"
   }
 }

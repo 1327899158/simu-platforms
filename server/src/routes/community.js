@@ -50,7 +50,7 @@ function register(router){
   router.post('/api/cooperation/:id/respond',async(req,res,p)=>{const u=await member(req),b=await readJson(req);ok(res,await coop.respond(u,p.id,b.action));});
   router.get('/api/direct-demands',async(req,res,p,q)=>{const u=await member(req);ok(res,page(await query(`SELECT o.id,o.projectName,o.status,d.engineerId,u.nickname engineerName FROM direct_demands d JOIN orders o ON o.id=d.orderId JOIN users u ON u.id=d.engineerId WHERE (d.customerId=? OR d.engineerId=?) AND o.deletedAt IS NULL ORDER BY o.createdAt DESC,o.id DESC LIMIT 21 OFFSET ${offset(q)}`,[u.id,u.id])));});
   router.get('/api/direct-demands/:id',async(req,res,p)=>{const u=await member(req);await coop.assertScope(p.id,u.id);const d=await queryOne('SELECT * FROM direct_demands WHERE orderId=? AND (customerId=? OR engineerId=?)',[p.id,u.id,u.id]);ok(res,d?{...d,terms:parseJson(d.terms)}:null);});
-  router.get('/api/incentives',async(req,res)=>{const u=await member(req);ok(res,{...await incentives.state(u.id,query,u.role),role:u.role,checkin:await benefits.checkState(u.id),badges:await benefits.badges(u.id),leaderboard:u.role==='ENGINEER'?await incentives.leaderboard():[]});});
+  router.get('/api/incentives',async(req,res)=>{const u=await member(req);ok(res,{...await incentives.state(u.id,query,u.role),reservedCoins:(await require('../services/coin-svc').totals(u.id)).balance,role:u.role,checkin:await benefits.checkState(u.id),badges:await benefits.badges(u.id),leaderboard:u.role==='ENGINEER'?await incentives.leaderboard():[]});});
   router.post('/api/incentives/claim',async(req,res)=>{const u=await member(req),b=await readJson(req);ok(res,await incentives.claim(u.id,b.key,u.role));});
 }
 module.exports={register};

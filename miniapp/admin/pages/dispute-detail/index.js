@@ -20,7 +20,7 @@ const ACTIONS = [
 
 Page({
   data: {
-    id: '', dispute: null, loading: true, canResolve: false,
+    id: '', dispute: null, loading: true, canResolve: false, canRefund:false,
     verdict: '', orderAction: '', note: '', refundAmount: '',
     VERDICTS, ACTIONS, submitting: false,
   },
@@ -31,6 +31,7 @@ Page({
     this.setData({
       id: options.id,
       canResolve: hasPermission(admin, 'DISPUTE_RESOLVE'),
+      canRefund: hasPermission(admin, 'DISPUTE_REFUND'),
     });
     this.load();
   },
@@ -135,8 +136,9 @@ Page({
   refundReferenceInput(e){this.setData({refundReference:e.detail.value});},
   async registerRefund(e){
     if(this.data.submitting)return;const status=e.currentTarget.dataset.status,reference=String(this.data.refundReference||'').trim();
-    if(status==='PROCESSED'&&!reference)return wx.showToast({title:'请填写实际退款流水号',icon:'none'});
-    const yes=await require('../../../utils/community').confirm('确认登记退款结果','此操作仅登记，不会发起真实退款。请确认已核对实际资金结果。');if(!yes)return;
+    const real=this.data.dispute?.realRefund;
+    if(!real&&status==='PROCESSED'&&!reference)return wx.showToast({title:'请填写实际退款流水号',icon:'none'});
+    const yes=await require('../../../utils/community').confirm(real?'确认处理原路退款':'确认登记退款结果',real?'将按裁定金额向微信发起或查询退款，现金原路退回，退款完成后返还相应仿真币。':'此操作仅登记，不会发起真实退款。请确认已核对实际资金结果。');if(!yes)return;
     this.setData({submitting:true});try{await request('POST',`/admin/disputes/${this.data.id}/refund`,{refundStatus:status,refundTransactionId:reference});await this.load();}catch(e){wx.showToast({title:e.message,icon:'none'});}finally{this.setData({submitting:false});}
   },
 });

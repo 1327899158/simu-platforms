@@ -370,7 +370,11 @@ function register(router) {
     await requireAdmin(req, 'DISPUTE_READ');
     const d = await queryOne(`SELECT * FROM disputes WHERE id = ?`, [params.id]);
     if (!d) throw err.notFound('纠纷不存在');
-    ok(res, await disputeDetail(d));
+    const detail=await disputeDetail(d);
+    const payment=await queryOne("SELECT provider FROM payments WHERE orderId=? AND status='SUCCESS' ORDER BY paidAt DESC LIMIT 1",[d.orderId]);
+    const realRefund=payment?.provider==='v3';
+    const moneyRefund=realRefund?await queryOne('SELECT status,refundId,cashRefundFen,coinRefund,lastError FROM payment_refunds WHERE businessKey=?',['DISPUTE:'+d.id]):null;
+    ok(res,{...detail,realRefund,moneyRefund});
   });
 
   // POST /api/admin/disputes/:id/resolve { verdict, orderAction, note?, refundAmountFen? }

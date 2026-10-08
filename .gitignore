@@ -4,6 +4,10 @@
 .env.production
 .env.development
 
+# 微信支付私钥和公钥采用运行时挂载，禁止提交密钥文件
+*.pem
+/server/secrets/
+
 # 依赖包（云托管构建时会自动 npm install）
 node_modules/
 */node_modules/

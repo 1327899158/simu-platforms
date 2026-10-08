@@ -6,13 +6,15 @@ App({
   globalData: { adminMode: false, unreadTotal: 0 },
   _unreadTimer: null,
 
-  onLaunch() {
+  onLaunch(options) {
+    require('./utils/invitation').capture(options);
     // 初始化云开发 SDK
     initCloud();
     // 刷新用户信息
     this.refreshUser();
   },
-  onShow() {
+  onShow(options) {
+    require('./utils/invitation').capture(options);
     // 管理分包使用独立数据流，进入管理模式后不轮询普通会话列表。
     if (this.globalData.adminMode) this.stopUnreadPoll();
     else this.startUnreadPoll();

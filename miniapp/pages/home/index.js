@@ -1,5 +1,5 @@
 /** 首页：按角色分流 —— 客户（发布入口+最近订单）/ 工程师（可接需求预览）。 */
-const { ensureLogin } = require('../../utils/auth');
+const { ensureLogin, getUser } = require('../../utils/auth');
 const { request } = require('../../utils/request');
 const { fenToYuan, timeShort, STATUS_CLASS } = require('../../utils/format');
 const { isApproved, promptIdentity } = require('../../utils/identity');
@@ -19,12 +19,15 @@ Page({
     hall: [], exposures: [],
     hallStats: { allCount: null, todayCount: null },
     campaigns: [], notices: [], engineers: [], categories: [],
+    sharePopupVisible: false,
+    shareCampaign: null,
   },
   async onShow() {
     this._exposureActive=true;
     clearInterval(this._quoteTimer);
     let user = ensureLogin();
     if (!user) return;
+    require('../../utils/invitation').accept();
     try {
       user = await request('GET', '/me', null, { silent: true });
       wx.setStorageSync('user', user);
@@ -39,6 +42,7 @@ Page({
     });
     const tabBar = this.getTabBar && this.getTabBar();
     if (tabBar && tabBar.syncTabBar) tabBar.syncTabBar(user.role, '/pages/home/index');
+    this.loadSharePopup(user.id);
     if (user.role === 'ENGINEER') {
       this.loadQuoteUnread();
       this._quoteTimer = setInterval(() => this.loadQuoteUnread(), 15000);
@@ -51,7 +55,7 @@ Page({
       this._noticeTimer = setInterval(() => this.loadNotices(), 15000);
     }
   },
-  onHide() { this._exposureActive=false;require('../../utils/exposure-tracker').stop(this); clearInterval(this._noticeTimer); clearInterval(this._quoteTimer); },
+  onHide() { this.setData({sharePopupVisible:false});this._exposureActive=false;require('../../utils/exposure-tracker').stop(this); clearInterval(this._noticeTimer); clearInterval(this._quoteTimer); },
   onUnload() { this._exposureActive=false;require('../../utils/exposure-tracker').stop(this); clearInterval(this._noticeTimer); clearInterval(this._quoteTimer); },
   async loadQuoteUnread() {
     const userId = this.data.user && this.data.user.id;
@@ -61,6 +65,36 @@ Page({
         this.setData({ unreadQuoteCount: Number(data.unreadCount || 0) });
       }
     } catch (_) {}
+  },
+  async loadSharePopup(userId) {
+    const loginShare = require('../../utils/login-share');
+    const ticket = loginShare.pending(userId);
+    if (!ticket || this._sharePopupLoading === ticket.version) return;
+    this._sharePopupLoading = ticket.version;
+    try {
+      const campaigns = await request('GET', '/home/campaigns', null, {silent:true});
+      const campaign = campaigns.find(x => x.id === 'invite' && x.action === 'SHARE');
+      if (!campaign || !loginShare.isCurrent(ticket) || !this._exposureActive || this.data.user?.id !== userId || getUser()?.id !== userId) return;
+      if(campaign){try{const invitation=await request('GET','/invitations',null,{silent:true});campaign.sharePath=invitation.sharePath;}catch(_){} }
+      if (!campaign || !this._exposureActive || this.data.user?.id !== userId || getUser()?.id !== userId) return;
+      if (loginShare.consume(ticket)) {
+        require('../../utils/exposure-tracker').stop(this);
+        this.setData({shareCampaign:campaign, sharePopupVisible:true});
+      }
+    } catch (_) { /* 活动读取失败不影响登录及首页操作，返回首页时可重试。 */ }
+    finally { if (this._sharePopupLoading === ticket.version) this._sharePopupLoading = null; }
+  },
+  closeSharePopup() {
+    this.setData({sharePopupVisible:false}, () => {
+      if (this._exposureActive && this.data.canTakeOrders) require('../../utils/exposure-tracker').observe(this);
+    });
+  },
+  stopSharePopupTap() {},
+  openInviteActivity(){this.closeSharePopup();wx.navigateTo({url:'/pages/invite-poster/index'});},
+  onShareAppMessage(e) {
+    const inviting = e && e.from === 'button' && e.target?.id === 'login-invite-share';
+    if (inviting) this.closeSharePopup();
+    return {title:inviting ? this.data.shareCampaign?.title || '邀请你体验仿真服务平台' : '仿真服务平台 · 找专业工程师', path:inviting ? this.data.shareCampaign?.sharePath || '/pages/guest-home/index' : '/pages/guest-home/index'};
   },
   async loadNotices() {
     try { this.setData({ notices: await request('GET','/home/notices',null,{silent:true}) }); } catch (_) {}

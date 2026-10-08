@@ -32,12 +32,16 @@ const OFFERS=[
 ];
 async function assets(id,offset=0){
  offset=v.int(offset,'offset',{min:0,max:1000000});
- const totals=await queryOne('SELECT COALESCE(SUM(amount),0) total FROM incentive_rewards WHERE userId=?',[id]);
+ const totals=await require('./coin-svc').totals(id);
  const coupons=await query(`SELECT id,offerKey,title,amountFen,minSpendFen,expiresAt,CASE WHEN expiresAt<=UTC_TIMESTAMP() THEN 'EXPIRED' ELSE status END status FROM user_coupons WHERE userId=? ORDER BY createdAt DESC,id DESC LIMIT 21 OFFSET ${offset}`,[id]);
- const coins=await query(`SELECT id,taskKey,periodKey,amount,status,createdAt FROM incentive_rewards WHERE userId=? ORDER BY createdAt DESC,id DESC LIMIT 21 OFFSET ${offset}`,[id]);
+ const coins=await query(`SELECT * FROM (
+   SELECT id COLLATE utf8mb4_unicode_ci id,taskKey COLLATE utf8mb4_unicode_ci taskKey,periodKey COLLATE utf8mb4_unicode_ci periodKey,amount,status COLLATE utf8mb4_unicode_ci status,createdAt FROM incentive_rewards WHERE userId=?
+   UNION ALL SELECT businessKey,IF(kind='ORDER','ORDER_DEDUCT','EXPOSURE_DEDUCT'),orderId,-coins,status,createdAt FROM coin_spends WHERE userId=? AND status='SPENT'
+   UNION ALL SELECT businessKey,'COIN_REFUND',paymentKey,coins,'RETURNED',createdAt FROM coin_refunds WHERE userId=?
+  ) ledger ORDER BY createdAt DESC,id DESC LIMIT 21 OFFSET ${offset}`,[id,id,id]);
  const claimedCoupons=await query('SELECT offerKey FROM user_coupons WHERE userId=?',[id]);
  const claimedCoins=await query("SELECT periodKey FROM incentive_rewards WHERE userId=? AND taskKey='ACTIVITY'",[id]);
- return {balance:Number(totals?.total||0),coupons:coupons.slice(0,20),coins:coins.slice(0,20),nextOffset:Math.max(coupons.length,coins.length)>20?offset+20:null,
+ return {...totals,coupons:coupons.slice(0,20),coins:coins.slice(0,20),nextOffset:Math.max(coupons.length,coins.length)>20?offset+20:null,
  offers:OFFERS.map(o=>({...o,claimed:claimedCoupons.some(x=>x.offerKey===o.key)||claimedCoins.some(x=>x.periodKey===o.key)}))};
 }
 async function claimOffer(user,key){

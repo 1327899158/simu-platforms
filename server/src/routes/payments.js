@@ -1,9 +1,9 @@
 'use strict';
 /**
- * 支付路由（云开发版）。
+ * 支付路由：API v3 公开签名通知，兼容历史云托管通知。
  *
  * POST /api/orders/:id/pay
- *   → 调用云托管代签名接口下 JSAPI 单，返回调起参数
+ *   → 业务下单路由在 orders.js，按支付单通道返回调起参数
  *
  * POST /api/pay/notify
  *   → 微信支付回调（内部投递，已由云托管 sidecar 解密）
@@ -19,6 +19,16 @@ const { reconcilePayment, applyPaymentSuccess } = require('../services/pay-svc')
 const { config } = require('../config');
 
 function register(router) {
+  router.get('/api/orders/:id/refunds',async(req,res,p)=>{
+    const u=await requireUser(req);
+    const order=await queryOne('SELECT o.customerId,q.engineerId FROM orders o LEFT JOIN quotes q ON q.id COLLATE utf8mb4_unicode_ci=o.selectedQuoteId COLLATE utf8mb4_unicode_ci WHERE o.id=? AND o.deletedAt IS NULL',[p.id]);
+    if(!order||![order.customerId,order.engineerId].includes(u.id))throw err.notFound('订单不存在');
+    const items=await require('../db').query('SELECT id,status,grossRefundFen,cashRefundFen,coinRefund,refundId,updatedAt FROM payment_refunds WHERE orderId=? ORDER BY createdAt DESC',[p.id]);
+    ok(res,{items:items.map(r=>({...r,cashRefundText:(Number(r.cashRefundFen)/100).toFixed(2),statusText:({PENDING:'退款待处理',PROCESSING:'退款处理中',SUCCESS:'退款成功',ABNORMAL:'退款异常，请联系客服',CLOSED:'退款已关闭，请联系客服'})[r.status]||'退款待确认'}))});
+  });
+  router.post('/api/pay/v3/notify', require('../services/payment-notify-v3').handler('order'));
+  router.post('/api/pay/v3/refund-notify', require('../services/payment-notify-v3').handler('refund'));
+  router.post('/api/orders/:id/pay/cancel',async(req,res,p)=>{const u=await requireUser(req);ok(res,await require('../services/pay-svc').cancelPayment(p.id,u.id));});
   // POST /api/pay/notify —— 微信支付回调（@Public，内部投递不带 X-WX-OPENID）
   router.post('/api/pay/notify', async (req, res) => {
     if (config.paymentMode !== 'wechat') throw err.notFound('真实支付回调未开启');
@@ -36,6 +46,8 @@ function register(router) {
       return;
     }
     try {
+      const p = await queryOne('SELECT provider FROM payments WHERE outTradeNo=?', [body.out_trade_no || body.outTradeNo]);
+      if (p?.provider === 'v3' || p?.provider === 'mock') throw err.conflict('请使用对应支付通道的通知地址');
       const result = await reconcilePayment(body.out_trade_no || body.outTradeNo);
       if (result.reason === 'not-paid') throw new Error('微信支付查单尚未确认成功');
     } catch (e) {
@@ -63,6 +75,7 @@ function register(router) {
       [params.id]
     );
     if (!payment) throw err.notFound('支付单不存在，请先发起支付');
+    if(payment.provider && payment.provider!=='mock')throw err.forbidden('真实支付单不能模拟确认');
     if (payment.status === 'SUCCESS') {
       ok(res, { mode: 'mock', orderStatus: order.status, alreadySuccess: true });
       return;
@@ -83,17 +96,18 @@ function register(router) {
     let o = await queryOne(`SELECT * FROM orders WHERE id = ?`, [params.id]);
     if (!o || o.customerId !== user.id) throw err.notFound('订单不存在');
     let p = await queryOne(
-      `SELECT outTradeNo, amountFen, status, paidAt FROM payments
+      `SELECT outTradeNo, amountFen, grossAmountFen, coinAmount, status, paidAt FROM payments
        WHERE orderId = ? ORDER BY createdAt DESC LIMIT 1`, [params.id]);
     // 用户已付款但通知延迟时，轮询主动查单；失败仍显示待确认，不伪造成功。
-    if (config.paymentMode === 'wechat' && p?.status === 'PENDING') {
+    if (p?.status === 'PENDING' && (config.paymentMode === 'wechat' || Number(p.amountFen)===0)) {
       try {
-        await reconcilePayment(p.outTradeNo);
+        if(Number(p.amountFen)===0)await require('../services/pay-svc').confirmCoinPayment(p);
+        else await reconcilePayment(p.outTradeNo);
         o = await queryOne('SELECT * FROM orders WHERE id=?', [params.id]);
-        p = await queryOne('SELECT outTradeNo,amountFen,status,paidAt FROM payments WHERE outTradeNo=?', [p.outTradeNo]);
+        p = await queryOne('SELECT outTradeNo,amountFen,grossAmountFen,coinAmount,status,paidAt FROM payments WHERE outTradeNo=?', [p.outTradeNo]);
       } catch (e) { console.error('[pay/query]', e.message); }
     }
-    ok(res, { orderStatus: o.status, payment: p || null });
+    ok(res, { mode:config.paymentMode,orderStatus: o.status, payment: p || null });
   });
 }
 

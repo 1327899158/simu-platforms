@@ -217,11 +217,15 @@
 
 | 方法 | 路径 | 鉴权 | 说明 |
 |---|---|---|---|
-| POST | `/api/pay/notify` | 公开（微信回调） | 云托管代解密后的支付事件回调，落账入口 |
+| POST | `/api/pay/v3/notify` | 微信支付签名 | API v3 支付通知，原始报文验签解密后查单，成功返回204 |
+| POST | `/api/pay/v3/refund-notify` | 微信支付签名 | API v3 退款通知，验签解密后查询原路退款状态 |
+| POST | `/api/exposure-pay/v3/notify` | 微信支付签名 | API v3 曝光支付通知 |
+| POST | `/api/pay/notify` | 公开（历史微信回调） | 仅兼容历史云托管支付事件，拒绝 v3 支付单 |
 | POST | `/api/orders/:id/pay/mock-confirm` | 属主 | 模拟支付确认（仅 `PAYMENT_MODE=mock`） |
 | GET  | `/api/orders/:id/payment` | 属主 | 支付状态查询 |
+| GET  | `/api/orders/:id/refunds` | 订单双方 | 原路退款现金、返币及处理状态，不暴露错误日志或密钥 |
 
-前端发起支付流程（`miniapp/pages/order-detail/index.js#pay`）：
+前端由订单详情进入支付页面，流程见 `miniapp/pages/payment/index.js`；生产配置见 [微信支付部署](wechat-pay.md)：
 1. `POST /api/orders/:id/pay` → 返回：
    - **mock**：`{ mode:'mock', outTradeNo, amountFen, paymentStatus }`
    - **wechat**：`{ mode:'wechat', outTradeNo, amountFen, timeStamp, nonceStr, package, signType, paySign }`

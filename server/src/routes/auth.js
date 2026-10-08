@@ -375,4 +375,4 @@ function register(router) {
   });
 }
 
-module.exports = { register, loadUserView };
+module.exports = { register, loadUserView, getWechatApiCredential };

@@ -39,7 +39,8 @@ Page({
     profileSuccessTitle: '登录成功',
   },
 
-  onLoad() {
+  onLoad(q) {
+    require('../../utils/invitation').capture(q);
     if (isLoggedIn()) wx.switchTab({ url: '/pages/home/index' });
   },
 

@@ -6,7 +6,15 @@ const { EventEmitter } = require('node:events');
 const mock = (path, exports) => { require.cache[require.resolve(path)] = { exports, loaded: true }; };
 const config = { env: 'production', paymentMode: 'wechat', wxpayMchid: 'merchant', wxAppid: 'app', cloudbaseEnv: 'env', wxpayCallbackService: 'simu-api', payAmountOverrideFen: 1, payTimeoutSec: 1800 };
 let payment, order, sqlLog, requests, response, expired, concurrentPayment;
+let v3Calls;
 mock('../src/config', { config });
+mock('../src/services/wechat-pay-v3', { assertConfigured:()=>{},gateway:async(path,body)=>{
+  v3Calls.push({path,body});
+  const base={status:200,body:{return_code:'SUCCESS',result_code:'SUCCESS'}};
+  if(path==='/unifiedorder')return {...base,body:{...base.body,payment:{timeStamp:'123',nonceStr:'nonce',package:'prepay_id=p',paySign:'signature',signType:'RSA'}}};
+  if(path==='/closeorder')return base;
+  return {...base,body:{...base.body,out_trade_no:payment.outTradeNo,trade_state:'SUCCESS',appid:config.wxAppid,mch_id:config.wxpayMchid,total_fee:payment.amountFen,fee_type:'CNY',transaction_id:'wx-v3'}};
+}});
 mock('../src/services/chat-svc', {
   ensureConversation: async () => ({ id: 'conv' }), systemMessage: async () => ({ msgId: 'msg' }),
   publishConversationDoc() {}, publishSystemMessage() {},
@@ -15,7 +23,8 @@ const conn = { execute: async (sql, args) => {
   sqlLog.push(sql);
   if (sql.startsWith('SELECT orderId FROM payments')) return [[payment && { orderId: payment.orderId }].filter(Boolean)];
   if (sql.startsWith('SELECT') && sql.includes('FROM orders')) { assert.match(sql, /FOR UPDATE/); return [[{ ...order }]]; }
-  if (sql.startsWith('SELECT outTradeNo,status FROM payments')) return [[...(payment ? [{ ...payment }] : []), ...(concurrentPayment ? [concurrentPayment] : [])]];
+  if (sql.startsWith('SELECT outTradeNo FROM payments')) return [[]];
+  if (sql.startsWith('SELECT outTradeNo,status,amountFen,coinAmount,grossAmountFen,provider,payMchid,payAppid FROM payments')) return [[...(payment ? [{ ...payment }] : []), ...(concurrentPayment ? [concurrentPayment] : [])]];
   if (sql.startsWith('SELECT * FROM payments')) return [[payment && { ...payment }].filter(Boolean)];
   if (sql.startsWith('INSERT INTO payments')) {
     payment = { id: args[0], orderId: args[1], outTradeNo: args[2], amountFen: args[3], status: 'PENDING' };
@@ -50,6 +59,7 @@ http.request = (opts, callback) => {
 const svc = require('../src/services/pay-svc');
 beforeEach(() => {
   config.paymentMode = 'wechat';
+  delete config.wxpayTransport;v3Calls=[];
   payment = { id: 'p', orderId: 'o', outTradeNo: 'trade', amountFen: 380000, status: 'PENDING' };
   order = { id: 'o', status: 'AWAITING_PAYMENT', selectedQuoteId: 'q', finalAmountFen: 380000 };
   sqlLog = []; requests = []; expired = []; concurrentPayment = null;
@@ -109,4 +119,27 @@ test('关单期间出现新待支付单，不回退订单；全部已关闭才�
   concurrentPayment = null;
   assert.equal(await svc.sweepExpiredAwaitingPayment(), 1);
   assert.equal(order.status, 'QUOTING'); assert.equal(payment.status, 'FAILED');
+});
+test('默认改为v3后历史单仍走云托管，新单记录v3并返回RSA、查单推进订单',async()=>{
+  config.wxpayTransport='v3';payment.provider='cloudbase';
+  await svc.reconcilePayment('trade');assert.equal(requests[0].path,'/_/pay/queryorder');assert.equal(v3Calls.length,0);
+  order.status='AWAITING_PAYMENT';payment=null;
+  const p=await svc.createJsapiOrder({...order,projectName:'结构分析'},'openid');
+  assert.equal(p.signType,'RSA');assert.equal(v3Calls[0].path,'/unifiedorder');
+  assert.match(v3Calls[0].body.time_expire,/Z$/);assert.equal(v3Calls[0].body.total_fee,380000);
+  assert.ok(sqlLog.some(sql=>sql.startsWith('INSERT INTO payments')&&sql.includes('provider,payMchid,payAppid')));
+  payment.provider='v3';await svc.reconcilePayment(payment.outTradeNo);assert.equal(payment.status,'SUCCESS');assert.equal(order.status,'IN_PROGRESS');
+});
+test('商户或AppID变更不能用新配置取消旧单；模拟模式不能覆盖真实单',async()=>{
+  payment.provider='v3';payment.payMchid='old-merchant';
+  await assert.rejects(svc.reconcilePayment('trade'),e=>e.status===409);assert.equal(requests.length,0);assert.equal(v3Calls.length,0);
+  payment.payMchid=config.wxpayMchid;payment.payAppid='old-app';
+  await assert.rejects(svc.createPayment(order),e=>e.status===409);
+  payment.payAppid=config.wxAppid;config.paymentMode='mock';
+  await assert.rejects(svc.createPayment(order),e=>e.status===409);
+  await assert.rejects(svc.applyPaymentSuccess('trade','MOCK_fake',{mock:true}),e=>e.status===403);assert.equal(payment.status,'PENDING');
+});
+test('支付期限已过不能新建支付单或冻结抵扣',async()=>{
+  order.selectedAt=new Date(Date.now()-31*60*1000);payment=null;
+  await assert.rejects(svc.createPayment(order),e=>e.status===409);assert.equal(payment,null);
 });

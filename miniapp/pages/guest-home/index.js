@@ -2,6 +2,7 @@ const { request } = require('../../utils/request');
 
 // 游客首页仅展示平台能力；操作入口统一引导至登录。
 Page({
+  onLoad(q) { require('../../utils/invitation').capture(q); },
   data: {
     activeBanner: 0,
     banners: [

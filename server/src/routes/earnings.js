@@ -11,7 +11,7 @@ function months(now=new Date()){
 const FROM = `FROM orders o JOIN quotes q ON q.id=o.selectedQuoteId
  WHERE q.engineerId=? AND o.deletedAt IS NULL
  AND o.status IN ('COMPLETED','IN_PROGRESS','DELIVERED','REFUND_PENDING','DISPUTING')
- AND EXISTS (SELECT 1 FROM payments p WHERE p.orderId=o.id AND p.status='SUCCESS' AND p.amountFen=o.finalAmountFen)`;
+ AND EXISTS (SELECT 1 FROM payments p WHERE p.orderId=o.id AND p.status='SUCCESS' AND COALESCE(p.grossAmountFen,p.amountFen)=o.finalAmountFen)`;
 function register(router){
  router.get('/api/engineers/earnings',async(req,res,_p,search)=>{
   const user=await requireUser(req);

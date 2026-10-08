@@ -89,7 +89,7 @@ npm run dev
 
 ### 2. 开通云托管与服务
 
-云开发控制台 → 云托管 → 新建服务 `simu-api` → 开通 MySQL（Serverless）→ 开通「开放接口服务 → 微信支付服务」并绑定商户号。
+云开发控制台 → 云托管 → 新建服务 `simu-api` → 开通 MySQL（Serverless）。新支付单使用普通商户 API v3；按 [微信支付接入与部署说明](docs/wechat-pay.md) 配置商户、小程序关联和服务端密钥。
 
 ### 3. 绑定代码仓库自动构建
 
@@ -102,7 +102,14 @@ npm run dev
 | `NODE_ENV` | `production` |
 | `CLOUDBASE_ENV_ID` | 云开发环境 ID |
 | `WX_APPID` | 小程序 AppID |
-| `WXPAY_NOTIFY_URL` | `http://simu-api.cloud1-d8gpj5gwue506a774.wxcloudrun/api/pay/notify` |
+| `PAYMENT_MODE` | `wechat` |
+| `WXPAY_TRANSPORT` | `v3` |
+| `WXPAY_MCHID` | 已关联小程序的普通商户号 |
+| `WXPAY_NOTIFY_BASE_URL` | 云托管公网 HTTPS 域名，无路径和参数 |
+| `WXPAY_SERIAL_NO` / `WXPAY_API_V3_KEY` | 商户 API 证书序列号 / APIv3 密钥 |
+| `WXPAY_PRIVATE_KEY_BASE64` | 商户私钥 PEM 文件的 Base64 |
+| `WXPAY_PUBLIC_KEY_ID` / `WXPAY_PUBLIC_KEY_BASE64` | 微信支付公钥 ID / 公钥 PEM 文件的 Base64 |
+| `PAY_AMOUNT_OVERRIDE_FEN` | 留空 |
 | `PAY_TIMEOUT_SEC` | `1800` |
 
 > `MYSQL_ADDRESS/USERNAME/PASSWORD/DATABASE` 由平台自动注入，无需配置。

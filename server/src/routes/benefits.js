@@ -9,6 +9,7 @@ async function member(req){const u=await requireUser(req);if(!['CUSTOMER','ENGIN
 async function engineer(req){const u=await member(req);if(u.role!=='ENGINEER')throw err.forbidden();return u;}
 const offset=q=>v.int(q.get('offset')||0,'offset',{min:0,max:1000000});
 function register(router){
+ router.get('/api/benefits/balance',async(req,res)=>ok(res,await require('../services/coin-svc').totals((await member(req)).id)));
  router.get('/api/benefits',async(req,res,p,q)=>ok(res,await benefits.assets((await member(req)).id,offset(q))));
  router.post('/api/benefits/claim',async(req,res)=>{const u=await member(req),b=await readJson(req);ok(res,await benefits.claimOffer(u,b.key));});
  router.post('/api/incentives/signin',async(req,res)=>ok(res,await benefits.signin((await member(req)).id)));

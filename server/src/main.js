@@ -30,6 +30,7 @@ require('./routes/orders').register(router);
 require('./routes/delivery-enterprise').register(router);
 require('./routes/market').register(router);
 require('./routes/exposure').register(router);
+require('./routes/invitations').register(router);
 require('./routes/earnings').register(router);
 require('./routes/quotes').register(router);
 require('./routes/reviews').register(router);
@@ -88,6 +89,10 @@ async function bootstrap() {
   await require('./services/customer-service-migration').migrate(require('./db').query);
   await require('./services/admin-console').migrate(require('./db').query);
   await require('./services/exposure-migration').migrate(require('./db').query);
+  await require('./services/coin-migration').migrate(require('./db').query);
+  await require('./services/payment-migration').migrate(require('./db').query);
+  require('./services/refund-svc').start();
+  require('./services/invitation-svc').start();
   require('./services/completion-reward-svc').start();
   require('./services/overdue-svc').start();
   require('./services/account-closure-svc').start();
@@ -99,6 +104,7 @@ async function bootstrap() {
       wxAppsecretConfigured: Boolean(config.wxAppsecret),
       engineerSelfVerify: config.allowEngineerSelfVerify,
       paymentMode: config.paymentMode,
+      paymentTransport: config.wxpayTransport,
       chatImageMode: 'direct-cloud-file-id',
       attachmentSchema: 'order-attachments-v1',
       maxUploadMb: config.uploadMaxMb,

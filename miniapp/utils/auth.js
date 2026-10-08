@@ -31,6 +31,8 @@ async function login(roleHint = 'customer') {
   // 发请求给云托管（X-WX-OPENID 由微信网关自动注入）
   const data = await request('POST', '/auth/wx-login', { roleHint }, { silent: true, redirectOnUnauthorized: false });
   saveUser(data.user);
+  require('./login-share').start(data.user.id);
+  await require('./invitation').accept();
   return data.user;
 }
 
@@ -69,6 +71,7 @@ async function logout() {
   }
   wx.removeStorageSync('user');
   wx.removeStorageSync('sessionToken');
+  require('./login-share').start(null);
   wx.reLaunch({ url: '/pages/login/index' });
 }
 
@@ -107,6 +110,8 @@ async function loginByUsername(username, password) {
   const data = await request('POST', '/auth/login', { username, password }, { silent: true, redirectOnUnauthorized: false });
   saveUser(data.user);
   saveSession(data.token);
+  require('./login-share').start(data.user.id);
+  await require('./invitation').accept();
   return data.user;
 }
 
@@ -119,6 +124,8 @@ async function registerByPhone(username, phone, password, smsCode, roleHint = 'c
   });
   saveUser(data.user);
   saveSession(data.token);
+  require('./login-share').start(data.user.id);
+  await require('./invitation').accept();
   return data.user;
 }
 
@@ -129,6 +136,8 @@ async function loginByPhone(phone, smsCode, roleHint = 'customer') {
   const data = await request('POST', '/auth/phone-login', { phone, smsCode, roleHint }, { silent: true, redirectOnUnauthorized: false });
   saveUser(data.user);
   saveSession(data.token);
+  require('./login-share').start(data.user.id);
+  await require('./invitation').accept();
   return data.user;
 }
 

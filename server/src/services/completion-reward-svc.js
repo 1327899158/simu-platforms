@@ -5,7 +5,7 @@ async function grant(orderId){return tx(async c=>{
  if(!o||o.status!=='COMPLETED'||o.deletedAt||!o.completedAt||new Date(o.completedAt).getTime()>Date.now())return;
  const [[activation]]=await c.execute("SELECT activatedAt FROM feature_activation WHERE feature='ORDER_COMPLETE_500'");
  if(!activation||new Date(o.completedAt)<new Date(activation.activatedAt))return;
- const [[payment]]=await c.execute("SELECT id FROM payments WHERE orderId=? AND status='SUCCESS' AND amountFen=? LIMIT 1",[orderId,o.finalAmountFen]);if(!payment)return;
+ const [[payment]]=await c.execute("SELECT id FROM payments WHERE orderId=? AND status='SUCCESS' AND COALESCE(grossAmountFen,amountFen)=? LIMIT 1",[orderId,o.finalAmountFen]);if(!payment)return;
  for(const id of new Set([o.customerId,o.engineerId])){
   const [[u]]=await c.execute("SELECT id FROM users WHERE id=? AND status='ACTIVE' AND deletedAt IS NULL",[id]);if(!u)continue;
   await c.execute("INSERT IGNORE INTO incentive_rewards(id,userId,taskKey,periodKey,amount,status,createdAt) VALUES(?,?,'ORDER_COMPLETE',?,500,'RESERVED',UTC_TIMESTAMP(3))",[newId(),id,orderId]);

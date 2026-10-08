@@ -28,7 +28,7 @@ function register(router){
     await requireAdmin(req,'FINANCE_READ');const dates=period(q),args=[dates.from,dates.until];
     const [paid,pending,issued,withdrawals,queue,invoices,daily,promotionRows]=await Promise.all([
       queryOne("SELECT COALESCE(SUM(amountFen),0) amountFen,COUNT(*) count FROM payments WHERE status='SUCCESS' AND paidAt>=? AND paidAt<?",args),
-      queryOne("SELECT COALESCE(SUM(o.finalAmountFen),0) amountFen FROM orders o WHERE o.deletedAt IS NULL AND o.status IN ('IN_PROGRESS','DELIVERED') AND EXISTS(SELECT 1 FROM payments p WHERE p.orderId=o.id AND p.status='SUCCESS' AND p.amountFen=o.finalAmountFen)"),
+      queryOne("SELECT COALESCE(SUM(o.finalAmountFen),0) amountFen FROM orders o WHERE o.deletedAt IS NULL AND o.status IN ('IN_PROGRESS','DELIVERED') AND EXISTS(SELECT 1 FROM payments p WHERE p.orderId=o.id AND p.status='SUCCESS' AND COALESCE(p.grossAmountFen,p.amountFen)=o.finalAmountFen)"),
       queryOne("SELECT COALESCE(SUM(o.finalAmountFen),0) amountFen,COUNT(*) count FROM invoice_requests i JOIN orders o ON o.id=i.orderId WHERE i.status='ISSUED' AND i.updatedAt>=? AND i.updatedAt<?",args),
       queryOne("SELECT COALESCE(SUM(amountFen),0) amountFen,SUM(amountFen>500000) largeCount,SUM(amountFen<=500000) smallCount FROM demo_withdrawals WHERE status IN ('SUBMITTED','APPROVED','PAYING')"),
       query("SELECT w.id,w.amountFen,w.bankLabel,w.status,w.createdAt,u.nickname FROM demo_withdrawals w JOIN users u ON u.id COLLATE utf8mb4_unicode_ci=w.userId COLLATE utf8mb4_unicode_ci WHERE w.amountFen>500000 AND w.status IN ('SUBMITTED','APPROVED','PAYING') ORDER BY w.createdAt,w.id LIMIT 50"),
@@ -36,8 +36,8 @@ function register(router){
       query("SELECT DATE_FORMAT(DATE_ADD(paidAt,INTERVAL 8 HOUR),'%Y-%m-%d') day,COUNT(*) count,SUM(amountFen) amountFen FROM payments WHERE status='SUCCESS' AND paidAt>=? AND paidAt<? GROUP BY day ORDER BY day",args),
       query(`SELECT COUNT(*) count,COALESCE(SUM(targetPeople),0) targetPeople,COALESCE(SUM(deliveredPeople),0) deliveredPeople,
         COALESCE(SUM(amountFen),0) estimatedFen,
-        COALESCE(SUM(CASE WHEN paymentStatus='SUCCESS' AND paymentMode='wechat' THEN amountFen ELSE 0 END),0) receivedFen,
-        COALESCE(SUM(CASE WHEN paymentStatus='SUCCESS' AND paymentMode='mock' THEN amountFen ELSE 0 END),0) mockFen
+        COALESCE(SUM(CASE WHEN paymentStatus='SUCCESS' AND paymentMode='wechat' THEN COALESCE(cashAmountFen,amountFen) ELSE 0 END),0) receivedFen,
+        COALESCE(SUM(CASE WHEN paymentStatus='SUCCESS' AND paymentMode='mock' THEN COALESCE(cashAmountFen,amountFen) ELSE 0 END),0) mockFen
         FROM order_exposures WHERE createdAt>=? AND createdAt<?`,args)
     ]);
     const promotions=promotionSummary(promotionRows);

@@ -1,6 +1,6 @@
 'use strict';
 // 仅生成未来发奖计划。不得把客户端事件直接传入结算，也不写钱包或优惠券。
-const RULES = Object.freeze({ enabled: false, welcomeMinFen: 100000, welcomeDiscountFen: 5000, firstDiscountFen: 3000, inviteRegisterCoins: 50, inviteFirstOrderCoins: 250 });
+const RULES = Object.freeze({ enabled: false, couponEnabled: false, coinDeductionEnabled: true, invitationEnabled: true, coinsPerYuan: 100, welcomeMinFen: 100000, welcomeDiscountFen: 5000, firstDiscountFen: 3000, inviteRegisterCoins: 50, inviteFirstOrderCoins: 250 });
 function planReward({ event, userId, inviterId, eventId, isFirst = false }) {
   if (!userId || !eventId) return [];
   const plans = [];

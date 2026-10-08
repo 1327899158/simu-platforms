@@ -228,6 +228,15 @@ async function resolveDispute(admin, disputeId, { verdict, orderAction, note, re
 
   const now = nowIso();
   await tx(async (conn) => {
+    const { config }=require('../config');
+    if(Number(refundAmountFen)>0 && config.wxpayTransport){
+      await conn.execute('SELECT id FROM orders WHERE id=? FOR UPDATE',[d.orderId]);
+      const [[paid]]=await conn.execute("SELECT * FROM payments WHERE orderId=? AND status='SUCCESS' ORDER BY paidAt DESC LIMIT 1 FOR UPDATE",[d.orderId]);
+      if(paid?.provider==='v3'){
+        const [prior]=await conn.execute('SELECT * FROM payment_refunds WHERE paymentId=? FOR UPDATE',[paid.id]);
+        require('./refund-svc').plan(paid,prior,Number(refundAmountFen));
+      }else if(!paid && config.paymentMode==='wechat' && config.wxpayTransport==='v3')throw err.conflict('订单没有成功支付记录，不能裁定现金退款');
+    }
     // 只有处于 DISPUTING 的订单才需要恢复/变更；KEEP 走恢复快照。
     if (orderAction !== 'KEEP') {
       const [r] = await conn.execute(
@@ -271,11 +280,25 @@ async function updateRefund(admin, disputeId, { refundStatus, refundTransactionI
   const d = await queryOne(`SELECT * FROM disputes WHERE id = ?`, [disputeId]);
   if (!d) throw err.notFound('纠纷不存在');
   if (d.status !== 'RESOLVED') throw err.conflict('仅已结案纠纷可登记退款');
-  await query(
-    `UPDATE disputes SET refundStatus = ?, refundTransactionId = COALESCE(?, refundTransactionId), updatedAt = ?
-     WHERE id = ?`,
-    [refundStatus, refundTransactionId || null, nowIso(), disputeId]
-  );
+  const { config } = require('../config');
+  if(config.wxpayTransport){
+    const p=await queryOne("SELECT provider FROM payments WHERE orderId=? AND status='SUCCESS' ORDER BY paidAt DESC LIMIT 1",[d.orderId]);
+    if(p?.provider==='v3'){
+      if(refundStatus!=='PROCESSED')throw err.conflict('真实退款状态由微信返回，请点击处理退款发起或查询退款');
+      const r=await require('./refund-svc').request('DISPUTE',disputeId);
+      return {updated:true,refundStatus:r.status==='SUCCESS'?'PROCESSED':r.status==='PROCESSING'||r.status==='PENDING'?'PENDING':'FAILED',refundId:r.refundId};
+    }
+  }
+  await tx(async conn=>{
+    await conn.execute('SELECT id FROM orders WHERE id = ? FOR UPDATE',[d.orderId]);
+    const [[current]]=await conn.execute('SELECT * FROM disputes WHERE id = ? FOR UPDATE',[disputeId]);
+    if(current.status!=='RESOLVED')throw err.conflict('纠纷状态已变化');
+    if(current.refundStatus==='PROCESSED'&&refundStatus!=='PROCESSED')throw err.conflict('已处理的退款不可撤销');
+    if(refundStatus==='PROCESSED')await require('./coin-svc').refund(conn,d.orderId,'DISPUTE:'+disputeId,Number(current.refundAmountFen||0));
+    await conn.execute(
+      `UPDATE disputes SET refundStatus = ?, refundTransactionId = COALESCE(?, refundTransactionId), updatedAt = ? WHERE id = ?`,
+      [refundStatus,refundTransactionId||null,nowIso(),disputeId]);
+  });
   return { updated: true, refundStatus };
 }
 

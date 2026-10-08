@@ -40,6 +40,7 @@ Page({
     paying: false, delivering: false, downloadingFileId: '',
     dispute: null,
     refundRequest: null,
+    moneyRefunds: [],
     invoiceRequest: null,
     invoiceNeedsAction: false,
     respondingRefund: false,
@@ -89,6 +90,10 @@ Page({
       // 未选中工程师、无退款申请等场景不影响订单详情展示。
     }
     this.setData({ refundRequest });
+    if(mode==='customer'||order.iAmSelected){
+      try {const refunds=await request('GET',`/orders/${id}/refunds`,null,{silent:true});this.setData({moneyRefunds:refunds.items||[]});}
+      catch(e){this.setData({moneyRefunds:[]});}
+    }
     // 发票信息仅订单双方可读取；不存在申请时返回 null，不影响订单详情。
     try {
       const invoiceRequest = await request('GET', `/orders/${id}/invoice-request`, null, { silent: true });
@@ -246,51 +251,7 @@ Page({
       },
     });
   },
-  async pay() {
-    if (this.data.paying) return;
-    this.setData({ paying: true });
-    try {
-      // 云开发版：服务端通过云托管开放接口代签名，返回 wx.requestPayment 五参数
-      const p = await request('POST', `/orders/${this.data.id}/pay`, {}, { silent: true });
-
-      if (p.mode === 'mock') {
-        await new Promise((resolve,reject)=>wx.navigateTo({url:'/pages/payment/index?id='+encodeURIComponent(this.data.id),success:resolve,fail:reject}));
-        this.setData({ paying: false });
-      } else if (p.timeStamp) {
-        // 真实微信支付（云托管代签名返回的五参数）
-        wx.requestPayment({
-          timeStamp: p.timeStamp,
-          nonceStr: p.nonceStr,
-          package: p.package,
-          signType: p.signType || 'RSA',
-          paySign: p.paySign,
-          success: async () => {
-            // 轮询等待回调落账
-            for (let i = 0; i < 8; i++) {
-              const st = await request('GET', `/orders/${this.data.id}/payment`, null, { silent: true });
-              if (st && st.orderStatus === 'IN_PROGRESS') break;
-              await new Promise((rs) => setTimeout(rs, 800));
-            }
-            wx.showToast({ title: '支付成功', icon: 'success' });
-            this.load();
-          },
-          fail: (err) => {
-            if (err.errMsg && err.errMsg.includes('cancel')) {
-              wx.showToast({ title: '已取消支付', icon: 'none' });
-            } else {
-              wx.showToast({ title: '支付失败', icon: 'none' });
-            }
-          },
-          complete: () => this.setData({ paying: false }),
-        });
-      } else {
-        throw new Error('微信支付下单返回参数不完整');
-      }
-    } catch (e) {
-      this.setData({ paying: false });
-      wx.showToast({ title: e.message || '支付处理失败', icon: 'none' });
-    }
-  },
+  pay() { wx.navigateTo({url:'/pages/payment/index?id='+encodeURIComponent(this.data.id)}); },
   confirmDone() {
     wx.showModal({
       title: '确认验收', content: '确认成果符合要求并完成订单？',

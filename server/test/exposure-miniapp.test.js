@@ -24,7 +24,7 @@ test('上报失败释放本地去重标记，下次可见可以重试',async()=>
 test('曝光支付取消确认不创建支付，取消微信支付不调用模拟确认',async()=>{
  let n=0;const canceled=component(async()=>{n++;},{confirms:[false]});await canceled.p.pay();assert.equal(n,0);assert.equal(canceled.p.data.busy,false);
  const calls=[],real=component(async(m,url)=>{calls.push(url);return {mode:'wechat',amountFen:1900};},{paymentFail:true});
- await real.p.pay();assert.equal(real.calls.includes('wx.requestPayment'),true);assert.equal(calls.length,1);assert.ok(!calls.some(s=>s.endsWith('/mock-confirm')));
+ await real.p.pay();assert.equal(real.calls.includes('wx.requestPayment'),true);assert(calls.some(s=>s.endsWith('/cancel')));assert(calls.some(s=>s.endsWith('/exposure')));assert.ok(!calls.some(s=>s.endsWith('/mock-confirm')));
 });
 test('模拟支付需要明确确认，服务端支付成功才显示开通',async()=>{
  const calls=[];let paid=false;const c=component(async(m,url)=>{calls.push([m,url]);if(url.endsWith('/pay'))return {mode:'mock',amountFen:1900};if(url.endsWith('/mock-confirm')){paid=true;return{};}return {state:paid?'ACTIVE':'UNPAID',targetPeople:100,deliveredPeople:0,progress:0,amountFen:1900,paymentMode:'mock'};});

@@ -26,9 +26,9 @@ async function inspect(id,user=null,nudge=false){
   if(!breach&&eligible(o,term.deadline,!!pending)){
    const [[blocking]]=await c.execute("SELECT id FROM disputes WHERE orderId=? AND (status='OPEN' OR refundStatus IN ('PENDING','PROCESSED','FAILED')) LIMIT 1",[id]);
    const [[refund]]=await c.execute("SELECT id FROM refund_requests WHERE orderId=? AND status IN ('PENDING','AGREED') LIMIT 1",[id]);
-   const [[payment]]=await c.execute("SELECT id FROM payments WHERE orderId=? AND status='SUCCESS' AND amountFen=? LIMIT 1",[id,o.finalAmountFen]);
+   const [[payment]]=await c.execute("SELECT id FROM payments WHERE orderId=? AND status='SUCCESS' AND COALESCE(grossAmountFen,amountFen)=? LIMIT 1",[id,o.finalAmountFen]);
    if(!blocking&&!refund&&payment&&Number(o.finalAmountFen)>0){
-    const disputeId=newId(),note='系统逾期判定：超过约定期限48小时仍未交付，且无待审批延期申请。延期被拒不重置计时。已登记全额待退款，由管理员核实处理，未调用真实退款通道。';
+    const disputeId=newId(),note='系统逾期判定：超过约定期限48小时仍未交付，且无待审批延期申请。延期被拒不重置计时。已登记全额待退款，具体资金处理状态以订单退款记录为准。';
     await c.execute("INSERT INTO disputes(id,orderId,initiatorId,reasonType,description,status,orderStatusAtOpen,evidenceDeadlineAt,refundAmountFen,refundStatus,verdict,orderAction,resolutionNote,resolvedAt,createdAt,updatedAt) VALUES(?,?,?,'DELAY',?,'RESOLVED','IN_PROGRESS',UTC_TIMESTAMP(3),?,'PENDING','CUSTOMER_FAVOR','CLOSE',?,UTC_TIMESTAMP(3),UTC_TIMESTAMP(3),UTC_TIMESTAMP(3))",[disputeId,id,o.customerId,note,o.finalAmountFen,note]);
     await c.execute('INSERT INTO delivery_breaches(orderId,deadline,disputeId,createdAt) VALUES(?,?,?,UTC_TIMESTAMP(3))',[id,term.deadline,disputeId]);
     await c.execute("UPDATE orders SET status='CLOSED',updatedAt=UTC_TIMESTAMP(3) WHERE id=? AND status='IN_PROGRESS'",[id]);

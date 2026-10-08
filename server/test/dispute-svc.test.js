@@ -155,7 +155,7 @@ const dbMock = {
     // 简化：直接用一个代理连接执行
     const conn = {
       execute: async (sql, params = []) => {
-        if (/^SELECT/.test(sql)) return runSelect(sql, params);
+        if (/^SELECT/.test(sql)) return [runSelect(sql, params)];
         if (/^UPDATE/.test(sql)) return [runUpdate(sql, params)];
         if (/^INSERT/.test(sql)) return [runInsert(sql, params)];
         return [{}];
@@ -168,6 +168,8 @@ const dbMock = {
 // 注入 mock 模块
 const dbPath = require.resolve('../src/db');
 require.cache[dbPath] = { id: dbPath, filename: dbPath, loaded: true, exports: dbMock };
+// 这些用例验证历史退款登记；API v3 的真实退款由 refund-v3.test.js 单独验证。
+require.cache[require.resolve('../src/config')] = { loaded:true,exports:{config:{paymentMode:'mock',wxpayTransport:'cloudbase'}} };
 
 // mock chat-svc 的 systemMessageForOrder
 const chatPath = require.resolve('../src/services/chat-svc');

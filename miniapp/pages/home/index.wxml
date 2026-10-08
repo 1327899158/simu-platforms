@@ -73,3 +73,15 @@
  <view wx:if="{{!role}}" class="home-empty">正在加载首页…</view>
 </view>
 <signin-float wx:if="{{role==='ENGINEER'}}"/>
+<view wx:if="{{sharePopupVisible && shareCampaign}}" class="share-popup-mask" catchtap="closeSharePopup" catchtouchmove="stopSharePopupTap">
+ <view class="share-popup" catchtap="stopSharePopupTap" role="dialog" aria-label="分享得仿真币">
+  <button class="share-popup-close" bindtap="closeSharePopup" aria-label="关闭分享弹窗">×</button>
+  <image class="share-popup-icon" src="/assets/icons-contrast/award.svg" mode="aspectFit"/>
+  <view class="share-popup-title">分享得仿真币</view>
+  <view class="share-popup-heading">{{shareCampaign.title}}</view>
+  <scroll-view scroll-y class="share-popup-rules"><view>{{shareCampaign.content}}</view><view class="share-popup-note">通过个人邀请入口注册的新用户才计入奖励；首单奖励在订单完成后自动发放，分享本身不发币。</view></scroll-view>
+  <button class="share-popup-later" bindtap="openInviteActivity">查看活动 · 我的邀请海报 ›</button>
+  <button id="login-invite-share" class="share-popup-share" open-type="share">分享给好友</button>
+  <button class="share-popup-later" bindtap="closeSharePopup">稍后再说</button>
+ </view>
+</view>

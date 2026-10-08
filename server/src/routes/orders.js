@@ -35,7 +35,7 @@ function refundRequestView(row, files = []) {
     id: row.id,
     orderId: row.orderId,
     status: row.status,
-    statusText: row.status === 'PENDING' ? '待工程师确认' : row.status === 'REJECTED' ? '工程师已拒绝' : row.status,
+    statusText: row.status === 'PENDING' ? '待工程师确认' : row.status === 'REJECTED' ? '工程师已拒绝' : row.status === 'AGREED' ? '工程师已同意退款' : row.status,
     reason: row.reason || '历史退款申请未填写理由',
     attemptCount: Number(row.attemptCount || 1), remainingAttempts: Math.max(0, 3-Number(row.attemptCount || 1)),
     files: files.map(refundFileView),
@@ -300,7 +300,7 @@ function register(router) {
     }
     const refundRequest = await queryOne(
       `SELECT * FROM refund_requests
-        WHERE orderId = ? AND (status = 'PENDING' OR (status = 'REJECTED' AND disputeId IS NULL))
+        WHERE orderId = ? AND (status IN ('PENDING','AGREED') OR (status = 'REJECTED' AND disputeId IS NULL))
         ORDER BY createdAt DESC LIMIT 1`,
       [params.id]
     );
@@ -435,13 +435,20 @@ function register(router) {
           [now, refundRequest.orderId]
         );
         if (changed.affectedRows !== 1) throw err.conflict('订单状态已变化，无法取消');
+        // API v3 退款确认成功后统一返币；历史通道仍采用原处理流程。
+        let realRefund = false;
+        if(config.wxpayTransport){
+          const [[paid]]=await conn.execute("SELECT provider FROM payments WHERE orderId=? AND status='SUCCESS' ORDER BY paidAt DESC LIMIT 1 FOR UPDATE",[refundRequest.orderId]);
+          realRefund = paid?.provider === 'v3';
+        }
+        if(!realRefund)await require('../services/coin-svc').refund(conn,refundRequest.orderId,'AGREED:'+refundRequest.id);
         await conn.execute(
           `UPDATE refund_requests
               SET status = 'AGREED', respondedAt = ?, updatedAt = ?
             WHERE id = ? AND status = 'PENDING'`,
           [now, now, refundRequest.id]
         );
-        return { accepted: true, orderStatus: 'CANCELLED', refundRequestId: refundRequest.id };
+        return { accepted: true, orderStatus: 'CANCELLED', refundRequestId: refundRequest.id, realRefund };
       }
 
       const [restored] = await conn.execute(
@@ -460,8 +467,12 @@ function register(router) {
       return { accepted: false, rejected: true, orderStatus: originalStatus, refundRequestId: refundRequest.id };
     });
 
+    if(result.realRefund){
+      try { result.moneyRefund=await require('../services/refund-svc').request('AGREED',result.refundRequestId); }
+      catch(e){console.error('[refund/accepted]',result.refundRequestId,e.message);result.moneyRefund={status:'PENDING'};}
+    }
     const message = result.accepted
-      ? '工程师已同意退款申请。订单已取消，退款资金处理将由平台后续处理。'
+      ? result.realRefund ? '工程师已同意退款申请。订单已取消，款项将原路退回；到账时间以支付渠道为准，可在订单详情查看退款进度。' : '工程师已同意退款申请。订单已取消，退款资金处理将由平台后续处理。'
       : '工程师已拒绝退款申请。客户可在订单详情中选择“申请客服介入”。';
     systemMessageForOrder(
       params.id,
@@ -571,6 +582,7 @@ function register(router) {
   // POST /api/orders/:id/pay
   router.post('/api/orders/:id/pay', async (req, res, params) => {
     const user = await requireCustomer(req);
+    const body=await readJson(req),coins=require('../services/coin-svc').amount(body.coins);
     const o = await queryOne(
       `SELECT * FROM orders WHERE id=? AND customerId=? AND deletedAt IS NULL`,
       [params.id, user.id]);
@@ -579,19 +591,21 @@ function register(router) {
 
     // 模拟支付只创建正常支付单，不访问微信支付接口。
     if (config.paymentMode === 'mock') {
-      const payment = await createPayment(o);
+      const payment = await createPayment(o,{coins});
+      if(Number(payment.amountFen)===0){await require('../services/pay-svc').confirmCoinPayment(payment);return ok(res,{mode:'coins',paid:true,amountFen:0,coinAmount:Number(payment.coinAmount),grossAmountFen:Number(payment.grossAmountFen)});}
       ok(res, {
         mode: 'mock',
         outTradeNo: payment.outTradeNo,
         amountFen: Number(payment.amountFen),
+        coinAmount:Number(payment.coinAmount||0),grossAmountFen:Number(payment.grossAmountFen??payment.amountFen),
         paymentStatus: payment.status,
       });
       return;
     }
 
     const openid = user.openid; // 小程序 openid，用于 JSAPI 下单
-    if (!openid) throw err.bad('无法获取用户 openid，请通过小程序调用');
-    const jsapiParams = await createJsapiOrder(o, openid, { service: req.headers['x-wx-service'], clientIp: String(req.headers['x-forwarded-for'] || '').split(',')[0].trim() || undefined });
+    if (!openid && coins<Number(o.finalAmountFen)) throw err.bad('无法获取用户 openid，请通过小程序调用');
+    const jsapiParams = await createJsapiOrder(o, openid, {coins,service: req.headers['x-wx-service'], clientIp: String(req.headers['x-forwarded-for'] || '').split(',')[0].trim() || undefined });
     ok(res, jsapiParams);
   });
 

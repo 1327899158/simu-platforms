@@ -1,0 +1,1 @@
+.coin-box{background:#fff8eb;border:1rpx solid #f2e3c8;border-radius:20rpx;padding:24rpx;margin:20rpx 0}.coin-row{display:flex;align-items:center;justify-content:space-between;gap:16rpx}.coin-heading{font-size:28rpx;font-weight:600;color:#69502d}.coin-hint{font-size:23rpx;color:#918065;line-height:1.6;margin-top:6rpx}.coin-saving{font-size:27rpx;color:#d68127;margin-top:16rpx}

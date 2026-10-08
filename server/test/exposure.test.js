@@ -10,7 +10,7 @@ async function execute(sql,args){
  if(sql.startsWith('SELECT')&&sql.includes('FROM direct_demands'))return [[...(direct?[{orderId:'o'}]:[])]];
  if(sql.startsWith('SELECT')&&sql.includes('FROM order_exposures'))return [[...(ledger?[copy(ledger)]:[])]];
  if(sql.startsWith('INSERT INTO order_exposures')){ledger={orderId:args[0],customerId:args[1],targetPeople:args[2],amountFen:args[3],outTradeNo:args[4],deliveredPeople:0,paymentStatus:'PENDING'};}
- else if(sql.startsWith('UPDATE order_exposures SET targetPeople='))Object.assign(ledger,{targetPeople:args[0],amountFen:args[1],paymentStartedAt:'now',paymentMode:args[2]});
+ else if(sql.startsWith('UPDATE order_exposures SET targetPeople='))Object.assign(ledger,{targetPeople:args[0],amountFen:args[1],paymentStartedAt:'now',paymentMode:args[2],provider:args[3]});
  else if(sql.startsWith("UPDATE order_exposures SET paymentStatus='SUCCESS'"))Object.assign(ledger,{paymentStatus:'SUCCESS',transactionId:args[0],paymentMode:args[1],paidAt:'now'});
  else if(sql.startsWith('UPDATE order_exposures SET deliveredPeople='))ledger.deliveredPeople++;
  else if(sql.startsWith('UPDATE orders'))order.promotion='EXPOSURE';
@@ -42,7 +42,7 @@ mock('../src/db',{
   throw Error(sql);
  }
 });
-mock('../src/services/pay-svc',{wxpayRequest:async(method,path,body)=>{gatewayCalls.push({method,path,body});return gatewayResponse;},cloudPayResult:r=>r});
+mock('../src/services/pay-svc',{paymentProvider:()=>config.paymentMode==='mock'?'mock':'cloudbase',assertPaymentAccount:()=>{},assertPaymentConfigured:()=>{},wxpayRequest:async(method,path,body)=>{gatewayCalls.push({method,path,body});return gatewayResponse;},cloudPayResult:r=>r});
 mock('../src/lib/auth-mw',{
  requireCustomer:async req=>{if(req.user?.role!=='CUSTOMER')throw Object.assign(Error('forbidden'),{status:403});return req.user;},
  requireEngineer:async req=>{if(req.user?.role!=='ENGINEER'||!req.user.approved)throw Object.assign(Error('forbidden'),{status:403});return req.user;}

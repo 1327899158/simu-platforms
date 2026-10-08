@@ -5,7 +5,7 @@ const { Readable } = require('node:stream');
 const mock = (path, exports) => { require.cache[require.resolve(path)] = { exports, loaded: true }; };
 let config = { paymentMode: 'wechat' }, verification, called;
 mock('../src/config', { config });
-mock('../src/db', {});
+mock('../src/db', {queryOne:async()=>({provider:'cloudbase'})});
 mock('../src/lib/auth-mw', {});
 mock('../src/services/pay-svc', { reconcilePayment: async no => { called = no; return verification(); } });
 const { createRouter } = require('../src/lib/http');

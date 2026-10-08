@@ -6,11 +6,13 @@ const { v, newId } = require('../lib/util');
 const { config } = require('../config');
 const exposure = require('../services/exposure-svc');
 function register(router) {
+  router.post('/api/exposure-pay/v3/notify', require('../services/payment-notify-v3').handler('exposure'));
   router.get('/api/orders/:id/exposure', async (req, res, p) => ok(res, await exposure.read(p.id, (await requireCustomer(req)).id)));
   router.post('/api/orders/:id/exposure/pay', async (req, res, p) => {
     const u = await requireCustomer(req), b = await readJson(req);
-    ok(res, await exposure.pay(u, p.id, exposure.quantity(b.units), { service: req.headers?.['x-wx-service'], clientIp: req.headers?.['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress }));
+    ok(res, await exposure.pay(u, p.id, exposure.quantity(b.units), {coins:b.coins,service: req.headers?.['x-wx-service'], clientIp: req.headers?.['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress }));
   });
+  router.post('/api/orders/:id/exposure/cancel',async(req,res,p)=>ok(res,await exposure.cancel(await requireCustomer(req),p.id)));
   router.post('/api/orders/:id/exposure/mock-confirm', async (req, res, p) => {
     if (config.paymentMode !== 'mock') throw err.notFound('模拟曝光支付未开启');
     const u = await requireCustomer(req);
@@ -23,6 +25,8 @@ function register(router) {
     if (config.paymentMode !== 'wechat') throw err.notFound('真实曝光支付未开启');
     try {
       const b = await readJson(req);
+      const record = await queryOne('SELECT provider FROM order_exposures WHERE outTradeNo=?', [b.out_trade_no || b.outTradeNo]);
+      if(record?.provider==='v3'||record?.provider==='mock')throw err.conflict('请使用对应支付通道的通知地址');
       if (!((await exposure.reconcile(b.out_trade_no || b.outTradeNo)).paid)) throw Error('曝光支付待确认');
       sendJson(res, 200, { errcode: 0, errmsg: 'OK' });
     } catch (e) {
