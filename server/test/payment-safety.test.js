@@ -143,3 +143,41 @@ test('支付期限已过不能新建支付单或冻结抵扣',async()=>{
   order.selectedAt=new Date(Date.now()-31*60*1000);payment=null;
   await assert.rejects(svc.createPayment(order),e=>e.status===409);assert.equal(payment,null);
 });
+
+test('UTC数据库选标时间在不同时区均可立即支付，微信截止时间保持30分钟',async()=>{
+  const previousTimezone=process.env.TZ,previousNow=Date.now;
+  const selected=Date.parse('2026-10-08T04:00:00.000Z');
+  Date.now=()=>selected+1000;
+  try {
+    for(const timezone of ['Asia/Shanghai','UTC','America/Los_Angeles']) {
+      process.env.TZ=timezone;config.wxpayTransport='v3';payment=null;v3Calls=[];
+      order.selectedAt='2026-10-08 04:00:00.000';
+      const result=await svc.createJsapiOrder({...order,projectName:'新需求'},'openid');
+      assert.equal(result.mode,'wechat');
+      assert.equal(v3Calls[0].body.time_expire,'2026-10-08T04:30:00.000Z');
+    }
+  } finally {
+    Date.now=previousNow;
+    if(previousTimezone===undefined)delete process.env.TZ;else process.env.TZ=previousTimezone;
+  }
+});
+
+test('SQL时间、Date和带时区时间均在实际到期时阻止支付',async()=>{
+  const previousTimezone=process.env.TZ,previousNow=Date.now;
+  const selected=Date.parse('2026-10-08T04:00:00.000Z');
+  try {
+    for(const timezone of ['Asia/Shanghai','UTC','America/Los_Angeles']) {
+      process.env.TZ=timezone;
+      for(const selectedAt of ['2026-10-08 04:00:00.000',new Date(selected),'2026-10-08T12:00:00+08:00']) {
+        order.selectedAt=selectedAt;payment=null;Date.now=()=>selected+1800*1000-1;
+        await svc.createPayment(order);
+        payment=null;Date.now=()=>selected+1800*1000;
+        await assert.rejects(svc.createPayment(order),e=>e.status===409);
+        assert.equal(payment,null);
+      }
+    }
+  } finally {
+    Date.now=previousNow;
+    if(previousTimezone===undefined)delete process.env.TZ;else process.env.TZ=previousTimezone;
+  }
+});

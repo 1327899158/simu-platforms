@@ -6,7 +6,7 @@
  */
 const http = require('node:http');
 const { err } = require('../lib/http');
-const { newId, nowIso } = require('../lib/util');
+const { newId, nowIso, parseDbDate } = require('../lib/util');
 const { config } = require('../config');
 const { query, queryOne, tx } = require('../db');
 const {
@@ -72,7 +72,7 @@ async function createPayment(order, options = {}) {
   return tx(async conn => {
     const [[current]] = await conn.execute('SELECT * FROM orders WHERE id=? AND deletedAt IS NULL FOR UPDATE', [order.id]);
     if (!current || current.status !== 'AWAITING_PAYMENT' || current.selectedQuoteId !== order.selectedQuoteId) throw err.conflict('订单状态已变化，请刷新后支付');
-    const selectedAt=current.selectedAt?new Date(current.selectedAt).getTime():null;
+    const selectedAt=current.selectedAt?parseDbDate(current.selectedAt).getTime():null;
     if(Number.isFinite(selectedAt)&&selectedAt+(config.payTimeoutSec||1800)*1000<=Date.now())throw err.conflict('支付时间已过，请返回订单等待报价恢复');
     const gross = Number(!coins && config.env !== 'production' && config.payAmountOverrideFen || current.finalAmountFen);
     if (!Number.isSafeInteger(gross) || gross <= 0) throw err.conflict('订单金额异常');
@@ -160,7 +160,7 @@ async function createJsapiOrder(order, openid, context = {}) {
     spbill_create_ip: context.clientIp || '127.0.0.1',
     env_id: config.cloudbaseEnv, callback_type: 2,
     container: { service, path: '/api/pay/notify' },
-    ...(provider==='v3'?{time_expire: new Date((currentOrder.selectedAt ? new Date(currentOrder.selectedAt).getTime() : Date.now()) + (config.payTimeoutSec||1800) * 1000).toISOString()}:{}),
+    ...(provider==='v3'?{time_expire: new Date((currentOrder.selectedAt ? parseDbDate(currentOrder.selectedAt).getTime() : Date.now()) + (config.payTimeoutSec||1800) * 1000).toISOString()}:{}),
     }, provider);
   });
   const result = cloudPayResult(response, '下单');

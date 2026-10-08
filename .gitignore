@@ -3,9 +3,13 @@
 .env.local
 .env.production
 .env.development
+.env.*
+!.env.example
 
 # 微信支付私钥和公钥采用运行时挂载，禁止提交密钥文件
 *.pem
+*.p12
+*.pfx
 /server/secrets/
 
 # 依赖包（云托管构建时会自动 npm install）
