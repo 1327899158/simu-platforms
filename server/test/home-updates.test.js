@@ -20,29 +20,36 @@ function page(request=async()=>[]){
  definition.selectComponent=id=>{assert.equal(id,'#home-announcements');return {dismiss:(...args)=>dismissals.push(args)};};
  return {p:definition,navigation,modals,dismissals};
 }
-test('客户首页将订单进度、公告、活动与预算合并，默认折叠并保留各功能入口',()=>{
+test('客户首页只折叠订单进度和公告，活动与预算保留原有独立模块和入口',()=>{
  const {p,navigation,modals,dismissals}=page();
  p.setData({notices,announcements,campaigns});p.refreshUpdates();
  assert.equal(p.data.updatesExpanded,false);
- assert.deepEqual(p.data.homeUpdates.map(item=>item.kind),['order','announcement','campaign','estimate']);
+ assert.deepEqual(p.data.homeUpdates.map(item=>item.kind),['order','announcement']);
  for(const item of p.data.homeUpdates)p.openUpdate({currentTarget:{dataset:{key:item.key}}});
+ p.openCampaign({currentTarget:{dataset:{id:'invite'}}});p.goEstimate();
  assert.deepEqual(navigation,['/pages/order-detail/index?id=o&mode=customer','/pages/activity/index?id=invite','/pages/estimate/index']);
  assert.equal(modals[0].content,'详细公告内容');
  p.dismissUpdate({currentTarget:{dataset:{key:'announcement:a:1'}}});assert.deepEqual(dismissals,[['a',1]]);
  p.openUpdate({currentTarget:{dataset:{key:'unknown'}}});assert.equal(navigation.length,3);
  const markup=read('pages/home/index.wxml');
+ assert.match(markup,/<swiper class="home-campaigns"[^>]*wx:if="\{\{campaigns.length\}\}"/);
+ assert.match(markup,/<view class="estimate-banner" bindtap="goEstimate"/);
+ assert.ok(markup.indexOf('class="home-campaigns"')<markup.indexOf('class="home-updates surface"'));
+ assert.ok(markup.indexOf('class="estimate-banner"')>markup.indexOf('class="updates-list"'));
+ p.setData({notices:[],announcements:[]});p.refreshUpdates();assert.equal(p.data.homeUpdates.length,0);
  assert.match(markup,/class="updates-swiper"[^>]*vertical/);
  assert.match(markup,/autoplay="\{\{homeVisible && !sharePopupVisible && homeUpdates.length>1\}\}"/);
  assert.match(markup,/interval="5000"/);assert.match(markup,/wx:if="\{\{!updatesExpanded\}\}"/);
  p.data.homeVisible=true;p.onHide();assert.equal(p.data.homeVisible,false);
 });
 test('轮播期间刷新保持当前条目和展开状态，删除当前条目时回到有效索引',()=>{
- const {p}=page();p.setData({notices,campaigns});p.refreshUpdates();
+ const {p}=page();p.setData({notices,announcements});p.refreshUpdates();
  p.changeUpdate({detail:{current:1}});p.toggleUpdates();assert.equal(p.data.updatesExpanded,true);
- p.updateAnnouncements({detail:{items:announcements}});
- assert.equal(p.data.homeUpdates[p.data.updateIndex].key,'campaign:invite');
+ p.setData({notices:[{id:'new',text:'工程师已提交成果'},...notices]});p.refreshUpdates();
+ assert.equal(p.data.homeUpdates[p.data.updateIndex].key,'announcement:a:1');
+ assert.equal(p.data.updateIndex,2);
  assert.equal(p.data.updatesExpanded,true);
- p.setData({campaigns:[]});p.refreshUpdates();assert.equal(p.data.updateIndex,0);
+ p.updateAnnouncements({detail:{items:[]}});assert.equal(p.data.updateIndex,0);
  p.toggleUpdates();assert.equal(p.data.updatesExpanded,false);
 });
 test('订单提醒轮询不会将旧账号或工程师身份下的响应显示到客户首页',async()=>{

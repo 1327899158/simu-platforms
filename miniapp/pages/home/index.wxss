@@ -18,6 +18,11 @@ page{background:#e6f1ef}
 .shortcut-icon{width:88rpx;height:84rpx;display:flex;align-items:center;justify-content:center;border-radius:24rpx;font-size:42rpx;position:relative}
 .yellow{background:#fff7c8}.blue{background:#e0f5fc}.mint{background:#e8f6e9}.pink{background:#f7edf0}
 .unread{position:absolute;top:-8rpx;right:-6rpx;border-radius:24rpx;min-width:30rpx;padding:3rpx 6rpx;text-align:center;background:#f07162;color:white;font-size:20rpx}
+.home-campaigns{height:292rpx;margin:0 0 8rpx}.campaign{position:relative;display:flex;align-items:center;min-height:248rpx;padding:26rpx 30rpx;background:linear-gradient(120deg,#fff7bd,#fff0a5);overflow:hidden}
+.campaign-1{background:linear-gradient(120deg,#cdeffd,#e9f7fc)}.campaign-2{background:linear-gradient(120deg,#e5f5d7,#c9f0e3)}
+.campaign-copy{flex:1;min-width:0;z-index:1}.eyebrow{font-size:20rpx;color:#787249}.campaign-heading{font-size:32rpx;font-weight:750;line-height:1.5;margin:10rpx 0}.campaign-art{font-size:76rpx;margin-left:16rpx}.campaign-link{display:inline-block;font-size:22rpx;padding:9rpx 20rpx;border-radius:24rpx;background:rgba(255,255,255,.65);margin-top:16rpx}
+.estimate-banner{display:flex;align-items:center;gap:20rpx;padding:28rpx 24rpx;background:linear-gradient(110deg,#dff4fb,#edf6fa);border-radius:26rpx;margin:24rpx 0}
+.estimate-icon{font-size:48rpx}.arrow{font-size:36rpx;color:#4cabcb}
 .home-updates{margin:0 0 26rpx;overflow:hidden;background:rgba(250,253,252,.88)}
 .updates-header{display:flex;align-items:center;justify-content:space-between;gap:12rpx;padding:16rpx 22rpx 8rpx}
 .updates-heading{display:flex;align-items:center;gap:12rpx;font-size:25rpx;font-weight:600;color:#405e62}
@@ -28,7 +33,6 @@ page{background:#e6f1ef}
 .update-row{display:flex;align-items:center;gap:14rpx;padding:18rpx 22rpx;box-sizing:border-box;min-height:118rpx}
 .update-tag{flex-shrink:0;border-radius:8rpx;padding:5rpx 9rpx;color:#66827b;background:#eaf3ef;font-size:20rpx;line-height:1.5}
 .update-tag-order{background:#f4efd9;color:#857240}.update-tag-announcement{background:#e7eff5;color:#567589}
-.update-tag-campaign{background:#f2edf5;color:#85718e}
 .update-copy{flex:1;min-width:0}
 .update-title{font-size:26rpx;font-weight:500;line-height:1.6;color:#314c50;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .update-subtitle{margin-top:4rpx;font-size:22rpx;color:#738789;line-height:1.5;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -63,6 +67,10 @@ page{background:#e6f1ef}
 .demand-info{background:#f3f3f3;border-radius:18rpx;padding:22rpx 24rpx;font-size:27rpx;line-height:1.8;margin:22rpx 0}.home-page .quote-button{border-radius:14rpx;padding:17rpx 28rpx;font-size:26rpx}
 .home-page .hall-button{margin:26rpx 0}.pressed{opacity:.8}
 /* 收敛提示与表单底纹，不截断整页背景。 */
+.home-page .campaign{background:linear-gradient(120deg,rgba(247,240,210,.9),rgba(244,243,226,.75))}
+.home-page .campaign-1{background:linear-gradient(120deg,rgba(214,234,242,.9),rgba(235,243,243,.75))}
+.home-page .campaign-2{background:linear-gradient(120deg,rgba(221,237,221,.9),rgba(232,243,235,.75))}
+.home-page .estimate-banner{background:linear-gradient(110deg,rgba(212,233,240,.78),rgba(237,246,245,.65));border:1rpx solid rgba(255,255,255,.6)}
 .home-page .notification{background:rgba(246,240,217,.78);border-color:rgba(224,215,180,.55)}
 .home-page .notice-icon{color:#b4a164}
 .home-page .demand-info{background:rgba(220,233,234,.4)}

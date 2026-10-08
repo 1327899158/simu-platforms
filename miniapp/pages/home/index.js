@@ -119,13 +119,12 @@ Page({
       const [campaigns,directory] = await Promise.all([request('GET','/home/campaigns'),request('GET','/home/engineers')]);
       if(this.data.role!=='CUSTOMER'||this.data.user?.id!==userId)return;
       this.setData({ campaigns, categories:directory.categories, engineers:directory.items.slice(0,4).map(x=>({...x,positiveText:x.level.positiveRate===null?'暂无评价':x.level.positiveRate.toFixed(1)+'%'})) });
-      this.refreshUpdates();
     } catch (_) {}
   },
   updateAnnouncements(e){this.setData({announcements:e.detail.items||[]});this.refreshUpdates();},
   refreshUpdates(){
     const previous=this.data.homeUpdates[this.data.updateIndex]?.key;
-    const items=homeUpdates(this.data.notices,this.data.announcements,this.data.campaigns);
+    const items=homeUpdates(this.data.notices,this.data.announcements);
     const index=items.findIndex(item=>item.key===previous);
     this.setData({homeUpdates:items,updateIndex:index<0?0:index});
   },
@@ -136,8 +135,6 @@ Page({
     if(!item)return;
     const event={currentTarget:{dataset:{id:item.id}}};
     if(item.kind==='order')return this.openMine(event);
-    if(item.kind==='campaign')return this.openCampaign(event);
-    if(item.kind==='estimate')return this.goEstimate();
     wx.showModal({title:item.title,content:item.subtitle,showCancel:false,confirmText:'知道了'});
   },
   dismissUpdate(e){
