@@ -31,17 +31,19 @@ test('立即咨询打开聊天，提交工单打开独立表单',async()=>{
  instance.create();assert.equal(instance.data.form,true);assert.equal(instance.data.detail,null);assert.equal(instance.data.channel,'TICKET');
 });
 
-test('订单卡片按客服页面身份分开跳转，用户端不受缓存管理员身份影响',async()=>{
- let definition,posted;const destinations=[],toasts=[];let permissions=['ORDER_READ'];
+test('订单卡片按客户、工程师和管理员身份跳转，用户端不受缓存管理员身份影响',async()=>{
+ let definition,posted;const destinations=[],toasts=[];let permissions=['ORDER_READ'],role='CUSTOMER';
  vm.runInNewContext(fs.readFileSync(path.resolve(__dirname,'../../miniapp/components/service-desk/index.js'),'utf8'),{
   Component:d=>definition=d,
-  require:()=>({request:async(method,url,body)=>{posted={method,url,body};return {};}}),
+  require:()=>({getUser:()=>({role}),request:async(method,url,body)=>{posted={method,url,body};return {};}}),
   wx:{navigateTo:o=>destinations.push(o.url),getStorageSync:()=>({permissions}),showToast:o=>toasts.push(o.title)},
  });
  const order={id:'o',projectName:'测试项目',orderNo:'SIM001'};
  const instance={...definition.methods,data:{...definition.data,admin:false,detail:{id:'chat',channel:'CHAT',messages:[{relatedOrder:order}]}},setData(p){Object.assign(this.data,p);}};
  const click={currentTarget:{dataset:{id:'o'}}};
  instance.openOrder(click);assert.equal(destinations.pop(),'/pages/order-detail/index?id=o');
+ role='ENGINEER';instance.openOrder(click);assert.equal(destinations.pop(),'/pages/order-detail/index?id=o&mode=market');
+ instance.data.detail={relatedOrder:order,messages:[]};instance.openOrder(click);assert.equal(destinations.pop(),'/pages/order-detail/index?id=o&mode=market');
  instance.data.admin=true;instance.openOrder(click);assert.equal(destinations.pop(),'/admin/pages/order-detail/index?id=o');
  permissions=[];instance.openOrder(click);assert.equal(destinations.length,0);assert.equal(toasts.pop(),'暂无订单查看权限');
  permissions=['*'];instance.data.detail={relatedOrder:order,messages:[]};instance.openOrder(click);assert.equal(destinations.pop(),'/admin/pages/order-detail/index?id=o');

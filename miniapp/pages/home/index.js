@@ -3,6 +3,7 @@ const { ensureLogin, getUser } = require('../../utils/auth');
 const { request } = require('../../utils/request');
 const { fenToYuan, timeShort, STATUS_CLASS } = require('../../utils/format');
 const { isApproved, promptIdentity } = require('../../utils/identity');
+const { homeUpdates } = require('../../utils/home-updates');
 
 Page({
   data: {
@@ -19,12 +20,14 @@ Page({
     hall: [], exposures: [],
     hallStats: { allCount: null, todayCount: null },
     campaigns: [], notices: [], engineers: [], categories: [],
+    announcements: [], homeUpdates: [], updatesExpanded: false, updateIndex: 0, homeVisible: false,
     sharePopupVisible: false,
     shareCampaign: null,
   },
   async onShow() {
     this._exposureActive=true;
     clearInterval(this._quoteTimer);
+    clearInterval(this._noticeTimer);
     let user = ensureLogin();
     if (!user) return;
     require('../../utils/invitation').accept();
@@ -32,13 +35,17 @@ Page({
       user = await request('GET', '/me', null, { silent: true });
       wx.setStorageSync('user', user);
     } catch (_) {}
-    if(this.data.user?.id!==user.id)this._exposureSeen=new Set();
+    if(this.data.user?.id!==user.id||this.data.role!==user.role){
+      this._exposureSeen=new Set();
+      this.setData({notices:[],campaigns:[],announcements:[],homeUpdates:[],updatesExpanded:false,updateIndex:0});
+    }
     const canTakeOrders = user.role === 'ENGINEER' && isApproved(user);
     this.setData({
       role: user.role,
       user,
       canTakeOrders,
       unreadQuoteCount: 0,
+      homeVisible: true,
     });
     const tabBar = this.getTabBar && this.getTabBar();
     if (tabBar && tabBar.syncTabBar) tabBar.syncTabBar(user.role, '/pages/home/index');
@@ -49,13 +56,14 @@ Page({
       if (canTakeOrders) { this.loadHall(); this.loadExposures(); }
       else this.setData({ hall: [],exposures:[] });
     } else {
+      this.refreshUpdates();
       this.loadCustomer();
       this.loadDiscovery();
       clearInterval(this._noticeTimer);
       this._noticeTimer = setInterval(() => this.loadNotices(), 15000);
     }
   },
-  onHide() { this.setData({sharePopupVisible:false});this._exposureActive=false;require('../../utils/exposure-tracker').stop(this); clearInterval(this._noticeTimer); clearInterval(this._quoteTimer); },
+  onHide() { this.setData({sharePopupVisible:false,homeVisible:false});this._exposureActive=false;require('../../utils/exposure-tracker').stop(this); clearInterval(this._noticeTimer); clearInterval(this._quoteTimer); },
   onUnload() { this._exposureActive=false;require('../../utils/exposure-tracker').stop(this); clearInterval(this._noticeTimer); clearInterval(this._quoteTimer); },
   async loadQuoteUnread() {
     const userId = this.data.user && this.data.user.id;
@@ -97,14 +105,44 @@ Page({
     return {title:inviting ? this.data.shareCampaign?.title || '邀请你体验仿真服务平台' : '仿真服务平台 · 找专业工程师', path:inviting ? this.data.shareCampaign?.sharePath || '/pages/guest-home/index' : '/pages/guest-home/index'};
   },
   async loadNotices() {
-    try { this.setData({ notices: await request('GET','/home/notices',null,{silent:true}) }); } catch (_) {}
+    const userId=this.data.user?.id;
+    try {
+      const notices=await request('GET','/home/notices',null,{silent:true});
+      if(this.data.role!=='CUSTOMER'||this.data.user?.id!==userId)return;
+      this.setData({notices});this.refreshUpdates();
+    } catch (_) {}
   },
   async loadDiscovery() {
     this.loadNotices();
+    const userId=this.data.user?.id;
     try {
       const [campaigns,directory] = await Promise.all([request('GET','/home/campaigns'),request('GET','/home/engineers')]);
+      if(this.data.role!=='CUSTOMER'||this.data.user?.id!==userId)return;
       this.setData({ campaigns, categories:directory.categories, engineers:directory.items.slice(0,4).map(x=>({...x,positiveText:x.level.positiveRate===null?'暂无评价':x.level.positiveRate.toFixed(1)+'%'})) });
+      this.refreshUpdates();
     } catch (_) {}
+  },
+  updateAnnouncements(e){this.setData({announcements:e.detail.items||[]});this.refreshUpdates();},
+  refreshUpdates(){
+    const previous=this.data.homeUpdates[this.data.updateIndex]?.key;
+    const items=homeUpdates(this.data.notices,this.data.announcements,this.data.campaigns);
+    const index=items.findIndex(item=>item.key===previous);
+    this.setData({homeUpdates:items,updateIndex:index<0?0:index});
+  },
+  toggleUpdates(){this.setData({updatesExpanded:!this.data.updatesExpanded});},
+  changeUpdate(e){this.setData({updateIndex:e.detail.current});},
+  openUpdate(e){
+    const item=this.data.homeUpdates.find(item=>item.key===e.currentTarget.dataset.key);
+    if(!item)return;
+    const event={currentTarget:{dataset:{id:item.id}}};
+    if(item.kind==='order')return this.openMine(event);
+    if(item.kind==='campaign')return this.openCampaign(event);
+    if(item.kind==='estimate')return this.goEstimate();
+    wx.showModal({title:item.title,content:item.subtitle,showCancel:false,confirmText:'知道了'});
+  },
+  dismissUpdate(e){
+    const item=this.data.homeUpdates.find(item=>item.key===e.currentTarget.dataset.key);
+    if(item?.kind==='announcement')this.selectComponent('#home-announcements')?.dismiss(item.id,item.revision);
   },
   openCampaign(e) { wx.navigateTo({url:'/pages/activity/index?id='+e.currentTarget.dataset.id}); },
   goEstimate() { wx.navigateTo({url:'/pages/estimate/index'}); },

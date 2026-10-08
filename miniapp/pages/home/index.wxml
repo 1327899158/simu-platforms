@@ -1,4 +1,14 @@
-<announcement-banner/>
+<announcement-banner wx:if="{{role==='ENGINEER'}}"/>
+<announcement-banner wx:if="{{role==='CUSTOMER'}}" id="home-announcements" embedded bind:change="updateAnnouncements"/>
+
+<template name="home-update">
+ <view class="update-row" data-key="{{item.key}}" bindtap="openUpdate" hover-class="pressed">
+  <text class="update-tag update-tag-{{item.kind}}">{{item.label}}</text>
+  <view class="update-copy"><view class="update-title">{{item.title}}</view><view class="update-subtitle">{{item.subtitle}}</view></view>
+  <text class="update-arrow">›</text>
+  <button wx:if="{{item.kind==='announcement'}}" class="update-dismiss" data-key="{{item.key}}" catchtap="dismissUpdate" aria-label="关闭这条公告">×</button>
+ </view>
+</template>
 
 <view class="home-page {{role==='ENGINEER'?'engineer-home':'customer-home'}}">
  <block wx:if="{{role==='CUSTOMER'}}">
@@ -14,11 +24,16 @@
     <view class="shortcut" bindtap="goEngineers" hover-class="pressed"><view class="shortcut-icon mint"><ui-symbol value="👷"/></view><text>找工程师</text></view>
     <view class="shortcut" bindtap="goMessages" hover-class="pressed"><view class="shortcut-icon pink"><ui-symbol value="💬"/></view><text>消息</text></view>
    </view>
-   <swiper class="home-campaigns" wx:if="{{campaigns.length}}" indicator-dots indicator-color="#dbd9b9" indicator-active-color="#5bc0eb" autoplay circular>
-    <swiper-item wx:for="{{campaigns}}" wx:key="id"><view class="campaign surface campaign-{{index%3}}" data-id="{{item.id}}" bindtap="openCampaign"><view class="campaign-copy"><text class="eyebrow">专属活动 · 好礼相伴</text><view class="campaign-heading">{{item.title}}</view><view class="small">{{item.subtitle}}</view><view class="campaign-link">查看活动 ›</view></view><view class="ui-icon-copy campaign-art"><ui-symbol value="🎁"/></view></view></swiper-item>
-   </swiper>
-   <view class="notification" wx:for="{{notices}}" wx:key="id" data-id="{{item.id}}" bindtap="openMine"><text class="notice-icon">★</text><view class="grow"><view>{{item.text}}</view><view class="small">{{item.projectName}}</view></view><text>›</text></view>
-   <view class="estimate-banner" bindtap="goEstimate"><view class="estimate-icon"><ui-symbol value="💡"/></view><view class="grow"><view class="card-title">不确定预算？先快速预估</view><view class="small">10秒了解项目费用，发布需求更精准</view></view><text class="arrow">›</text></view>
+   <view class="home-updates surface" wx:if="{{homeUpdates.length}}">
+    <view class="updates-header"><view class="updates-heading">提醒与活动 <text class="updates-count">{{homeUpdates.length}}</text></view><button class="updates-toggle" bindtap="toggleUpdates" aria-expanded="{{updatesExpanded}}">{{updatesExpanded?'收起':'展开全部'}} <text>{{updatesExpanded?'⌃':'⌄'}}</text></button></view>
+    <block wx:if="{{!updatesExpanded}}">
+     <swiper class="updates-swiper" vertical circular="{{homeUpdates.length>1}}" autoplay="{{homeVisible && !sharePopupVisible && homeUpdates.length>1}}" interval="5000" duration="350" current="{{updateIndex}}" bindchange="changeUpdate">
+      <swiper-item wx:for="{{homeUpdates}}" wx:key="key"><template is="home-update" data="{{item}}"/></swiper-item>
+     </swiper>
+     <view class="updates-footer"><text>{{homeUpdates.length>1?'上下滑动查看 · 点击进入详情':'点击进入详情'}}</text><text>{{updateIndex+1}} / {{homeUpdates.length}}</text></view>
+    </block>
+    <scroll-view wx:else scroll-y class="updates-list" style="height:{{homeUpdates.length>3?560:homeUpdates.length*150}}rpx" enhanced show-scrollbar="{{false}}"><view wx:for="{{homeUpdates}}" wx:key="key"><template is="home-update" data="{{item}}"/></view></scroll-view>
+   </view>
    <view class="section-head"><text class="section-heading">为您推荐<text class="marker">工程师</text></text><text class="more" bindtap="goEngineers">查看全部 ›</text></view>
    <scroll-view scroll-x class="engineer-scroll" enhanced show-scrollbar="{{false}}">
     <view class="engineer-strip"><view class="engineer-card surface" wx:for="{{engineers}}" wx:key="id" data-id="{{item.id}}" bindtap="openEngineer">

@@ -1,4 +1,5 @@
 const {request}=require('../../utils/request');
+const {getUser}=require('../../utils/auth');
 const labels={OPEN:'待回应',PROCESSING:'处理中',RESOLVED:'已处理',CLOSED:'已关闭'};
 Component({properties:{admin:Boolean,suggestedOrderId:String},data:{channel:'CHAT',selectedOrder:null,orderPicker:false,orderItems:[],orderSearch:"",orderOffset:0,orderHasMore:false,orderLoading:false,orderError:"",items:[],detail:null,form:false,title:'',content:'',category:'账号异常',categories:['账号异常','订单/交易','纠纷售后','发票问题','其他'],reply:'',evidence:[],faq:[],busy:false,error:'',offset:0,hasMore:false},lifetimes:{attached(){this.start();},detached(){this.stop();}},pageLifetimes:{show(){this.start();},hide(){this.stop();}},methods:{
  async consult(){if(this.data.busy)return;this.setData({busy:true});try{const r=await request('POST','/service-chats',{});await this.openId(r.id);}catch(e){wx.showToast({title:e.message||'连接客服失败',icon:'none'});}finally{this.setData({busy:false});}},
@@ -35,7 +36,8 @@ Component({properties:{admin:Boolean,suggestedOrderId:String},data:{channel:'CHA
    if(!permissions.includes('*')&&!permissions.includes('ORDER_READ'))return wx.showToast({title:'暂无订单查看权限',icon:'none'});
   }
   const page=this.data.admin?'/admin/pages/order-detail/index':'/pages/order-detail/index';
-  wx.navigateTo({url:page+'?id='+encodeURIComponent(id)});
+  const mode=!this.data.admin&&getUser()?.role==='ENGINEER'?'&mode=market':'';
+  wx.navigateTo({url:page+'?id='+encodeURIComponent(id)+mode});
  },
  removeOrder(){if(!this.data.busy)this.setData({selectedOrder:null});},
  base(){return (this.data.admin?'/admin':'')+'/service-tickets';},start(){if(this._active)return;this._active=true;this.load();if(!this.data.admin)request('GET','/help',null,{silent:true}).then(faq=>{if(this._active)this.setData({faq:faq.filter(x=>x.kind==='FAQ')});}).catch(()=>{});this._poll=setInterval(()=>{if(this.data.detail){if(!this._detailLoading)this.openId(this.data.detail.id);}else if(!this.data.form && this.data.offset<=20)this.load();},2000);},stop(){this._active=false;this._detailVersion=(this._detailVersion||0)+1;clearInterval(this._poll);},

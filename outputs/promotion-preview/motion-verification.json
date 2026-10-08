@@ -1,0 +1,60 @@
+{
+  "date": "2026-10-08",
+  "method": "Codex browser: native pointer, semantic clicks, keyboard and responsive viewport checks",
+  "final": {
+    "accessibleLoopSequences": 1,
+    "duplicateIds": [],
+    "engineerCards": 4,
+    "loopCopies": 3,
+    "overflow": false,
+    "platformButtons": 5,
+    "serviceCards": 6,
+    "spotlightCards": 10,
+    "testimonials": 3,
+    "titleWords": 4,
+    "width": 1071
+  },
+  "checkedWidths": [
+    1071,
+    768,
+    390,
+    320
+  ],
+  "pointerTiltObserved": {
+    "x": "1.34deg",
+    "y": "3.52deg"
+  },
+  "magnetObserved": {
+    "x": "3.90px",
+    "y": "-0.61px",
+    "clickOpenedDialog": false
+  },
+  "spotlightObserved": {
+    "x": "173px",
+    "y": "155.875px",
+    "color": "rgba(88,201,209,0.24)"
+  },
+  "softwareLoop": {
+    "observedMoving": true,
+    "manualPause": true,
+    "manualResume": true,
+    "keyboardToggle": true,
+    "pausesOffscreen": true
+  },
+  "platformDialog": {
+    "clickAfterMagnet": true,
+    "title": "敬请期待！",
+    "animation": "motion-dialog-in",
+    "magnetReset": true
+  },
+  "chartRegression": {
+    "metric": "新增需求",
+    "periodMonths": 12,
+    "points": 12
+  },
+  "reducedMotion": {
+    "supported": true,
+    "verification": "JS guards and CSS media query reviewed; OS preference was not changed"
+  },
+  "console": []
+}
