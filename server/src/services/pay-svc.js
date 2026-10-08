@@ -15,6 +15,28 @@ const {
   publishConversationDoc,
   publishSystemMessage,
 } = require('./chat-svc');
+const PAYMENT_CLOCK_VERSION = 'utc-db-v2';
+
+// 从 DATETIME 的文本原值计算 UTC 截止时间，避免驱动把它转换为本地 Date。
+// 诊断仅记录订单标识和时间，不记录支付密钥、签名或请求体。
+function paymentExpiry(order, phase) {
+  const now = Date.now(), timeout = config.payTimeoutSec ?? 1800;
+  if (!Number.isSafeInteger(timeout) || timeout <= 0) throw err.conflict('PAY_TIMEOUT_SEC 必须为正整数，单位为秒');
+  const source = order.paymentSelectedAtUtc ?? order.selectedAt;
+  const selected = source ? parseDbDate(source).getTime() : now;
+  const expires = selected + timeout * 1000;
+  const valid = Number.isFinite(selected) && Number.isFinite(expires);
+  console.log(JSON.stringify({
+    evt: 'pay-window-check', paymentClock: PAYMENT_CLOCK_VERSION, phase, orderId: order.id,
+    selectedAtRaw: source instanceof Date ? (Number.isFinite(source.getTime()) ? source.toISOString() : 'invalid') : source ?? null,
+    selectedAtUtc: valid ? new Date(selected).toISOString() : null,
+    expiresAtUtc: valid ? new Date(expires).toISOString() : null,
+    nowUtc: new Date(now).toISOString(), payTimeoutSec: timeout, expired: valid && expires <= now,
+  }));
+  if (!valid) throw err.conflict('订单支付时间异常，请联系客服核查');
+  if (expires <= now) throw err.conflict('支付时间已过，请返回订单等待报价恢复');
+  return expires;
+}
 
 /**
  * 向微信云托管代签名网关发 HTTP 请求（内部地址，无需签名）。
@@ -70,10 +92,9 @@ function wxpayRequest(method, path, body, provider = paymentProvider()) {
 async function createPayment(order, options = {}) {
   const coins = require('./coin-svc').amount(options.coins);
   return tx(async conn => {
-    const [[current]] = await conn.execute('SELECT * FROM orders WHERE id=? AND deletedAt IS NULL FOR UPDATE', [order.id]);
+    const [[current]] = await conn.execute("SELECT *, DATE_FORMAT(selectedAt,'%Y-%m-%d %H:%i:%s.%f') AS paymentSelectedAtUtc FROM orders WHERE id=? AND deletedAt IS NULL FOR UPDATE", [order.id]);
     if (!current || current.status !== 'AWAITING_PAYMENT' || current.selectedQuoteId !== order.selectedQuoteId) throw err.conflict('订单状态已变化，请刷新后支付');
-    const selectedAt=current.selectedAt?parseDbDate(current.selectedAt).getTime():null;
-    if(Number.isFinite(selectedAt)&&selectedAt+(config.payTimeoutSec||1800)*1000<=Date.now())throw err.conflict('支付时间已过，请返回订单等待报价恢复');
+    paymentExpiry(current, 'create-payment');
     const gross = Number(!coins && config.env !== 'production' && config.payAmountOverrideFen || current.finalAmountFen);
     if (!Number.isSafeInteger(gross) || gross <= 0) throw err.conflict('订单金额异常');
     const [[existing]] = await conn.execute(
@@ -150,9 +171,10 @@ async function createJsapiOrder(order, openid, context = {}) {
   assertPaymentConfigured(provider, service);
   // 与取消操作共享订单锁，不能在云端尚在创建支付单时释放抵扣余额。
   const response = await tx(async conn=>{
-    const [[currentOrder]]=await conn.execute('SELECT * FROM orders WHERE id=? FOR UPDATE',[order.id]);
+    const [[currentOrder]]=await conn.execute("SELECT *, DATE_FORMAT(selectedAt,'%Y-%m-%d %H:%i:%s.%f') AS paymentSelectedAtUtc FROM orders WHERE id=? FOR UPDATE",[order.id]);
     const [[current]]=await conn.execute('SELECT * FROM payments WHERE outTradeNo=? FOR UPDATE',[payment.outTradeNo]);
     if(!currentOrder||currentOrder.deletedAt||currentOrder.status!=='AWAITING_PAYMENT'||current?.status!=='PENDING')throw err.conflict('支付单已变化，请刷新');
+    const expiresAt = paymentExpiry(currentOrder, 'unifiedorder');
     return wxpayRequest('POST', '/unifiedorder', {
     body: '仿真服务·' + String(order.projectName || '').slice(0, 30),
     out_trade_no: payment.outTradeNo, sub_mch_id: config.wxpayMchid,
@@ -160,7 +182,7 @@ async function createJsapiOrder(order, openid, context = {}) {
     spbill_create_ip: context.clientIp || '127.0.0.1',
     env_id: config.cloudbaseEnv, callback_type: 2,
     container: { service, path: '/api/pay/notify' },
-    ...(provider==='v3'?{time_expire: new Date((currentOrder.selectedAt ? parseDbDate(currentOrder.selectedAt).getTime() : Date.now()) + (config.payTimeoutSec||1800) * 1000).toISOString()}:{}),
+    ...(provider==='v3'?{time_expire: new Date(expiresAt).toISOString()}:{}),
     }, provider);
   });
   const result = cloudPayResult(response, '下单');
@@ -348,4 +370,4 @@ function startSweeper() {
   if (timer.unref) timer.unref();
 }
 
-module.exports = { paymentProvider, assertPaymentAccount, assertPaymentConfigured, wxpayRequest, cloudPayResult, closeUnpaidTrade, reconcilePayment, createPayment, createJsapiOrder, confirmCoinPayment, cancelPayment, applyPaymentSuccess, sweepExpiredAwaitingPayment, startSweeper };
+module.exports = { PAYMENT_CLOCK_VERSION, paymentProvider, assertPaymentAccount, assertPaymentConfigured, wxpayRequest, cloudPayResult, closeUnpaidTrade, reconcilePayment, createPayment, createJsapiOrder, confirmCoinPayment, cancelPayment, applyPaymentSuccess, sweepExpiredAwaitingPayment, startSweeper };

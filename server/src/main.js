@@ -11,7 +11,7 @@ const http = require('node:http');
 const { config } = require('./config');
 const { createRouter, sendJson, ApiError } = require('./lib/http');
 const { init: dbInit } = require('./db');
-const { startSweeper } = require('./services/pay-svc');
+const { startSweeper, PAYMENT_CLOCK_VERSION } = require('./services/pay-svc');
 
 const router = createRouter();
 
@@ -47,7 +47,7 @@ require('./routes/admin').register(router);
 require('./routes/admin-console').register(router);
 
 router.get('/api/health', async (_req, res) =>
-  sendJson(res, 200, { code: 0, data: { ok: true, now: new Date().toISOString() } }));
+  sendJson(res, 200, { code: 0, data: { ok: true, now: new Date().toISOString(), paymentClock: PAYMENT_CLOCK_VERSION, payTimeoutSec: config.payTimeoutSec } }));
 
 const server = http.createServer(async (req, res) => {
   const start = Date.now();
@@ -105,6 +105,8 @@ async function bootstrap() {
       engineerSelfVerify: config.allowEngineerSelfVerify,
       paymentMode: config.paymentMode,
       paymentTransport: config.wxpayTransport,
+      paymentClock: PAYMENT_CLOCK_VERSION,
+      payTimeoutSec: config.payTimeoutSec,
       chatImageMode: 'direct-cloud-file-id',
       attachmentSchema: 'order-attachments-v1',
       maxUploadMb: config.uploadMaxMb,

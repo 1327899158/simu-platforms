@@ -181,3 +181,38 @@ test('SQL时间、Date和带时区时间均在实际到期时阻止支付',async
     if(previousTimezone===undefined)delete process.env.TZ;else process.env.TZ=previousTimezone;
   }
 });
+
+test('支付直接读取数据库DATETIME原值，不受驱动返回Date的时区偏移影响',async()=>{
+  const previousNow=Date.now,selected=Date.parse('2026-10-08T04:00:00.000Z');
+  Date.now=()=>selected+1000;
+  try {
+    config.wxpayTransport='v3';payment=null;
+    order.selectedAt=new Date(selected-8*3600*1000);
+    order.paymentSelectedAtUtc='2026-10-08 04:00:00.000000';
+    const result=await svc.createJsapiOrder({...order,projectName:'新需求'},'openid');
+    assert.equal(result.mode,'wechat');
+    assert.equal(v3Calls[0].body.time_expire,'2026-10-08T04:30:00.000Z');
+    assert.equal(sqlLog.filter(sql=>sql.includes('DATE_FORMAT(selectedAt')&&sql.includes('paymentSelectedAtUtc')).length,2);
+    Date.now=()=>selected+1800*1000;payment=null;
+    await assert.rejects(svc.createPayment(order),e=>e.status===409);
+    assert.equal(payment,null);
+  } finally { Date.now=previousNow; }
+});
+
+test('超时诊断包含实际时间及配置，异常时间不能创建支付单',async()=>{
+  const previousNow=Date.now,previousLog=console.log,logs=[];
+  Date.now=()=>Date.parse('2026-10-08T04:30:00Z');console.log=line=>logs.push(JSON.parse(line));
+  try {
+    order.selectedAt='2026-10-08 04:00:00';payment=null;
+    await assert.rejects(svc.createPayment(order),e=>e.status===409);
+    const diagnostic=logs.find(line=>line.evt==='pay-window-check');
+    assert.equal(diagnostic.paymentClock,'utc-db-v2');assert.equal(diagnostic.payTimeoutSec,1800);
+    assert.equal(diagnostic.selectedAtUtc,'2026-10-08T04:00:00.000Z');
+    assert.equal(diagnostic.expiresAtUtc,'2026-10-08T04:30:00.000Z');
+    assert.equal(diagnostic.nowUtc,'2026-10-08T04:30:00.000Z');assert.equal(diagnostic.expired,true);
+    assert.deepEqual(Object.keys(diagnostic).sort(),['evt','paymentClock','phase','orderId','selectedAtRaw','selectedAtUtc','expiresAtUtc','nowUtc','payTimeoutSec','expired'].sort());
+    order.selectedAt='invalid';
+    await assert.rejects(svc.createPayment(order),e=>e.status===409&&e.message.includes('时间异常'));
+    assert.equal(payment,null);
+  } finally { Date.now=previousNow;console.log=previousLog; }
+});
