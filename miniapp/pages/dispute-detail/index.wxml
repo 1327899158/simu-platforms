@@ -14,6 +14,7 @@
       <text class="timer-title">{{dispute.evidenceOpen ? '48小时举证进行中' : '举证通道已关闭'}}</text>
       <text class="timer-value">{{evidenceCountdown}}</text>
       <text class="timer-desc">截止时间：{{dispute.deadlineText}}</text>
+      <text class="timer-desc" wx:if="{{dispute.evidenceOpen}}">任意一方成功补充新证据后，双方举证期重新计算48小时</text>
     </view>
   </view>
 
@@ -37,7 +38,7 @@
     </view>
 
     <view class="evidence-notice">
-      点击加号选择图片，每次最多10张。填写说明后点击上传按钮提交，举证截止后不可再补充。
+      点击加号选择图片，每次最多10张。成功提交新证据后双方举证期重新计算48小时，截止后不可再补充。
     </view>
     <view class="evidence-description-form" wx:if="{{dispute.evidenceOpen}}">
       <view class="evidence-picker">

@@ -387,7 +387,7 @@ Page({
         if (!reasonType) return;
         wx.showModal({
           title: '申请客服介入',
-          content: '申请后订单进入纠纷处理，双方可在48小时内上传证据。是否确认？',
+          content: '申请后订单进入纠纷处理，双方可在48小时内上传证据；每次成功补充新证据后，双方举证期重新计算48小时。是否确认？',
           confirmText: '申请介入',
           success: async (result) => {
             if (!result.confirm || this._escalating) return;

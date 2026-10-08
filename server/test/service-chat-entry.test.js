@@ -30,3 +30,23 @@ test('立即咨询打开聊天，提交工单打开独立表单',async()=>{
  await instance.consult();assert.equal(instance.data.form,false);assert.equal(instance.data.detail.channel,'CHAT');assert.equal(requests[0],'/service-chats');
  instance.create();assert.equal(instance.data.form,true);assert.equal(instance.data.detail,null);assert.equal(instance.data.channel,'TICKET');
 });
+
+test('订单卡片按客服页面身份分开跳转，用户端不受缓存管理员身份影响',async()=>{
+ let definition,posted;const destinations=[],toasts=[];let permissions=['ORDER_READ'];
+ vm.runInNewContext(fs.readFileSync(path.resolve(__dirname,'../../miniapp/components/service-desk/index.js'),'utf8'),{
+  Component:d=>definition=d,
+  require:()=>({request:async(method,url,body)=>{posted={method,url,body};return {};}}),
+  wx:{navigateTo:o=>destinations.push(o.url),getStorageSync:()=>({permissions}),showToast:o=>toasts.push(o.title)},
+ });
+ const order={id:'o',projectName:'测试项目',orderNo:'SIM001'};
+ const instance={...definition.methods,data:{...definition.data,admin:false,detail:{id:'chat',channel:'CHAT',messages:[{relatedOrder:order}]}},setData(p){Object.assign(this.data,p);}};
+ const click={currentTarget:{dataset:{id:'o'}}};
+ instance.openOrder(click);assert.equal(destinations.pop(),'/pages/order-detail/index?id=o');
+ instance.data.admin=true;instance.openOrder(click);assert.equal(destinations.pop(),'/admin/pages/order-detail/index?id=o');
+ permissions=[];instance.openOrder(click);assert.equal(destinations.length,0);assert.equal(toasts.pop(),'暂无订单查看权限');
+ permissions=['*'];instance.data.detail={relatedOrder:order,messages:[]};instance.openOrder(click);assert.equal(destinations.pop(),'/admin/pages/order-detail/index?id=o');
+ instance.openOrder({currentTarget:{dataset:{id:'forged'}}});assert.equal(destinations.length,0);
+ instance.data.admin=false;instance.data.detail={id:'chat',channel:'CHAT',messages:[]};instance.data.orderItems=[order];instance.openId=async()=>{};
+ await instance.selectOrder(click);
+ assert.equal(posted.url,'/service-tickets/chat');assert.equal(posted.body.orderId,'o');assert.equal(posted.body.content,undefined);
+});

@@ -1,0 +1,67 @@
+{
+  "date": "2026-10-08",
+  "preview": "http://127.0.0.1:3140/",
+  "method": "Codex in-app browser, DOM inspection and screenshots",
+  "platformDialogs": [
+    {
+      "open": true,
+      "platform": "iOS 访问入口",
+      "title": "敬请期待！"
+    },
+    {
+      "open": true,
+      "platform": "Android 访问入口",
+      "title": "敬请期待！"
+    },
+    {
+      "open": true,
+      "platform": "Mac 访问入口",
+      "title": "敬请期待！"
+    },
+    {
+      "open": true,
+      "platform": "Windows 访问入口",
+      "title": "敬请期待！"
+    },
+    {
+      "open": true,
+      "platform": "微信小程序 访问入口",
+      "title": "敬请期待！"
+    }
+  ],
+  "responsive": [
+    {
+      "buttons": true,
+      "cases": "265px",
+      "footer": "120px 120px",
+      "scrollWidth": 305,
+      "services": "265px",
+      "width": 320
+    },
+    {
+      "buttons": true,
+      "cases": "342.5px 342.5px",
+      "footer": "214.328px 214.328px 214.328px",
+      "scrollWidth": 753,
+      "services": "342px 342px",
+      "width": 768
+    }
+  ],
+  "integrity": {
+    "brokenAnchors": [],
+    "counts": {
+      "engineers": 4,
+      "platforms": 5,
+      "services": 6,
+      "testimonials": 3
+    },
+    "duplicates": [],
+    "embeddedAvatars": true
+  },
+  "keyboardFocusReturn": true,
+  "keyboardFocusAnimation": "scale(1.07), translateY(-5px); icon scale(1.12), rotate(-5deg)",
+  "footerDemandDialog": true,
+  "footerEngineerGuide": true,
+  "footerComingDialog": true,
+  "consoleWarningsAndErrors": []
+}

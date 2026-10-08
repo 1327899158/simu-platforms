@@ -1,4 +1,4 @@
-const { ensureLogin } = require('../../utils/auth');
+const { ensureLogin, getUser } = require('../../utils/auth');
 const { request, upload } = require('../../utils/request');
 const { deleteCloudFile, downloadAndOpen, formatDownloadError } = require('../../utils/cloud-file');
 
@@ -22,7 +22,7 @@ function statusText(status, submittedAt) {
 
 Page({
   data: {
-    loading: true, uploading: false, saving: false, bindingPhone: false, uploadText: '',
+    loading: true, isEngineer: false, uploading: false, saving: false, bindingPhone: false, uploadText: '',
     realName: '', phone: '', idCardNumber: '', verifyStatus: 'PENDING', verifyText: '未申请', reviewReason: '',
     files: [], maxSupportingFiles: MAX_SUPPORTING,
     maxFileMb: DEFAULT_MAX_MB, maxFileBytes: DEFAULT_MAX_MB * 1024 * 1024,
@@ -33,7 +33,7 @@ Page({
   },
   onPullDownRefresh() { this.load().finally(() => wx.stopPullDownRefresh()); },
   async load() {
-    this.setData({ loading: true });
+    this.setData({ loading: true, isEngineer: getUser()?.role === 'ENGINEER' });
     try {
       const [identity, dicts] = await Promise.all([
         request('GET', '/identity', null, { silent: true }),
@@ -89,7 +89,7 @@ Page({
   },
 
   chooseSupporting() {
-    if (this.data.uploading) return;
+    if (!this.data.isEngineer || this.data.uploading) return;
     const rest = this.data.maxSupportingFiles - this.data.files.length;
     if (rest <= 0) return wx.showToast({ title: `最多上传 ${this.data.maxSupportingFiles} 份资料`, icon: 'none' });
     wx.showActionSheet({

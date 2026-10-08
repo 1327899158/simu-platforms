@@ -11,10 +11,12 @@
  <view wx:if="{{detail}}" class="{{detail.channel==='CHAT'?'service-chat':'service-ticket-detail'}}" style="bottom:{{keyboardHeight || 0}}px">
   <view class="service-chat-head"><button bindtap="back">‹ 返回</button><view>{{detail.title}}<view class="caption">{{detail.statusText}} · {{detail.channel==='CHAT'?'在线客服':'工单详情'}}</view></view></view>
   <scroll-view scroll-y class="{{detail.channel==='CHAT'?'service-chat-messages':'service-ticket-messages'}}" scroll-into-view="{{chatAnchor}}">
-   <view class="card" wx:if="{{detail.channel!=='CHAT'}}"><view>{{detail.content}}</view><view wx:if="{{detail.relatedOrder}}">关联订单：{{detail.relatedOrder.projectName}}（{{detail.relatedOrder.orderNo}}）</view><button wx:for="{{detail.evidence}}" wx:key="*this" data-id="{{item}}" bindtap="preview">查看截图 {{index+1}}</button></view>
+   <view class="card" wx:if="{{detail.channel!=='CHAT'}}"><view>{{detail.content}}</view><view class="service-order-card" wx:if="{{detail.relatedOrder}}" data-id="{{detail.relatedOrder.id}}" bindtap="openOrder"><view class="service-order-title">{{detail.relatedOrder.projectName}}</view><view class="caption">订单号：{{detail.relatedOrder.orderNo}}</view><view class="service-order-link">{{admin?'查看管理端订单':'查看订单详情'}} ›</view></view><button wx:for="{{detail.evidence}}" wx:key="*this" data-id="{{item}}" bindtap="preview">查看截图 {{index+1}}</button></view>
    <view class="service-message system" wx:if="{{!admin && detail.channel === 'CHAT'}}"><view class="service-bubble">您正在排队，请稍等客服回复。</view></view>
    <view wx:for="{{detail.messages}}" wx:key="id" class="service-message {{item.senderKind==='SYSTEM'?'system':(admin ? item.senderKind==='STAFF' : item.senderKind==='USER')?'mine':'peer'}}">
-    <view class="caption">{{item.senderKind==='STAFF'?'客服':item.senderKind==='SYSTEM'?'系统':'用户'}} · {{item.createdAt}}</view><view class="service-bubble">{{item.content}}</view>
+    <view class="caption">{{item.senderKind==='STAFF'?'客服':item.senderKind==='SYSTEM'?'系统':'用户'}} · {{item.createdAt}}</view>
+    <view wx:if="{{item.relatedOrder}}" class="service-bubble service-order-card" data-id="{{item.relatedOrder.id}}" bindtap="openOrder"><view class="service-order-title">{{item.relatedOrder.projectName}}</view><view class="caption">订单号：{{item.relatedOrder.orderNo}}</view><view class="service-order-link">{{admin?'查看管理端订单':'查看订单详情'}} ›</view></view>
+    <view wx:else class="service-bubble">{{item.content}}</view>
    </view>
    <view id="service-bottom" style="height:20rpx"></view>
   </scroll-view>

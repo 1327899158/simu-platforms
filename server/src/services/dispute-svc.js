@@ -12,7 +12,7 @@
  * 结案（orderAction=KEEP）或取消时恢复为发起时快照 orderStatusAtOpen。
  */
 const { err } = require('../lib/http');
-const { newId, nowIso } = require('../lib/util');
+const { newId, nowIso, parseDbDate } = require('../lib/util');
 const { query, queryOne, tx } = require('../db');
 
 // 允许发起纠纷的订单阶段（含待支付——按产品要求"任意已支付阶段"）
@@ -26,6 +26,19 @@ const EVIDENCE_WINDOW_HOURS = 48;
 function evidenceDeadlineIso(baseMs = Date.now()) {
   return new Date(baseMs + EVIDENCE_WINDOW_HOURS * 60 * 60 * 1000)
     .toISOString().slice(0, 19).replace('T', ' ');
+}
+
+function evidenceWindow(d, nowMs = Date.now()) {
+  const fallbackMs = parseDbDate(d.createdAt).getTime() + EVIDENCE_WINDOW_HOURS * 60 * 60 * 1000;
+  const parsedDeadline = d.evidenceDeadlineAt ? parseDbDate(d.evidenceDeadlineAt).getTime() : fallbackMs;
+  const deadlineMs = Number.isFinite(parsedDeadline) ? parsedDeadline : fallbackMs;
+  const remainingSeconds = Math.max(0, Math.ceil((deadlineMs - nowMs) / 1000));
+  return {
+    evidenceDeadlineAt: new Date(deadlineMs).toISOString(),
+    evidenceOpen: d.status === 'OPEN' && remainingSeconds > 0,
+    evidenceRemainingSeconds: d.status === 'OPEN' ? remainingSeconds : 0,
+    arbitrationReady: d.status === 'OPEN' && remainingSeconds === 0,
+  };
 }
 
 /** 解析行内返回的 message 类型字段，兼容 mysql2 返回的 [rows, fields] 或直接的行数组 */
@@ -168,7 +181,7 @@ async function createDispute(user, { orderId, reasonType, description, fileIds }
 
   // 事务提交后给订单会话发系统消息（fire-and-forget）
   const { systemMessageForOrder } = require('./chat-svc');
-  systemMessageForOrder(orderId, '买家发起了纠纷，订单已暂停处理。请双方在48小时内上传证据，举证结束后由平台仲裁。')
+  systemMessageForOrder(orderId, '订单已发起纠纷并暂停处理。请双方在48小时内上传证据，每次成功补充新证据后，双方举证期重新计算48小时，截止后由平台仲裁。')
     .catch(() => {});
   return result;
 }
@@ -228,9 +241,13 @@ async function resolveDispute(admin, disputeId, { verdict, orderAction, note, re
 
   const now = nowIso();
   await tx(async (conn) => {
+    await conn.execute('SELECT id FROM orders WHERE id=? FOR UPDATE', [d.orderId]);
+    const [[current]] = await conn.execute('SELECT * FROM disputes WHERE id = ? FOR UPDATE', [disputeId]);
+    if (!current) throw err.notFound('纠纷不存在');
+    if (current.status !== 'OPEN') throw err.conflict('该纠纷已处理');
+    if (evidenceWindow(current).evidenceOpen) throw err.conflict('举证期尚未结束，请在最新举证截止时间后再仲裁');
     const { config }=require('../config');
     if(Number(refundAmountFen)>0 && config.wxpayTransport){
-      await conn.execute('SELECT id FROM orders WHERE id=? FOR UPDATE',[d.orderId]);
       const [[paid]]=await conn.execute("SELECT * FROM payments WHERE orderId=? AND status='SUCCESS' ORDER BY paidAt DESC LIMIT 1 FOR UPDATE",[d.orderId]);
       if(paid?.provider==='v3'){
         const [prior]=await conn.execute('SELECT * FROM payment_refunds WHERE paymentId=? FOR UPDATE',[paid.id]);
@@ -309,6 +326,7 @@ module.exports = {
   ORDER_ACTIONS,
   EVIDENCE_WINDOW_HOURS,
   evidenceDeadlineIso,
+  evidenceWindow,
   getOrderParties,
   isOrderParty,
   findOpenDispute,

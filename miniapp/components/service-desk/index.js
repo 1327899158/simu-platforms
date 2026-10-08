@@ -24,7 +24,19 @@ Component({properties:{admin:Boolean,suggestedOrderId:String},data:{channel:'CHA
    this.setData({orderItems:more?this.data.orderItems.concat(r.items):r.items,orderOffset:offset+20,orderHasMore:r.hasMore});
   }catch(e){this.setData({orderError:e.message});}finally{this.setData({orderLoading:false});}
  },
- async selectOrder(e){const order=this.data.orderItems.find(o=>o.id===e.currentTarget.dataset.id);if(!order)return;if(this.data.detail?.channel==='CHAT'){this.setData({orderPicker:false,busy:true});try{await request('POST',this.base()+'/'+this.data.detail.id,{action:'REPLY',content:'关联订单：'+order.projectName+'\n订单号：'+order.orderNo});await this.openId(this.data.detail.id);}catch(e){wx.showToast({title:e.message,icon:'none'});}finally{this.setData({busy:false});}}else this.setData({selectedOrder:order,orderPicker:false});},
+ async selectOrder(e){const order=this.data.orderItems.find(o=>o.id===e.currentTarget.dataset.id);if(!order)return;if(this.data.detail?.channel==='CHAT'){this.setData({orderPicker:false,busy:true});try{await request('POST',this.base()+'/'+this.data.detail.id,{action:'REPLY',orderId:order.id});await this.openId(this.data.detail.id);}catch(e){wx.showToast({title:e.message,icon:'none'});}finally{this.setData({busy:false});}}else this.setData({selectedOrder:order,orderPicker:false});},
+ openOrder(e){
+  const id=e.currentTarget.dataset.id;
+  const detail=this.data.detail;
+  const linked=[detail?.relatedOrder,...(detail?.messages||[]).map(message=>message.relatedOrder)].some(order=>order?.id===id);
+  if(!id||!linked)return;
+  if(this.data.admin){
+   const permissions=wx.getStorageSync('adminProfile')?.permissions||[];
+   if(!permissions.includes('*')&&!permissions.includes('ORDER_READ'))return wx.showToast({title:'暂无订单查看权限',icon:'none'});
+  }
+  const page=this.data.admin?'/admin/pages/order-detail/index':'/pages/order-detail/index';
+  wx.navigateTo({url:page+'?id='+encodeURIComponent(id)});
+ },
  removeOrder(){if(!this.data.busy)this.setData({selectedOrder:null});},
  base(){return (this.data.admin?'/admin':'')+'/service-tickets';},start(){if(this._active)return;this._active=true;this.load();if(!this.data.admin)request('GET','/help',null,{silent:true}).then(faq=>{if(this._active)this.setData({faq:faq.filter(x=>x.kind==='FAQ')});}).catch(()=>{});this._poll=setInterval(()=>{if(this.data.detail){if(!this._detailLoading)this.openId(this.data.detail.id);}else if(!this.data.form && this.data.offset<=20)this.load();},2000);},stop(){this._active=false;this._detailVersion=(this._detailVersion||0)+1;clearInterval(this._poll);},
  async load(more=false){try{const channel=this.data.channel,offset=more===true?this.data.offset:0,r=await request('GET',this.base(),{offset,channel});if(!this._active||channel!==this.data.channel)return;const items=r.items.map(x=>({...x,statusText:labels[x.status]}));this.setData({items:more===true?this.data.items.concat(items):items,offset:offset+20,hasMore:r.hasMore,error:''});}catch(e){if(this._active)this.setData({error:e.message});}},more(){this.load(true);},

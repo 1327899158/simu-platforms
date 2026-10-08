@@ -88,7 +88,7 @@ Page({
       wx.hideLoading();
       wx.showModal({
         title: '纠纷已发起',
-        content: '订单已暂停处理。双方可在48小时内进入纠纷详情补充证据，举证结束后由平台仲裁。',
+        content: '订单已暂停处理。双方可在48小时内补充证据，每次成功补充新证据后，双方举证期重新计算48小时，截止后由平台仲裁。',
         showCancel: false,
         success: () => wx.navigateBack(),
       });

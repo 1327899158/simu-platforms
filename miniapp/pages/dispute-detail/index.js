@@ -1,4 +1,4 @@
-/** 纠纷详情：双方在发起后的 48 小时内补充证据，截止后等待平台仲裁。 */
+/** 纠纷详情：每次成功补充新证据后重新计算 48 小时，截止后等待平台仲裁。 */
 const { ensureLogin } = require('../../utils/auth');
 const { request, upload } = require('../../utils/request');
 const { downloadAndOpen, formatDownloadError } = require('../../utils/cloud-file');

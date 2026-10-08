@@ -16,7 +16,7 @@
     <view class="detail-line"><text>发起时间</text><text>{{dispute.createdText}}</text></view>
     <view class="detail-line"><text>举证截止</text><text>{{dispute.deadlineText}}</text></view>
     <view class="evidence-stage {{dispute.evidenceOpen ? 'collecting' : 'ready'}}">
-      {{dispute.evidenceOpen ? '双方正在举证，管理员可实时查看材料；倒计时结束后开放仲裁。' : (dispute.status === 'OPEN' ? '举证已结束，可以开始仲裁。' : '本纠纷举证及处理已结束。')}}
+      {{dispute.evidenceOpen ? '双方正在举证，每次成功补充新证据后重新计算48小时；最新举证截止时间后开放仲裁。' : (dispute.status === 'OPEN' ? '举证已结束，可以开始仲裁。' : '本纠纷举证及处理已结束。')}}
     </view>
     <view class="detail-line"><text>订单状态</text><text>{{dispute.orderStatusAtOpen}} → {{dispute.order ? dispute.order.status : '—'}}</text></view>
     <view class="detail-line" wx:if="{{dispute.verdict !== 'NONE'}}"><text>仲裁结论</text><text>{{dispute.verdictText}} · {{dispute.orderActionText}}</text></view>

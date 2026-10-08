@@ -5,7 +5,21 @@ const offset=q=>v.int(q.get('offset')||0,'offset',{min:0,max:1000000});
 async function member(req){const u=await requireUser(req);if(!['CUSTOMER','ENGINEER'].includes(u.role))throw err.forbidden();return u;}
 function validateAnnouncement(b){const title=v.str(b.title,'标题',{min:1,max:80}),content=v.str(b.content,'公告内容',{min:1,max:2000}),targetRole=v.oneOf(b.targetRole,'发布角色',['ALL','CUSTOMER','ENGINEER']);
  const startsAt=new Date(b.startsAt),endsAt=new Date(b.endsAt);if(!Number.isFinite(startsAt.getTime())||!Number.isFinite(endsAt.getTime())||startsAt>=endsAt)throw err.bad('结束时间必须晚于开始时间');if(typeof b.enabled!=='boolean')throw err.bad('请选择发布状态');return {title,content,targetRole,startsAt,endsAt};}
-async function detail(id,userId,admin=false){const r=await queryOne('SELECT * FROM service_tickets WHERE id=?',[id]);if(!r||(!admin&&r.userId!==userId))throw err.notFound('工单不存在');const messages=await query('SELECT id,senderKind,content,createdAt FROM service_ticket_messages WHERE ticketId=? ORDER BY id DESC LIMIT 100',[id]);return {...r,evidence:parseJson(r.evidence),relatedOrder:r.relatedOrder?parseJson(r.relatedOrder,null):null,messages:messages.reverse()};}
+async function detail(id,userId,admin=false){
+ const r=await queryOne('SELECT * FROM service_tickets WHERE id=?',[id]);
+ if(!r||(!admin&&r.userId!==userId))throw err.notFound('工单不存在');
+ const messages=await query('SELECT id,senderKind,content,relatedOrder,createdAt FROM service_ticket_messages WHERE ticketId=? ORDER BY id DESC LIMIT 100',[id]);
+ const normalized=messages.reverse().map(message=>({...message,relatedOrder:message.relatedOrder?parseJson(message.relatedOrder,null):null}));
+ // 兼容旧客户端的订单文字，仅将工单用户本人参与的订单恢复成卡片。
+ const legacy=normalized.filter(message=>!message.relatedOrder&&message.senderKind==='USER').map(message=>({message,match:/^关联订单：[^\r\n]+\r?\n订单号：([^\r\n]+)$/.exec(message.content||'')})).filter(item=>item.match);
+ if(legacy.length){
+  const numbers=[...new Set(legacy.map(item=>item.match[1]))];
+  const orders=await query(`SELECT o.id,o.projectName,o.orderNo FROM orders o WHERE o.deletedAt IS NULL AND o.orderNo IN (${numbers.map(()=>'?').join(',')}) AND (o.customerId=? OR EXISTS(SELECT 1 FROM quotes q WHERE q.orderId=o.id AND q.engineerId=?))`,[...numbers,r.userId,r.userId]);
+  const byNumber=new Map(orders.map(order=>[order.orderNo,order]));
+  for(const item of legacy)item.message.relatedOrder=byNumber.get(item.match[1])||null;
+ }
+ return {...r,evidence:parseJson(r.evidence),relatedOrder:r.relatedOrder?parseJson(r.relatedOrder,null):null,messages:normalized};
+}
 function orderScope(user){return user.role==='CUSTOMER'?'o.customerId=?':'EXISTS(SELECT 1 FROM quotes q WHERE q.orderId=o.id AND q.engineerId=?)';}
 function register(router){
  router.post('/api/service-chats',async(req,res)=>{
@@ -67,14 +81,24 @@ function register(router){
  });
  router.get('/api/admin/service-tickets/:id',async(req,res,p)=>{await requireAdmin(req,'CUSTOMER_SERVICE');ok(res,await detail(p.id,null,true));});
  for(const adminMode of [false,true])router.post('/api/'+(adminMode?'admin/':'')+'service-tickets/:id',async(req,res,p)=>{
-  const actor=adminMode?await requireAdmin(req,'CUSTOMER_SERVICE'):{user:await member(req)},b=await readJson(req),action=v.oneOf(b.action,'操作',adminMode?['REPLY','ACCEPT','RESOLVE','CLOSE','REOPEN']:['REPLY','CLOSE','REOPEN']);const content=action==='REPLY'?v.str(b.content,'回复',{min:1,max:3000}):({ACCEPT:'客服已受理工单',RESOLVE:'客服标记问题已处理',CLOSE:'工单已关闭',REOPEN:'工单已重新打开'})[action];
+  const actor=adminMode?await requireAdmin(req,'CUSTOMER_SERVICE'):{user:await member(req)},b=await readJson(req),action=v.oneOf(b.action,'操作',adminMode?['REPLY','ACCEPT','RESOLVE','CLOSE','REOPEN']:['REPLY','CLOSE','REOPEN']);
+  const orderId=action==='REPLY'?v.str(b.orderId,'关联订单',{min:1,max:32,optional:true}):null;
+  if(adminMode&&orderId)throw err.bad('请由用户选择并发送关联订单');
+  let content=action==='REPLY'?(orderId?'':v.str(b.content,'回复',{min:1,max:3000})):({ACCEPT:'客服已受理工单',RESOLVE:'客服标记问题已处理',CLOSE:'工单已关闭',REOPEN:'工单已重新打开'})[action];
   await tx(async c=>{const [[t]]=await c.execute('SELECT * FROM service_tickets WHERE id=? FOR UPDATE',[p.id]);if(!t||(!adminMode&&t.userId!==actor.user.id))throw err.notFound('工单不存在');
    if(action==='REOPEN'&&!['CLOSED','RESOLVED'].includes(t.status))throw err.conflict('工单尚未关闭或处理完成');
    if(action!=='REOPEN'&&t.status==='CLOSED')throw err.conflict('工单已关闭，请先重新打开');
    if(['ACCEPT','RESOLVE'].includes(action)&&!['OPEN','PROCESSING'].includes(t.status))throw err.conflict('当前状态不可操作');
+   let relatedOrder=null;
+   if(orderId){
+    const [[order]]=await c.execute(`SELECT o.id,o.projectName,o.orderNo FROM orders o WHERE o.id=? AND o.deletedAt IS NULL AND ${orderScope(actor.user)}`,[orderId,actor.user.id]);
+    if(!order)throw err.forbidden('只能发送本人参与的订单');
+    relatedOrder=JSON.stringify(order);
+    content='关联订单：'+order.projectName+'\n订单号：'+order.orderNo;
+   }
    const status=action==='REOPEN'?'OPEN':action==='CLOSE'?'CLOSED':action==='RESOLVE'?'RESOLVED':adminMode?'PROCESSING':'OPEN';
    await c.execute('UPDATE service_tickets SET status=?,assignedAdminId=COALESCE(?,assignedAdminId),updatedAt=UTC_TIMESTAMP(3) WHERE id=?',[status,adminMode?actor.admin.id:null,p.id]);
-   await c.execute('INSERT INTO service_ticket_messages(ticketId,senderId,senderKind,content,createdAt) VALUES(?,?,?,?,UTC_TIMESTAMP(3))',[p.id,adminMode?actor.admin.id:actor.user.id,action!=='REPLY'?'SYSTEM':adminMode?'STAFF':'USER',content]);
+   await c.execute('INSERT INTO service_ticket_messages(ticketId,senderId,senderKind,content,relatedOrder,createdAt) VALUES(?,?,?,?,?,UTC_TIMESTAMP(3))',[p.id,adminMode?actor.admin.id:actor.user.id,action!=='REPLY'?'SYSTEM':adminMode?'STAFF':'USER',content,relatedOrder]);
    if(adminMode)await writeAdminAudit(req,actor.admin,'TICKET_'+action,'SERVICE_TICKET',p.id,{content},c);
   });ok(res,{updated:true});
  });

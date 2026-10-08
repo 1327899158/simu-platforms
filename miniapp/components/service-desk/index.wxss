@@ -31,3 +31,4 @@
 .admin-service button[disabled] {opacity:.45;}
 
 .service-message.system .service-bubble{background:transparent;border:0;box-shadow:none;color:#8A90A6;text-align:center;font-size:23rpx;line-height:1.6;padding:12rpx 20rpx}
+.service-order-card{min-width:300rpx;max-width:100%;margin-top:12rpx;padding:22rpx;border:1rpx solid #dce6eb;border-radius:16rpx;background:#fff;box-sizing:border-box;white-space:normal;word-break:break-all}.service-order-title{font-weight:600;line-height:1.5}.service-order-link{margin-top:14rpx;padding-top:12rpx;border-top:1rpx solid #e4e9eb;color:#35788d;font-size:24rpx}.admin-service .service-order-link{color:#33469C}

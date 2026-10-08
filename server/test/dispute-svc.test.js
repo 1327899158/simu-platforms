@@ -139,6 +139,7 @@ function runInsert(sql, params) {
   return { insertId: tables[table].length };
 }
 
+let beforeTx = null;
 const dbMock = {
   async query(sql, params = []) {
     if (/^SELECT/.test(sql.trim())) return runSelect(sql, params);
@@ -152,6 +153,7 @@ const dbMock = {
     return (rows && rows.length) ? rows[0] : null;
   },
   async tx(fn) {
+    if (beforeTx) beforeTx();
     // 简化：直接用一个代理连接执行
     const conn = {
       execute: async (sql, params = []) => {
@@ -236,6 +238,23 @@ async function expectThrow(name, fn, code) {
   await expectThrow('已结束纠纷不能发言', () => svc.sendDisputeMessage('cust1', d2.id, { type: 'TEXT', content: 'hi' }), 409);
 
   // ---------- 7. 仲裁结案：FORCE_COMPLETE + 退款登记 ----------
+  await expectThrow('举证尚未截止时不能仲裁', () => svc.resolveDispute({ id: 'admin1' }, d1.id, {
+    verdict: 'CUSTOMER_FAVOR', orderAction: 'FORCE_COMPLETE', refundAmountFen: 5000,
+  }), 409);
+  const expireEvidence = (id) => {
+    tables.disputes.find((d) => d.id === id).evidenceDeadlineAt = '2000-01-01 00:00:00';
+  };
+  expireEvidence(d1.id);
+  // 模拟仲裁读到旧截止时间后，对方提交新证据刷新了数据库中的截止时间。
+  beforeTx = () => {
+    tables.disputes.find((d) => d.id === d1.id).evidenceDeadlineAt = svc.evidenceDeadlineIso();
+  };
+  await expectThrow('仲裁事务按锁定后的最新截止时间校验，不能覆盖刚补交的证据', () => svc.resolveDispute({ id: 'admin1' }, d1.id, {
+    verdict: 'CUSTOMER_FAVOR', orderAction: 'FORCE_COMPLETE', refundAmountFen: 5000,
+  }), 409);
+  beforeTx = null;
+  check('举证延期后纠纷和订单仍被冻结', tables.disputes.find((d) => d.id === d1.id).status === 'OPEN' && tables.orders.find((o) => o.id === 'order1').status === 'DISPUTING');
+  expireEvidence(d1.id);
   await svc.resolveDispute({ id: 'admin1' }, d1.id, {
     verdict: 'CUSTOMER_FAVOR', orderAction: 'FORCE_COMPLETE', note: '工程师未按期交付', refundAmountFen: 5000,
   });
@@ -253,18 +272,21 @@ async function expectThrow(name, fn, code) {
   const d3 = await svc.createDispute({ id: 'cust1' }, {
     orderId: 'order1', reasonType: 'OTHER', description: '这是第三次纠纷的说明文字内容', fileIds: [],
   });
+  expireEvidence(d3.id);
   await svc.resolveDispute({ id: 'admin1' }, d3.id, { verdict: 'ENGINEER_FAVOR', orderAction: 'REOPEN' });
   check('REOPEN 后订单回到 IN_PROGRESS', tables.orders.find((o) => o.id === 'order1').status === 'IN_PROGRESS');
 
   const d4 = await svc.createDispute({ id: 'cust1' }, {
     orderId: 'order1', reasonType: 'OTHER', description: '这是第四次纠纷的说明文字内容', fileIds: [],
   });
+  expireEvidence(d4.id);
   await svc.resolveDispute({ id: 'admin1' }, d4.id, { verdict: 'PARTIAL', orderAction: 'CLOSE' });
   check('CLOSE 后订单关闭', tables.orders.find((o) => o.id === 'order1').status === 'CLOSED');
 
   const d5 = await svc.createDispute({ id: 'cust1' }, {
     orderId: 'order_completed', reasonType: 'OTHER', description: '这是第五次纠纷的说明文字内容', fileIds: [],
   });
+  expireEvidence(d5.id);
   await svc.resolveDispute({ id: 'admin1' }, d5.id, { verdict: 'NONE', orderAction: 'KEEP' });
   check('KEEP 后订单恢复快照 COMPLETED', tables.orders.find((o) => o.id === 'order_completed').status === 'COMPLETED');
 

@@ -16,11 +16,13 @@ function verifyView(user) {
   const status = user?.identity?.verifyStatus || profile?.verifyStatus || user?.verifyStatus || 'PENDING';
   const fileCount = Number(user?.identity?.fileCount || profile?.qualificationFileCount || 0);
   const hasSubmitted = Boolean(user?.identity?.hasSubmitted || user?.identity?.submittedAt || fileCount);
-  const qualificationHint = hasSubmitted
-    ? fileCount
-      ? `已提交 ${fileCount} 份补充认证资料。`
-      : '认证信息已提交，补充认证资料为选填。'
-    : '填写本人信息即可提交认证，补充认证资料选填。';
+  const qualificationHint = user?.role !== 'ENGINEER'
+    ? hasSubmitted ? '认证信息已提交。' : '填写本人信息即可提交身份认证。'
+    : hasSubmitted
+      ? fileCount
+        ? `已提交 ${fileCount} 份补充认证资料。`
+        : '认证信息已提交，补充认证资料为选填。'
+      : '填写本人信息即可提交认证，补充认证资料选填。';
   let roleBadgeText = '客户';
   if (user?.role === 'ENGINEER') {
     roleBadgeText = status === 'APPROVED'

@@ -19,7 +19,7 @@
 const { refreshForOrder } = require('../services/engineer-level');
 const { ensureConversation, systemMessage, publishConversationDoc, publishSystemMessage } = require('../services/chat-svc');
 const { readJson, ok, err } = require('../lib/http');
-const { v, maskPhone, nowIso, parseDbDate } = require('../lib/util');
+const { v, maskPhone, nowIso } = require('../lib/util');
 const { query, queryOne, tx } = require('../db');
 const { requireUser } = require('../lib/auth-mw');
 const { requireAdmin, writeAdminAudit } = require('../lib/admin-mw');
@@ -27,6 +27,7 @@ const {
   REASON_TYPES, VERDICTS, ORDER_ACTIONS,
   findOpenDispute, isOrderParty,
   createDispute, cancelDispute, resolveDispute, updateRefund,
+  EVIDENCE_WINDOW_HOURS, evidenceDeadlineIso, evidenceWindow,
 } = require('../services/dispute-svc');
 
 const REASON_TEXT = {
@@ -42,20 +43,6 @@ const ACTION_TEXT = {
   KEEP: '恢复原状', FORCE_COMPLETE: '强制完成', REOPEN: '重新执行', CLOSE: '关闭订单',
 };
 const MAX_EVIDENCE_PER_PARTY = 20;
-
-function evidenceWindow(d) {
-  const createdMs = parseDbDate(d.createdAt).getTime();
-  const fallbackMs = createdMs + 48 * 60 * 60 * 1000;
-  const parsedDeadline = d.evidenceDeadlineAt ? parseDbDate(d.evidenceDeadlineAt).getTime() : fallbackMs;
-  const deadlineMs = Number.isFinite(parsedDeadline) ? parsedDeadline : fallbackMs;
-  const remainingSeconds = Math.max(0, Math.ceil((deadlineMs - Date.now()) / 1000));
-  return {
-    evidenceDeadlineAt: new Date(deadlineMs).toISOString(),
-    evidenceOpen: d.status === 'OPEN' && remainingSeconds > 0,
-    evidenceRemainingSeconds: d.status === 'OPEN' ? remainingSeconds : 0,
-    arbitrationReady: d.status === 'OPEN' && remainingSeconds === 0,
-  };
-}
 
 function disputeView(d, extra = {}) {
   return {
@@ -239,7 +226,7 @@ function register(router) {
     ok(res, { ...detail, myRole: d.initiatorId === user.id ? 'INITIATOR' : 'OPPOSITE' });
   });
 
-  // POST /api/disputes/:id/evidence { fileIds, description? } —— 48 小时内补充证据。
+  // 截止前成功补充新证据后，双方举证期从本次提交重新计算 48 小时。
   router.post('/api/disputes/:id/evidence', async (req, res, params) => {
     const user = await requireUser(req);
     const b = await readJson(req);
@@ -253,6 +240,8 @@ function register(router) {
     if (!(await isOrderParty(current.orderId, user.id))) throw err.forbidden('仅纠纷当事人可补充证据');
 
     const result = await tx(async (conn) => {
+      // 与仲裁保持相同的加锁顺序，证据保存和截止时间延长一起提交。
+      await conn.execute('SELECT id FROM orders WHERE id=? FOR UPDATE', [current.orderId]);
       const [[d]] = await conn.execute(`SELECT * FROM disputes WHERE id = ? FOR UPDATE`, [params.id]);
       if (!d) throw err.notFound('纠纷不存在');
       if (d.status !== 'OPEN') throw err.conflict('纠纷已结束，不能继续补充证据');
@@ -283,12 +272,13 @@ function register(router) {
         added += Number(inserted.affectedRows || 0);
       }
       if (!added) throw err.conflict('所选文件已经提交过');
-      await conn.execute(`UPDATE disputes SET updatedAt = ? WHERE id = ?`, [now, d.id]);
+      const evidenceDeadlineAt = evidenceDeadlineIso();
+      await conn.execute(`UPDATE disputes SET evidenceDeadlineAt = ?, updatedAt = ? WHERE id = ?`, [evidenceDeadlineAt, now, d.id]);
       const conv=await ensureConversation(d.orderId,conn);
-      const content=`对方补充了${added}份纠纷证据，请进入订单纠纷详情查看材料和说明。`;
+      const content=`对方补充了${added}份纠纷证据，双方举证期已重新计算${EVIDENCE_WINDOW_HOURS}小时，请进入订单纠纷详情查看材料、说明和最新截止时间。`;
       const meta={senderId:user.id,actionOrderId:d.orderId};
       const message=await systemMessage(conv.id,content,conn,meta);
-      return { added, evidenceDeadlineAt: evidenceWindow(d).evidenceDeadlineAt, notification:{conv,content,meta,msgId:message.msgId} };
+      return { added, ...evidenceWindow({ ...d, evidenceDeadlineAt }), notification:{conv,content,meta,msgId:message.msgId} };
     });
     const n=result.notification;
     if(n.conv._isNew)publishConversationDoc(n.conv);
@@ -390,7 +380,7 @@ function register(router) {
 
     const d = await queryOne(`SELECT * FROM disputes WHERE id = ?`, [params.id]);
     if (!d) throw err.notFound('纠纷不存在');
-    if (evidenceWindow(d).evidenceOpen) throw err.conflict('举证期尚未结束，请在48小时举证期结束后再仲裁');
+    if (evidenceWindow(d).evidenceOpen) throw err.conflict('举证期尚未结束，请在最新举证截止时间后再仲裁');
 
     const result = await resolveDispute(admin, params.id, { verdict, orderAction, note, refundAmountFen });
     await refreshForOrder(result.orderId);
